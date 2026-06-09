@@ -1,0 +1,66 @@
+import express from 'express';
+import { createServer } from 'http';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
+import sequelize from './utils/db';
+import authRoutes from './routes/authRoutes';
+import paymentRoutes from './routes/paymentRoutes';
+import courseRoutes from './routes/courseRoutes';
+import notificationRoutes from './routes/notificationRoutes';
+import teacherRoutes from './routes/teacherRoutes';
+import { stripeWebhook } from './controllers/paymentController';
+
+// Models import to ensure they are registered with Sequelize
+import './models/Etudiant';
+import './models/Course';
+import './models/Module';
+import './models/Lesson';
+import './models/Transaction';
+import './models/Notification';
+import './models/Intervenant';
+import './models/CourseAccess';
+import { initSocket } from './utils/socket';
+
+dotenv.config();
+
+const app = express();
+const httpServer = createServer(app);
+const port = process.env.PORT || 5000;
+
+// Initialize Socket.io
+initSocket(httpServer);
+
+app.use(cors({
+  origin: [process.env.FRONTEND_URL || 'http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:5173'], // Adjust as needed
+  credentials: true, // Necessary to allow cookies to be sent
+}));
+
+// Stripe Webhook MUST be placed BEFORE express.json() because it needs the raw body
+app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), stripeWebhook);
+
+app.use(express.json());
+app.use(cookieParser());
+
+app.use('/api/auth', authRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/courses', courseRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/teacher', teacherRoutes);
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', message: 'CEGA E-Learning API is running' });
+});
+
+// Use alter: true to not drop existing tables, but apply new columns if necessary.
+// Important: Since there are existing users, we DO NOT use force: true.
+sequelize.sync({ alter: true })
+  .then(() => {
+    console.log('Database synced successfully.');
+    httpServer.listen(port, () => {
+      console.log(`Server is running on port ${port}`);
+    });
+  })
+  .catch((err) => {
+    console.error('Error syncing database:', err);
+  });

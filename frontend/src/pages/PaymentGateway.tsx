@@ -1,0 +1,130 @@
+import React, { useState } from 'react';
+import { CreditCard, Smartphone, CheckCircle, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
+import { StripePaymentForm } from '../components/StripePaymentForm';
+
+// Initialize Stripe outside component to avoid recreating the Stripe object on every render
+const stripePromise = loadStripe('pk_test_51TKdreHTTgYbk5AbmdIxHtghkUsUDjUoU2YDiPmV3G80IA0fFBBLvA1eXK1thbthuLl0PiHrCuAU6RVb7EIPJHn3002GBq5FOq');
+
+const PaymentGateway: React.FC = () => {
+  const [selectedMethod, setSelectedMethod] = useState<'stripe' | 'cinetpay' | null>(null);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const handlePaymentInit = async () => {
+    if (!selectedMethod) return;
+
+    if (selectedMethod === 'stripe') {
+      setIsLoading(true);
+      try {
+        // En conditions réelles, on récupère l'email de l'utilisateur connecté ou des props
+        const response = await axios.post('/api/payments/create-intent', {
+          amount: 150000,
+          currency: 'gnf',
+          description: 'Frais de scolarité CEGA E-Learning',
+          email: 'etudiant@cega.edu', // A remplacer par l'email réel
+        }, {
+          withCredentials: true
+        });
+        
+        setClientSecret(response.data.clientSecret);
+      } catch (error) {
+        console.error('Erreur lors de la création de la session Stripe:', error);
+        alert('Erreur lors de l\'initialisation du paiement');
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      alert('Redirection vers CinetPay (Mobile Money : Orange Money / MTN Momo)...');
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 2000);
+    }
+  };
+
+  return (
+    <div className="auth-layout">
+      <div className="auth-container glass-panel animate-slide-up" style={{ maxWidth: '550px' }}>
+        <div className="auth-header">
+          <h1 className="gradient-text">Finalisez votre Inscription</h1>
+          <p>Choisissez votre méthode de paiement pour activer votre compte étudiant.</p>
+        </div>
+
+        {!clientSecret ? (
+          <div style={{ marginBottom: '2rem' }}>
+            <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '0', border: '1px solid var(--border-color)', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Frais de scolarité (1ère tranche)</span>
+                <span style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--text-primary)' }}>150 000 GNF</span>
+              </div>
+            </div>
+
+            <h3 style={{ fontSize: '1rem', marginBottom: '1rem', color: 'var(--text-primary)' }}>Méthode de paiement</h3>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div 
+                onClick={() => setSelectedMethod('cinetpay')}
+                style={{
+                  padding: '1.25rem',
+                  borderRadius: '0',
+                  border: `2px solid ${selectedMethod === 'cinetpay' ? 'var(--accent-primary)' : 'var(--border-color)'}`,
+                  background: selectedMethod === 'cinetpay' ? 'rgba(16, 185, 129, 0.05)' : 'rgba(255,255,255,0.02)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  position: 'relative'
+                }}
+              >
+                {selectedMethod === 'cinetpay' && <CheckCircle size={20} style={{ position: 'absolute', top: '10px', right: '10px', color: 'var(--accent-primary)' }} />}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+                  <Smartphone size={32} color={selectedMethod === 'cinetpay' ? 'var(--accent-primary)' : 'var(--text-secondary)'} />
+                  <span style={{ fontWeight: '500', textAlign: 'center' }}>Mobile Money</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center' }}>Orange Money, MTN Momo</span>
+                </div>
+              </div>
+
+              <div 
+                onClick={() => setSelectedMethod('stripe')}
+                style={{
+                  padding: '1.25rem',
+                  borderRadius: '0',
+                  border: `2px solid ${selectedMethod === 'stripe' ? 'var(--accent-primary)' : 'var(--border-color)'}`,
+                  background: selectedMethod === 'stripe' ? 'rgba(16, 185, 129, 0.05)' : 'rgba(255,255,255,0.02)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  position: 'relative'
+                }}
+              >
+                {selectedMethod === 'stripe' && <CheckCircle size={20} style={{ position: 'absolute', top: '10px', right: '10px', color: 'var(--accent-primary)' }} />}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+                  <CreditCard size={32} color={selectedMethod === 'stripe' ? 'var(--accent-primary)' : 'var(--text-secondary)'} />
+                  <span style={{ fontWeight: '500', textAlign: 'center' }}>Carte Bancaire</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center' }}>Visa, Mastercard</span>
+                </div>
+              </div>
+            </div>
+
+            <button 
+              onClick={handlePaymentInit}
+              disabled={!selectedMethod || isLoading}
+              className={`btn ${selectedMethod ? 'btn-primary' : 'btn-secondary'}`} 
+              style={{ opacity: selectedMethod && !isLoading ? 1 : 0.5, cursor: selectedMethod ? 'pointer' : 'not-allowed', width: '100%', marginTop: '2rem' }}
+            >
+              {isLoading ? 'Chargement...' : (selectedMethod ? 'Procéder au paiement' : 'Sélectionnez une méthode')}
+              {selectedMethod && !isLoading && <ArrowRight size={20} style={{ marginLeft: '0.5rem' }} />}
+            </button>
+          </div>
+        ) : (
+          <Elements options={{ clientSecret, appearance: { theme: 'night' } }} stripe={stripePromise}>
+            <StripePaymentForm />
+          </Elements>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default PaymentGateway;
