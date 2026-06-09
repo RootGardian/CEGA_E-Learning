@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, login, logout, enable2FA, verify2FA, forgotPassword, resetPassword, getMe, updateProfile, updatePassword } from '../controllers/authController';
+import { register, login, logout, enable2FA, verify2FA, forgotPassword, resetPassword, getMe, updateProfile, updatePassword, getPublicSettings } from '../controllers/authController';
 import { protect } from '../middlewares/authMiddleware';
 
 const router = Router();
@@ -7,6 +7,9 @@ const router = Router();
 router.post('/register', register);
 router.post('/login', login);
 router.post('/logout', logout);
+
+// Global public settings (e.g. price)
+router.get('/public/settings', getPublicSettings);
 
 // Protected routes for 2FA setup
 router.post('/2fa/enable', protect, enable2FA);

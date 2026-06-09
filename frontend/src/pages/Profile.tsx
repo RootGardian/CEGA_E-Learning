@@ -34,6 +34,8 @@ const Profile: React.FC = () => {
 
   useEffect(() => {
     const fetchTransactions = async () => {
+      if (user.role !== 'etudiant') return;
+      
       try {
         const res = await axios.get('/api/payments/history', { withCredentials: true });
         setTransactions(res.data);
@@ -42,7 +44,7 @@ const Profile: React.FC = () => {
       }
     };
     fetchTransactions();
-  }, []);
+  }, [user.role]);
 
   const handleSave = async () => {
     setLoading(true);
@@ -105,31 +107,31 @@ const Profile: React.FC = () => {
 
   return (
     <div className="dashboard-content animate-fade-in">
-      <div style={{ marginBottom: '3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 style={{ fontSize: '2rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Mon Profil</h1>
-          <p style={{ color: 'var(--text-secondary)' }}>Vos informations personnelles et académiques.</p>
+      <div style={{ marginBottom: '3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+        <div style={{ flex: '1 1 min(100%, 300px)' }}>
+          <h1 style={{ fontSize: 'clamp(1.8rem, 5vw, 2rem)', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Mon Profil</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Vos informations personnelles et académiques.</p>
         </div>
         {!isEditing ? (
-          <button onClick={() => setIsEditing(true)} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'auto' }}>
+          <button onClick={() => setIsEditing(true)} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: 'auto', minWidth: '160px' }}>
             <Edit2 size={18} /> Modifier le profil
           </button>
         ) : (
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <button onClick={() => { setIsEditing(false); setFormData({ firstName: user.firstName, lastName: user.lastName, phone: user.phone || '', bio: user.bio || '', profilePicture: user.profilePicture || '' }); }} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'auto' }}>
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', flex: '1 1 auto', justifyContent: 'flex-start' }}>
+            <button onClick={() => { setIsEditing(false); setFormData({ firstName: user.firstName, lastName: user.lastName, phone: user.phone || '', bio: user.bio || '', profilePicture: user.profilePicture || '' }); }} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: 'auto', minWidth: '120px' }}>
               <X size={18} /> Annuler
             </button>
-            <button onClick={handleSave} disabled={loading} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'auto' }}>
+            <button onClick={handleSave} disabled={loading} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: 'auto', minWidth: '140px' }}>
               <Check size={18} /> {loading ? 'Enregistrement...' : 'Enregistrer'}
             </button>
           </div>
         )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '2rem', alignItems: 'start' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem', alignItems: 'stretch' }}>
         
         {/* Colonne de gauche */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', flex: '1 1 min(100%, 300px)', width: '100%' }}>
           
           {/* Carte d'identité visuelle */}
           <div className="glass-panel" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
@@ -159,7 +161,7 @@ const Profile: React.FC = () => {
             <h2 style={{ fontSize: '1.5rem', color: 'var(--text-primary)', marginBottom: '0.2rem' }}>
               {formData.firstName} {formData.lastName}
             </h2>
-            <p style={{ color: 'var(--accent-primary)', fontWeight: 600, marginBottom: '1.5rem' }}>Étudiant</p>
+            <p style={{ color: 'var(--accent-primary)', fontWeight: 600, marginBottom: '1.5rem' }}>{user.role === 'enseignant' ? 'Formateur' : 'Étudiant'}</p>
             
             <div style={{ width: '100%', textAlign: 'left' }}>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.2rem' }}>Dernière connexion</p>
@@ -167,40 +169,42 @@ const Profile: React.FC = () => {
             </div>
           </div>
 
-          {/* Abonnement / Accès */}
-          <div className="glass-panel" style={{ padding: '2rem' }}>
-            <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <CreditCard size={18} /> Mon Abonnement
-            </h3>
-            
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-              <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Statut</span>
-              {user.subscriptionStatus === 'active' ? (
-                <span style={{ padding: '0.25rem 0.75rem', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', fontSize: '0.85rem', fontWeight: 600 }}>Actif</span>
-              ) : (
-                <span style={{ padding: '0.25rem 0.75rem', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'var(--error)', fontSize: '0.85rem', fontWeight: 600 }}>Expiré / Inactif</span>
-              )}
-            </div>
+          {/* Abonnement / Accès (Uniquement pour les étudiants) */}
+          {user.role !== 'enseignant' && (
+            <div className="glass-panel" style={{ padding: '2rem' }}>
+              <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <CreditCard size={18} /> Mon Abonnement
+              </h3>
+              
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Statut</span>
+                {user.subscriptionStatus === 'active' ? (
+                  <span style={{ padding: '0.25rem 0.75rem', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', fontSize: '0.85rem', fontWeight: 600 }}>Actif</span>
+                ) : (
+                  <span style={{ padding: '0.25rem 0.75rem', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'var(--error)', fontSize: '0.85rem', fontWeight: 600 }}>Expiré / Inactif</span>
+                )}
+              </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Expiration</span>
-              <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 500 }}>
-                {user.accessExpirationDate ? new Date(user.accessExpirationDate).toLocaleDateString('fr-FR') : 'Non défini'}
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Expiration</span>
+                <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 500 }}>
+                  {user.accessExpirationDate ? new Date(user.accessExpirationDate).toLocaleDateString('fr-FR') : 'Non défini'}
+                </span>
+              </div>
             </div>
-          </div>
+          )}
 
         </div>
 
         {/* Colonne de droite */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', flex: '2 1 min(100%, 400px)', width: '100%', minWidth: 0 }}>
           
-          <div className="glass-panel" style={{ padding: '2rem' }}>
+          <div className="glass-panel" style={{ padding: 'clamp(1.5rem, 4vw, 2rem)' }}>
             <h3 style={{ fontSize: '1.2rem', color: 'var(--text-primary)', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
               Informations Personnelles
             </h3>
             
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
               <div>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
                   <User size={16} /> Prénom
@@ -263,85 +267,91 @@ const Profile: React.FC = () => {
             </div>
           </div>
 
-          <div className="glass-panel" style={{ padding: '2rem' }}>
-            <h3 style={{ fontSize: '1.2rem', color: 'var(--text-primary)', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
-              Dossier Académique
-            </h3>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-              <div style={{ gridColumn: '1 / -1' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
-                  <Briefcase size={16} /> Filière
-                </label>
-                <div style={{ padding: '0.75rem', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>{getDeptName(user.department)}</div>
-              </div>
+          {/* Dossier Académique (Uniquement pour les étudiants) */}
+          {user.role !== 'enseignant' && (
+            <div className="glass-panel" style={{ padding: 'clamp(1.5rem, 4vw, 2rem)' }}>
+              <h3 style={{ fontSize: '1.2rem', color: 'var(--text-primary)', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                Dossier Académique
+              </h3>
               
-              <div>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
-                  <Hash size={16} /> Numéro Étudiant (INE)
-                </label>
-                <div style={{ padding: '0.75rem', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>{user.numero_etudiant || 'Non défini'}</div>
-              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
+                    <Briefcase size={16} /> Filière
+                  </label>
+                  <div style={{ padding: '0.75rem', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>{getDeptName(user.department)}</div>
+                </div>
+                
+                <div>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
+                    <Hash size={16} /> Numéro Étudiant (INE)
+                  </label>
+                  <div style={{ padding: '0.75rem', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>{user.numero_etudiant || 'Non défini'}</div>
+                </div>
 
-              <div>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
-                  <Calendar size={16} /> Cohorte
-                </label>
-                <div style={{ padding: '0.75rem', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>{user.cohorte_id ? `Cohorte ${user.cohorte_id}` : 'Non définie'}</div>
+                <div>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
+                    <Calendar size={16} /> Cohorte
+                  </label>
+                  <div style={{ padding: '0.75rem', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>{user.cohorte_id ? `Cohorte ${user.cohorte_id}` : 'Non définie'}</div>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
-          <div className="glass-panel" style={{ padding: '2rem' }}>
-            <h3 style={{ fontSize: '1.2rem', color: 'var(--text-primary)', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
-              Historique des Transactions
-            </h3>
-            
-            {transactions.length === 0 ? (
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Aucune transaction trouvée.</p>
-            ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
-                      <th style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem' }}>Date</th>
-                      <th style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem' }}>Description</th>
-                      <th style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem' }}>Montant</th>
-                      <th style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem' }}>Statut</th>
-                      <th style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem' }}>Facture</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {transactions.map((tx) => (
-                      <tr key={tx.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                        <td style={{ padding: '1rem', color: 'var(--text-primary)', fontSize: '0.9rem' }}>{new Date(tx.createdAt).toLocaleDateString('fr-FR')}</td>
-                        <td style={{ padding: '1rem', color: 'var(--text-primary)', fontSize: '0.9rem' }}>{tx.description || 'Paiement CEGA'}</td>
-                        <td style={{ padding: '1rem', color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: 600 }}>{tx.amount} {tx.currency.toUpperCase()}</td>
-                        <td style={{ padding: '1rem' }}>
-                          <span style={{ 
-                            padding: '0.25rem 0.5rem', 
-                            backgroundColor: tx.status === 'succeeded' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', 
-                            color: tx.status === 'succeeded' ? 'var(--success)' : 'var(--error)', 
-                            fontSize: '0.8rem', 
-                            fontWeight: 600 
-                          }}>
-                            {tx.status === 'succeeded' ? 'Payé' : 'Échoué'}
-                          </span>
-                        </td>
-                        <td style={{ padding: '1rem' }}>
-                          {tx.status === 'succeeded' && (
-                            <button onClick={() => generateInvoice(tx)} className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'auto', fontSize: '0.85rem' }}>
-                              <Download size={14} /> PDF
-                            </button>
-                          )}
-                        </td>
+          {/* Historique des Transactions (Uniquement pour les étudiants) */}
+          {user.role !== 'enseignant' && (
+            <div className="glass-panel" style={{ padding: 'clamp(1.5rem, 4vw, 2rem)' }}>
+              <h3 style={{ fontSize: '1.2rem', color: 'var(--text-primary)', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                Historique des Transactions
+              </h3>
+              
+              {transactions.length === 0 ? (
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Aucune transaction trouvée.</p>
+              ) : (
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
+                        <th style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem' }}>Date</th>
+                        <th style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem' }}>Description</th>
+                        <th style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem' }}>Montant</th>
+                        <th style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem' }}>Statut</th>
+                        <th style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem' }}>Facture</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+                    </thead>
+                    <tbody>
+                      {transactions.map((tx) => (
+                        <tr key={tx.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                          <td style={{ padding: '1rem', color: 'var(--text-primary)', fontSize: '0.9rem' }}>{new Date(tx.createdAt).toLocaleDateString('fr-FR')}</td>
+                          <td style={{ padding: '1rem', color: 'var(--text-primary)', fontSize: '0.9rem' }}>{tx.description || 'Paiement CEGA'}</td>
+                          <td style={{ padding: '1rem', color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: 600 }}>{tx.amount} {tx.currency.toUpperCase()}</td>
+                          <td style={{ padding: '1rem' }}>
+                            <span style={{ 
+                              padding: '0.25rem 0.5rem', 
+                              backgroundColor: tx.status === 'succeeded' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', 
+                              color: tx.status === 'succeeded' ? 'var(--success)' : 'var(--error)', 
+                              fontSize: '0.8rem', 
+                              fontWeight: 600 
+                            }}>
+                              {tx.status === 'succeeded' ? 'Payé' : 'Échoué'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '1rem' }}>
+                            {tx.status === 'succeeded' && (
+                              <button onClick={() => generateInvoice(tx)} className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'auto', fontSize: '0.85rem' }}>
+                                <Download size={14} /> PDF
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
 
         </div>
 

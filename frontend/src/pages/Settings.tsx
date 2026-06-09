@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import axios from 'axios';
 import { Shield, Bell, Key, Smartphone } from 'lucide-react';
 import type { UserProfile } from '../components/SidebarLayout';
+import ThemeToggle from '../components/ThemeToggle';
 
 const formatDate = (dateString?: string) => {
   if (!dateString) return 'Inconnue';
@@ -125,7 +126,7 @@ const Settings: React.FC = () => {
             <h2 style={{ fontSize: '1.25rem', color: 'var(--text-primary)' }}>Sécurité du compte</h2>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem', border: '1px solid var(--border-color)', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem', border: '1px solid var(--border-color)', marginBottom: '1.5rem' }}>
             <div>
               <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Key size={18} /> Mot de passe
@@ -177,7 +178,7 @@ const Settings: React.FC = () => {
                   
                   {passwordError && <p style={{ color: 'var(--error)', fontSize: '0.9rem' }}>{passwordError}</p>}
                   
-                  <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '0.5rem' }}>
                     <button type="button" onClick={() => setIsChangingPassword(false)} className="btn btn-secondary" style={{ width: 'auto' }}>
                       Annuler
                     </button>
@@ -197,7 +198,7 @@ const Settings: React.FC = () => {
           )}
 
           <div style={{ padding: '1.5rem', border: '1px solid var(--border-color)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <div>
                 <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <Smartphone size={18} /> Double Authentification (2FA)
@@ -223,7 +224,7 @@ const Settings: React.FC = () => {
                   <img src={qrCode} alt="QR Code 2FA" style={{ border: '4px solid white', borderRadius: '4px' }} />
                 </div>
                 <h4 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem' }}>2. Entrez le code généré</h4>
-                <div style={{ display: 'flex', gap: '1rem' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
                   <input 
                     type="text" 
                     placeholder="Ex: 123456" 
@@ -250,8 +251,10 @@ const Settings: React.FC = () => {
             <h2 style={{ fontSize: '1.25rem', color: 'var(--text-primary)' }}>Préférences</h2>
           </div>
 
+          <ThemeToggle />
+
           <div style={{ display: 'grid', gap: '1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>
               <div>
                 <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Alertes notifications in-app</h3>
                 <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Afficher une cloche de notification dans l'application.</p>
@@ -261,7 +264,7 @@ const Settings: React.FC = () => {
               </label>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>
               <div>
                 <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Nouveau cours débloqué</h3>
                 <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Être averti lors du déblocage d'un nouveau cours par l'enseignant.</p>
@@ -271,7 +274,7 @@ const Settings: React.FC = () => {
               </label>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>
               <div>
                 <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Rappels automatiques d'examen</h3>
                 <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Recevoir des rappels avant une date d'examen (J-7, J-3, J-1).</p>
@@ -281,7 +284,7 @@ const Settings: React.FC = () => {
               </label>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>
               <div>
                 <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Publication des résultats</h3>
                 <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Notification de publication des résultats d'évaluation.</p>

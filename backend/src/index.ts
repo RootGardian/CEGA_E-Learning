@@ -9,6 +9,7 @@ import paymentRoutes from './routes/paymentRoutes';
 import courseRoutes from './routes/courseRoutes';
 import notificationRoutes from './routes/notificationRoutes';
 import teacherRoutes from './routes/teacherRoutes';
+import adminRoutes from './routes/adminRoutes';
 import { stripeWebhook } from './controllers/paymentController';
 
 // Models import to ensure they are registered with Sequelize
@@ -20,6 +21,8 @@ import './models/Transaction';
 import './models/Notification';
 import './models/Intervenant';
 import './models/CourseAccess';
+import './models/User';
+import './models/SystemSetting';
 import { initSocket } from './utils/socket';
 
 dotenv.config();
@@ -47,14 +50,16 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/teacher', teacherRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'CEGA E-Learning API is running' });
 });
 
 // Use alter: true to not drop existing tables, but apply new columns if necessary.
-// Important: Since there are existing users, we DO NOT use force: true.
-sequelize.sync({ alter: true })
+// Use alter: false to prevent Sequelize from trying to modify existing tables (like users)
+// which have dependent views. It will still create new tables (like system_settings).
+sequelize.sync({ alter: false })
   .then(() => {
     console.log('Database synced successfully.');
     httpServer.listen(port, () => {

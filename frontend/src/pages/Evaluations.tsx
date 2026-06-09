@@ -16,15 +16,15 @@ const Evaluations: React.FC = () => {
     <div className="dashboard-content animate-fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem' }}>
         <div>
-          <h1 style={{ fontSize: '2rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Mes Évaluations</h1>
+          <h1 style={{ fontSize: 'clamp(1.8rem, 5vw, 2rem)', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Mes Évaluations</h1>
           <p style={{ color: 'var(--text-secondary)' }}>Consultez vos examens à venir et vos résultats passés.</p>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem', alignItems: 'stretch' }}>
         
         {/* Évaluations à venir */}
-        <section>
+        <section style={{ flex: '1 1 min(100%, 300px)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
             <Clock size={24} color="var(--accent-primary)" />
             <h2 style={{ fontSize: '1.25rem', color: 'var(--text-primary)' }}>À venir</h2>
@@ -33,14 +33,14 @@ const Evaluations: React.FC = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {upcomingEvals.map(ev => (
               <div key={ev.id} className="glass-panel" style={{ padding: '1.5rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', gap: '0.5rem' }}>
                   <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent-secondary)', padding: '0.25rem 0.5rem', border: '1px solid var(--accent-secondary)' }}>
                     {ev.type}
                   </span>
                   <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{ev.date}</span>
                 </div>
-                <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>{ev.course}</h3>
-                <div style={{ display: 'flex', gap: '1rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '0.5rem', wordBreak: 'break-word' }}>{ev.course}</h3>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
                   <span>Horaire : {ev.time}</span>
                   {ev.duration !== 'N/A' && <span>Durée : {ev.duration}</span>}
                 </div>
@@ -50,7 +50,7 @@ const Evaluations: React.FC = () => {
         </section>
 
         {/* Historique des résultats */}
-        <section>
+        <section style={{ flex: '1 1 min(100%, 300px)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
             <Award size={24} color="var(--accent-secondary)" />
             <h2 style={{ fontSize: '1.25rem', color: 'var(--text-primary)' }}>Résultats récents</h2>
@@ -58,9 +58,9 @@ const Evaluations: React.FC = () => {
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {pastEvals.map(ev => (
-              <div key={ev.id} className="glass-panel" style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '0.2rem' }}>{ev.course}</h3>
+              <div key={ev.id} className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                <div style={{ flex: '1 1 min(100%, 150px)' }}>
+                  <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '0.2rem', wordBreak: 'break-word' }}>{ev.course}</h3>
                   <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{ev.type} • {ev.date}</p>
                 </div>
                 <div style={{ textAlign: 'right' }}>

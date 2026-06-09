@@ -3,10 +3,10 @@ import { Sun, Moon } from 'lucide-react';
 
 const ThemeToggle: React.FC = () => {
   const [isDark, setIsDark] = useState(() => {
-    // Check local storage or system preference
+    // Check local storage, default to light
     const saved = localStorage.getItem('theme');
     if (saved) return saved === 'dark';
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return false; // Default to light
   });
 
   useEffect(() => {
@@ -20,36 +20,37 @@ const ThemeToggle: React.FC = () => {
   }, [isDark]);
 
   return (
-    <button
-      onClick={() => setIsDark(!isDark)}
-      style={{
-        position: 'fixed',
-        bottom: '2rem',
-        right: '2rem',
-        width: '50px',
-        height: '50px',
-        borderRadius: '0',
-        backgroundColor: 'var(--bg-card)',
-        border: '1px solid var(--border-color)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        cursor: 'pointer',
-        boxShadow: 'none',
-        zIndex: 9999,
-        color: 'var(--text-primary)',
-        transition: 'all 0.2s ease'
-      }}
-      title={isDark ? "Passer en mode clair" : "Passer en mode sombre"}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundColor = 'var(--border-color)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.backgroundColor = 'var(--bg-card)';
-      }}
-    >
-      {isDark ? <Sun size={24} /> : <Moon size={24} />}
-    </button>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', marginBottom: '1.5rem' }}>
+      <div>
+        <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Thème de l'application</h3>
+        <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Basculer entre le mode clair et le mode sombre.</p>
+      </div>
+      <button
+        onClick={() => setIsDark(!isDark)}
+        style={{
+          width: '50px',
+          height: '50px',
+          borderRadius: '8px',
+          backgroundColor: 'var(--bg-card)',
+          border: '1px solid var(--border-color)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          color: 'var(--text-primary)',
+          transition: 'all 0.2s ease'
+        }}
+        title={isDark ? "Passer en mode clair" : "Passer en mode sombre"}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = 'var(--border-color)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'var(--bg-card)';
+        }}
+      >
+        {isDark ? <Sun size={24} /> : <Moon size={24} />}
+      </button>
+    </div>
   );
 };
 

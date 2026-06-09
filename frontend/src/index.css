@@ -11,6 +11,10 @@
   --accent-hover: #1A4D3F;
   --border-color: rgba(0, 0, 0, 0.1);
   --error: #EF4444;
+  
+  /* Layout variables */
+  --sidebar-width: 280px;
+  --topbar-height: 60px;
 }
 
 [data-theme='dark'] {
@@ -30,6 +34,7 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  -webkit-tap-highlight-color: transparent; /* PWA touch improvement */
 }
 
 body {
@@ -82,14 +87,23 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
+  padding: 1rem; /* Reduced for mobile */
   background-color: var(--bg-primary);
 }
 
 .auth-container {
   width: 100%;
   max-width: 440px;
-  padding: 2.5rem;
+  padding: 1.5rem; /* Reduced for mobile */
+}
+
+@media (min-width: 768px) {
+  .auth-layout {
+    padding: 2rem;
+  }
+  .auth-container {
+    padding: 2.5rem;
+  }
 }
 
 .auth-header {
@@ -98,8 +112,14 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .auth-header h1 {
-  font-size: 2rem;
+  font-size: 1.75rem; /* Slightly smaller for mobile */
   margin-bottom: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .auth-header h1 {
+    font-size: 2rem;
+  }
 }
 
 .auth-header p {
@@ -127,7 +147,7 @@ h1, h2, h3, h4, h5, h6 {
   border: 1px solid var(--border-color);
   border-radius: 0;
   color: var(--text-primary);
-  font-size: 1rem;
+  font-size: 1rem; /* Important for iOS to avoid zoom on focus */
   transition: all 0.2s ease;
 }
 
@@ -220,3 +240,185 @@ h1, h2, h3, h4, h5, h6 {
 [data-theme='dark'] .btn-secondary:hover {
   background: rgba(255, 255, 255, 0.1);
 }
+
+/* Dropdown Menus */
+.dropdown-menu {
+  position: absolute;
+  right: 1rem;
+  top: 100%;
+  z-index: 50;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  min-width: 200px;
+  overflow: hidden;
+  padding: 0.5rem 0;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  color: var(--text-primary);
+}
+
+.dropdown-item:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+[data-theme='dark'] .dropdown-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.dropdown-item.danger {
+  color: var(--error);
+}
+
+.dropdown-item.danger:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.dropdown-item.success {
+  color: #10B981; /* Tailwind Emerald-500 */
+}
+
+.dropdown-item.success:hover {
+  background-color: rgba(16, 185, 129, 0.1);
+}
+
+.dropdown-item.warning {
+  color: #F59E0B; /* Tailwind Amber-500 */
+}
+
+.dropdown-item.warning:hover {
+  background-color: rgba(245, 158, 11, 0.1);
+}
+
+/* -------------------------------------------
+   RESPONSIVE LAYOUT CLASSES (Mobile First)
+   ------------------------------------------- */
+
+/* App Container */
+.app-container {
+  display: flex;
+  flex-direction: column; /* Stack vertically on mobile */
+  height: 100vh;
+  height: 100dvh; /* For mobile browsers */
+  overflow: hidden;
+  background-color: var(--bg-primary);
+}
+
+/* Top Navigation Bar (Visible mainly on mobile) */
+.mobile-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--topbar-height);
+  padding: 0 1rem;
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  z-index: 50;
+}
+
+/* Sidebar Drawer (Mobile) / Fixed Sidebar (Desktop) */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--sidebar-width);
+  background-color: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  z-index: 100;
+  transform: translateX(-100%); /* Hidden by default on mobile */
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar.is-open {
+  transform: translateX(0); /* Visible when toggled */
+}
+
+/* Sidebar Overlay for Mobile */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 90;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  backdrop-filter: blur(2px);
+}
+
+.sidebar-overlay.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Main Content Area */
+.main-content {
+  flex: 1;
+  padding: 1rem; /* Smaller padding for mobile */
+  overflow-y: auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Desktop Overrides */
+@media (min-width: 1024px) {
+  .app-container {
+    flex-direction: row; /* Side-by-side on desktop */
+  }
+
+  .mobile-topbar {
+    display: none; /* Hide topbar on desktop, handled by sidebar/header */
+  }
+
+  .sidebar {
+    position: relative; /* Static positioning in flex layout */
+    transform: translateX(0); /* Always visible */
+    width: var(--sidebar-width);
+    padding: 2rem 1.5rem;
+  }
+
+  .sidebar-overlay {
+    display: none; /* Never show overlay on desktop */
+  }
+
+  .main-content {
+    padding: 2rem 3rem; /* Larger padding for desktop */
+  }
+}
+
+/* General Responsive Utilities */
+.hidden-mobile {
+  display: none !important;
+}
+
+@media (min-width: 1024px) {
+  .hidden-mobile {
+    display: flex !important; /* Assuming flex is often used */
+  }
+  .hidden-desktop {
+    display: none !important;
+  }
+}
+

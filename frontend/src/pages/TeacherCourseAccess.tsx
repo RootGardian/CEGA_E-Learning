@@ -82,27 +82,26 @@ const TeacherCourseAccess: React.FC = () => {
 
   return (
     <div className="dashboard-content animate-fade-in">
-      <div style={{ marginBottom: '3rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      <div style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'flex-start' }}>
         <button 
           onClick={() => navigate('/teacher/dashboard')}
-          className="btn btn-secondary" 
-          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', width: 'auto' }}
+          style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem 1rem', transition: 'all 0.2s ease', gap: '0.5rem', fontWeight: 500, fontSize: '0.9rem' }}
         >
           <ArrowLeft size={18} /> Retour
         </button>
         <div>
-          <h1 style={{ fontSize: '2rem', color: 'var(--text-primary)', marginBottom: '0.2rem', marginTop: 0 }}>
+          <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 2rem)', color: 'var(--text-primary)', marginBottom: '0.4rem', marginTop: 0 }}>
             Contrôle d'Accès
           </h1>
-          <p style={{ color: 'var(--text-secondary)', margin: 0 }}>
+          <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.95rem' }}>
             Gérez l'accès à vos cours : déblocage global ou individuel.
           </p>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '2rem' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem' }}>
         {/* Liste des cours */}
-        <div className="glass-panel" style={{ padding: '1.5rem' }}>
+        <div className="glass-panel" style={{ flex: '1 1 min(100%, 300px)', padding: 'clamp(1rem, 3vw, 1.5rem)', width: '100%' }}>
           <h2 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', color: 'var(--text-primary)' }}>Vos Cours</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {courses.map(course => (
@@ -110,18 +109,20 @@ const TeacherCourseAccess: React.FC = () => {
                 key={course.id}
                 onClick={() => handleSelectCourse(course)}
                 style={{
-                  padding: '1rem',
+                  padding: '1.25rem',
+                  borderRadius: '8px',
                   border: `1px solid ${selectedCourse?.id === course.id ? 'var(--accent-primary)' : 'var(--border-color)'}`,
-                  backgroundColor: selectedCourse?.id === course.id ? 'rgba(16, 185, 129, 0.05)' : 'transparent',
+                  backgroundColor: selectedCourse?.id === course.id ? 'rgba(16, 185, 129, 0.05)' : 'var(--bg-secondary)',
                   cursor: 'pointer',
                   display: 'flex',
                   justifyContent: 'space-between',
-                  alignItems: 'center'
+                  alignItems: 'center',
+                  transition: 'all 0.2s ease'
                 }}
               >
-                <div>
-                  <h3 style={{ fontSize: '1rem', color: 'var(--text-primary)', margin: '0 0 0.25rem 0' }}>{course.title}</h3>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                <div style={{ flex: 1, minWidth: 0, paddingRight: '0.5rem' }}>
+                  <h3 style={{ fontSize: '0.95rem', color: 'var(--text-primary)', margin: '0 0 0.5rem 0', lineHeight: 1.4, wordBreak: 'break-word' }}>{course.title}</h3>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', fontWeight: 600, padding: '0.2rem 0.6rem', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderRadius: '12px', display: 'inline-block' }}>
                     Actif
                   </span>
                 </div>
@@ -133,23 +134,23 @@ const TeacherCourseAccess: React.FC = () => {
 
         {/* Détails du cours sélectionné */}
         {selectedCourse ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          <div style={{ flex: '2 1 min(100%, 400px)', display: 'flex', flexDirection: 'column', gap: '1.5rem', minWidth: 0, width: '100%' }}>
 
             {/* Actions Globales */}
-            <div className="glass-panel" style={{ padding: '2rem' }}>
-              <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div className="glass-panel" style={{ padding: 'clamp(1rem, 4vw, 2rem)' }}>
+              <h2 style={{ fontSize: 'clamp(1.2rem, 4vw, 1.5rem)', marginBottom: '1.5rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'flex-start', gap: '0.75rem', lineHeight: 1.3, wordBreak: 'break-word' }}>
                 {selectedCourse.title}
               </h2>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
-                <div style={{ padding: '1.5rem', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div style={{ padding: 'clamp(1rem, 3vw, 1.5rem)', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', borderRadius: '8px' }}>
                   <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <Users size={18} /> Déblocage Promotion
                   </h3>
-                  <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+                  <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: 1.5 }}>
                     Autoriser l'accès à ce module pour toute la promotion (département).
                   </p>
-                  <div style={{ display: 'flex', gap: '1rem' }}>
+                  <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                     <button 
                       onClick={() => handleGlobalToggle(true)} 
                       disabled={globalUnlocked}
@@ -170,7 +171,7 @@ const TeacherCourseAccess: React.FC = () => {
             </div>
 
             {/* Liste des étudiants (Déblocage individuel) */}
-            <div className="glass-panel" style={{ padding: '2rem' }}>
+            <div className="glass-panel" style={{ padding: 'clamp(1rem, 4vw, 2rem)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <h2 style={{ fontSize: '1.25rem', color: 'var(--text-primary)', margin: 0 }}>Déblocage Individuel</h2>
                 <input 
@@ -190,9 +191,9 @@ const TeacherCourseAccess: React.FC = () => {
               </div>
 
               {loadingStudents ? (
-                <p>Chargement des étudiants...</p>
+                <p style={{ color: 'var(--text-secondary)' }}>Chargement des étudiants...</p>
               ) : (
-                <div style={{ overflowX: 'auto' }}>
+                <div style={{ overflowX: 'auto', width: '100%', WebkitOverflowScrolling: 'touch' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                     <thead>
                       <tr style={{ borderBottom: '2px solid var(--border-color)' }}>
@@ -273,9 +274,9 @@ const TeacherCourseAccess: React.FC = () => {
 
           </div>
         ) : (
-          <div className="glass-panel" style={{ padding: '3rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
-            <BookOpen size={48} style={{ marginBottom: '1rem', opacity: 0.5 }} />
-            <p>Sélectionnez un cours pour gérer ses accès.</p>
+          <div className="glass-panel" style={{ flex: '2 1 min(100%, 400px)', width: '100%', padding: 'clamp(1.5rem, 5vw, 3rem)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', textAlign: 'center', minHeight: '300px' }}>
+            <BookOpen size={48} style={{ marginBottom: '1.5rem', opacity: 0.5, color: 'var(--accent-primary)' }} />
+            <p style={{ fontSize: '1.1rem', margin: 0 }}>Sélectionnez un cours pour gérer ses accès.</p>
           </div>
         )}
       </div>

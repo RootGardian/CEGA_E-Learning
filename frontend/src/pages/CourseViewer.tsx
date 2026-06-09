@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ChevronDown, ChevronRight, PlayCircle, BookOpen, FileText, CheckCircle } from 'lucide-react';
+import { ChevronDown, ChevronRight, PlayCircle, BookOpen, FileText, CheckCircle, X, ArrowLeft, List } from 'lucide-react';
 import socket from '../utils/socket';
 
 interface LessonBlock {
@@ -43,6 +43,9 @@ const CourseViewer: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [expandedModules, setExpandedModules] = useState<number[]>([]);
   const [userRole, setUserRole] = useState<string>('etudiant');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
   useEffect(() => {
     const fetchCourse = async () => {
@@ -166,25 +169,49 @@ const CourseViewer: React.FC = () => {
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', backgroundColor: 'var(--bg-primary)' }}>
-      {/* Sidebar / Syllabus */}
-      <div style={{ 
-        width: '350px', 
-        backgroundColor: 'var(--bg-secondary)', 
-        borderRight: '1px solid var(--border-color)',
-        display: 'flex',
-        flexDirection: 'column',
-        overflowY: 'auto'
-      }}>
-        <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)' }}>
+    <div className="app-container">
+      {/* Mobile Topbar */}
+      <div className="mobile-topbar hidden-desktop">
+        <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0, paddingRight: '1rem' }}>
           <button 
             onClick={() => navigate(userRole === 'enseignant' ? '/teacher/dashboard' : '/dashboard')} 
-            style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: '1rem', padding: 0, display: 'flex', alignItems: 'center', fontSize: '0.9rem' }}
+            style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', cursor: 'pointer', color: 'var(--text-primary)', marginRight: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.4rem', transition: 'all 0.2s ease' }}
+            title="Retour"
           >
-            ← Retour au tableau de bord
+            <ArrowLeft size={20} />
           </button>
-          <h2 style={{ fontSize: '1.25rem', color: 'var(--text-primary)', lineHeight: 1.4 }}>{course.title}</h2>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>{course.volumeHoraire}</p>
+          <h2 className="gradient-text" style={{ fontSize: '1.05rem', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>
+            {course.title}
+          </h2>
+        </div>
+        <button onClick={toggleSidebar} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-primary)', padding: '0.5rem' }}>
+          <List size={24} />
+        </button>
+      </div>
+
+      {/* Sidebar Overlay for Mobile */}
+      <div 
+        className={`sidebar-overlay ${isSidebarOpen ? 'is-visible' : ''}`}
+        onClick={() => setIsSidebarOpen(false)}
+      ></div>
+
+      {/* Sidebar / Syllabus */}
+      <div className={`sidebar ${isSidebarOpen ? 'is-open' : ''}`} style={{ width: 'min(350px, 90vw)', padding: 0 }}>
+        <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <button 
+              onClick={() => navigate(userRole === 'enseignant' ? '/teacher/dashboard' : '/dashboard')} 
+              className="hidden-mobile"
+              style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: '1rem', padding: 0, display: 'flex', alignItems: 'center', fontSize: '0.9rem' }}
+            >
+              ← Retour au tableau de bord
+            </button>
+            <h2 style={{ fontSize: '1.25rem', color: 'var(--text-primary)', lineHeight: 1.4 }}>{course.title}</h2>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>{course.volumeHoraire}</p>
+          </div>
+          <button className="hidden-desktop" onClick={() => setIsSidebarOpen(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+            <X size={24} />
+          </button>
         </div>
 
         <div style={{ padding: '1rem' }}>
@@ -215,7 +242,10 @@ const CourseViewer: React.FC = () => {
                   {mod.lessons.map((lesson) => (
                     <button
                       key={lesson.id}
-                      onClick={() => setActiveLessonId(lesson.id)}
+                      onClick={() => {
+                        setActiveLessonId(lesson.id);
+                        setIsSidebarOpen(false);
+                      }}
                       style={{
                         width: '100%',
                         display: 'flex',
@@ -244,11 +274,11 @@ const CourseViewer: React.FC = () => {
       </div>
 
       {/* Main Content Area */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '3rem 4rem' }}>
-        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+      <div className="main-content">
+        <div style={{ maxWidth: '800px', margin: '0 auto', width: '100%' }}>
           {activeLessonContent ? (
             <>
-              <h1 style={{ fontSize: '2.5rem', color: 'var(--text-primary)', marginBottom: '2rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+              <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 2.5rem)', color: 'var(--text-primary)', marginBottom: '2rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', lineHeight: 1.3 }}>
                 {activeLessonContent.title}
               </h1>
               
@@ -262,9 +292,9 @@ const CourseViewer: React.FC = () => {
                 )}
               </div>
 
-              <div style={{ marginTop: '4rem', paddingTop: '2rem', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between' }}>
-                <button className="btn btn-secondary" style={{ width: 'auto' }}>Leçon précédente</button>
-                <button className="btn btn-primary" style={{ width: 'auto' }}>
+              <div style={{ marginTop: '4rem', paddingTop: '2rem', borderTop: '1px solid var(--border-color)', display: 'flex', flexWrap: 'wrap-reverse', gap: '1rem', justifyContent: 'space-between' }}>
+                <button className="btn btn-secondary" style={{ flex: '1 1 200px' }}>Leçon précédente</button>
+                <button className="btn btn-primary" style={{ flex: '1 1 200px' }}>
                   Terminer et continuer
                   <CheckCircle size={18} style={{ marginLeft: '0.5rem' }} />
                 </button>

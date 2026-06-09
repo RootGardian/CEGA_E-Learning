@@ -8,6 +8,8 @@ import { hashPassword, comparePassword } from '../utils/auth';
 import { sendEmail } from '../utils/email';
 
 import Intervenant from '../models/Intervenant';
+import User from '../models/User';
+import SystemSetting from '../models/SystemSetting';
 
 const generateToken = (userId: number, role: string = 'etudiant') => {
   return jwt.sign({ id: userId, role }, process.env.JWT_SECRET as string, {
@@ -66,18 +68,28 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       if (user) {
         role = 'enseignant';
       } else {
-        res.status(401).json({ message: 'Invalid credentials' });
-        return;
+        user = await User.findOne({ where: { email } });
+        if (user) {
+          if (user.role === 'directeur_formation') {
+            role = 'admin';
+          } else {
+            role = user.role;
+          }
+        } else {
+          res.status(401).json({ message: 'Invalid credentials' });
+          return;
+        }
       }
     }
 
-    // Since we have existing users, we must handle passwords with care.
-    // If comparePassword fails and we suspect they are an old user, we could have a fallback strategy here.
-    // For now, we assume the pepper logic works (e.g. if we just added a pepper, old hashes won't match,
-    // so in a real scenario you'd need to rehash or handle gracefully).
-    const isMatch = await comparePassword(password, user.password);
+    // Handle password depending on table (password vs password_hash)
+    const storedPassword = user.password || user.password_hash || user.getDataValue?.('password') || user.getDataValue?.('password_hash');
+    console.log(`[DEBUG LOGIN] email=${email}, role=${role}, storedPassword=`, storedPassword ? 'EXISTS' : 'NULL');
+    const isMatch = await comparePassword(password, storedPassword);
+    console.log(`[DEBUG LOGIN] isMatch=${isMatch}`);
 
     if (!isMatch) {
+      console.log(`[DEBUG LOGIN] failed matching password`);
       res.status(401).json({ message: 'Invalid credentials' });
       return;
     }
@@ -302,6 +314,10 @@ export const getMe = async (req: Request, res: Response): Promise<void> => {
       user = await Intervenant.findByPk(id, {
         attributes: { exclude: ['password', 'twoFactorSecret'] }
       });
+    } else if (role === 'admin' || role === 'directeur_formation') {
+      user = await User.findByPk(id, {
+        attributes: { exclude: ['password_hash', 'twoFactorSecret'] }
+      });
     } else {
       user = await Etudiant.findByPk(id, {
         attributes: { exclude: ['password', 'twoFactorSecret'] }
@@ -375,6 +391,27 @@ export const updatePassword = async (req: Request, res: Response): Promise<void>
     res.status(200).json({ message: 'Mot de passe mis à jour avec succès' });
   } catch (error) {
     console.error('Update Password error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const getPublicSettings = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const settings = await SystemSetting.findAll();
+    const settingsMap: Record<string, string | null> = {};
+    settings.forEach(s => {
+      // Expose only safe public settings
+      if (['formationPrice', 'siteName', 'supportEmail'].includes(s.key)) {
+        settingsMap[s.key] = s.value;
+      }
+    });
+    
+    if (!settingsMap['formationPrice']) settingsMap['formationPrice'] = '150000';
+    if (!settingsMap['siteName']) settingsMap['siteName'] = 'CEGA E-Learning';
+
+    res.status(200).json(settingsMap);
+  } catch (error) {
+    console.error('Error fetching public settings:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };

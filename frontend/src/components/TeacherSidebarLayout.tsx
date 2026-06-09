@@ -6,7 +6,11 @@ import {
   LogOut,
   TrendingUp,
   Briefcase,
-  ShieldAlert
+  ShieldAlert,
+  Menu,
+  X,
+  User,
+  Settings
 } from 'lucide-react';
 import { getDeptName } from '../utils/departments';
 
@@ -26,7 +30,10 @@ const TeacherSidebarLayout: React.FC = () => {
   const [user, setUser] = useState<TeacherProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
+
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -90,46 +97,79 @@ const TeacherSidebarLayout: React.FC = () => {
     transition: 'all 0.2s ease'
   });
 
+
+
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', backgroundColor: 'var(--bg-primary)' }}>
+    <div className="app-container">
+      {/* Mobile Topbar */}
+      <div className="mobile-topbar hidden-desktop">
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <img src="/logo1_cega.jpeg" alt="Logo" style={{ width: '44px', height: '44px', objectFit: 'contain', borderRadius: '8px', marginRight: '0.75rem' }} />
+          <h2 className="gradient-text" style={{ fontSize: '1.3rem', margin: 0 }}>Formateur</h2>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <button onClick={toggleSidebar} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-primary)', padding: '0.5rem' }}>
+            <Menu size={24} />
+          </button>
+        </div>
+      </div>
+
+      {/* Sidebar Overlay for Mobile */}
+      <div 
+        className={`sidebar-overlay ${isSidebarOpen ? 'is-visible' : ''}`}
+        onClick={() => setIsSidebarOpen(false)}
+      ></div>
+
       {/* Sidebar Ergonomique */}
-      <aside style={{
-        width: '280px',
-        backgroundColor: 'var(--bg-secondary)',
-        borderRight: '1px solid var(--border-color)',
-        padding: '2rem 1.5rem',
-        display: 'flex',
-        flexDirection: 'column',
-        overflowY: 'auto'
-      }}>
-        <div style={{ marginBottom: '3rem' }}>
-          <img src="/logo_cega.jpeg" alt="Logo CEGA" style={{ width: '64px', height: '64px', objectFit: 'contain', borderRadius: '12px', marginBottom: '0.75rem' }} />
-          <h2 className="gradient-text" style={{ fontSize: '1.5rem', marginBottom: '0.2rem' }}>Espace Formateur</h2>
-          <div style={{ display: 'flex', alignItems: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.5rem' }}>
-            <Briefcase size={14} style={{ marginRight: '0.4rem' }} />
-            {getDeptName(user.department)}
+      <aside className={`sidebar ${isSidebarOpen ? 'is-open' : ''}`}>
+        <div style={{ marginBottom: '3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <img src="/logo_cega.jpeg" alt="Logo CEGA" style={{ width: '80px', height: '80px', objectFit: 'contain', borderRadius: '12px', marginBottom: '1rem' }} />
+            <h2 className="gradient-text" style={{ fontSize: '1.5rem', marginBottom: '0.2rem' }}>Espace Formateur</h2>
+            <div style={{ display: 'flex', alignItems: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.5rem' }}>
+              <Briefcase size={14} style={{ marginRight: '0.4rem' }} />
+              {getDeptName(user.department)}
+            </div>
           </div>
+          <button className="hidden-desktop" onClick={() => setIsSidebarOpen(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+            <X size={24} />
+          </button>
         </div>
 
         <nav style={{ flex: 1 }}>
           <ul style={{ listStyle: 'none', padding: 0 }}>
             <li>
-              <NavLink to="/teacher/dashboard" style={navLinkStyle}>
+              <NavLink to="/teacher/dashboard" style={navLinkStyle} onClick={() => setIsSidebarOpen(false)}>
                 <TrendingUp size={20} style={{ marginRight: '0.75rem' }} /> Vue d'ensemble
               </NavLink>
             </li>
             <li>
-              <NavLink to="/teacher/courses" style={navLinkStyle}>
+              <NavLink to="/teacher/courses" style={navLinkStyle} onClick={() => setIsSidebarOpen(false)}>
                 <BookOpen size={20} style={{ marginRight: '0.75rem' }} /> Gestion des Cours
               </NavLink>
             </li>
             <li>
-              <NavLink to="/teacher/access" style={navLinkStyle}>
+              <NavLink to="/teacher/access" style={navLinkStyle} onClick={() => setIsSidebarOpen(false)}>
                 <ShieldAlert size={20} style={{ marginRight: '0.75rem' }} /> Contrôle d'Accès
               </NavLink>
             </li>
           </ul>
         </nav>
+
+        <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem', marginBottom: '1.5rem' }}>
+          <ul style={{ listStyle: 'none', padding: 0 }}>
+            <li>
+              <NavLink to="/teacher/profile" style={navLinkStyle} onClick={() => setIsSidebarOpen(false)}>
+                <User size={20} style={{ marginRight: '0.75rem' }} /> Mon Profil
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/teacher/settings" style={navLinkStyle} onClick={() => setIsSidebarOpen(false)}>
+                <Settings size={20} style={{ marginRight: '0.75rem' }} /> Paramètres
+              </NavLink>
+            </li>
+          </ul>
+        </div>
 
         <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
           <ul style={{ listStyle: 'none', padding: 0 }}>
@@ -143,8 +183,8 @@ const TeacherSidebarLayout: React.FC = () => {
       </aside>
 
       {/* Zone de contenu pour les sous-pages */}
-      <main style={{ flex: 1, padding: '3rem 4rem', overflowY: 'auto', position: 'relative' }}>
-        <header style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '2rem' }}>
+      <main className="main-content">
+        <header style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '2rem' }} className="hidden-mobile">
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
             
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>

@@ -3,6 +3,7 @@ import Stripe from 'stripe';
 import dotenv from 'dotenv';
 import Etudiant from '../models/Etudiant';
 import Transaction from '../models/Transaction';
+import SystemSetting from '../models/SystemSetting';
 
 dotenv.config();
 
@@ -12,10 +13,20 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
 
 export const createPaymentIntent = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { amount, currency = 'gnf', description, email } = req.body;
+    const { currency = 'gnf', description, email } = req.body;
+
+    // Fetch the dynamic price from settings instead of trusting the client
+    const setting = await SystemSetting.findOne({ where: { key: 'formationPrice' } });
+    const formationPrice = setting && setting.value ? parseInt(setting.value, 10) : 500; // Default 500
+    
+    // Si c'est GNF, Stripe s'attend à des entiers sans centimes (0 décimales)
+    // Si c'est EUR/USD, Stripe s'attend à des centimes, il faudrait multiplier par 100.
+    // Pour simplifier, on suppose que formationPrice est dans la plus petite unité, ou on gère selon la devise.
+    // Actuellement le code arrondit l'entier.
+    const amount = formationPrice;
 
     if (!amount) {
-      res.status(400).json({ message: 'Le montant est requis.' });
+      res.status(400).json({ message: 'Le montant est invalide.' });
       return;
     }
 
@@ -123,11 +134,23 @@ export const stripeWebhook = async (req: Request, res: Response): Promise<void> 
 
 export const getTransactions = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = (req as any).user.id;
+    const role = (req as any).user?.role;
+    if (role !== 'etudiant') {
+      res.status(200).json([]);
+      return;
+    }
+
+    const userId = Number((req as any).user?.id);
+    if (!Number.isFinite(userId) || userId <= 0) {
+      res.status(200).json([]);
+      return;
+    }
+
     const transactions = await Transaction.findAll({
       where: { etudiantId: userId },
-      order: [['createdAt', 'DESC']],
+      order: [['created_at', 'DESC']],
     });
+
     res.status(200).json(transactions);
   } catch (error) {
     console.error('Get Transactions error:', error);

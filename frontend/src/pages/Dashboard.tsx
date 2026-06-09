@@ -84,7 +84,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="dashboard-content animate-fade-in">
-      <h1 style={{ fontSize: '2rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+      <h1 style={{ fontSize: 'clamp(1.8rem, 5vw, 2rem)', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
         Tableau de Bord
       </h1>
       <p style={{ color: 'var(--text-secondary)', marginBottom: '3rem' }}>Voici un résumé de votre progression aujourd'hui.</p>
@@ -123,26 +123,28 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Section Principale: Cours et Evaluations */}
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem' }}>
 
           {/* Liste des cours filtrés avec barres de progression */}
-          <section>
-            <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', color: 'var(--text-primary)' }}>Mes Cours ({getDeptName(user.department)})</h2>
+          <section style={{ flex: '2 1 min(100%, 500px)' }}>
+            <h2 style={{ fontSize: 'clamp(1.1rem, 4vw, 1.25rem)', marginBottom: '1.5rem', color: 'var(--text-primary)' }}>Mes Cours ({getDeptName(user.department)})</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {myCourses.map(course => (
                 <div
                   key={course.id}
                   className="glass-panel"
                   style={{
-                    padding: '1.5rem',
+                    padding: 'clamp(1rem, 3vw, 1.5rem)',
                     display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '1rem',
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     opacity: isCourseBlocked(course) ? 0.65 : 1,
                     filter: isCourseBlocked(course) ? 'grayscale(0.25)' : 'none'
                   }}
                 >
-                  <div style={{ flex: 1, paddingRight: '2rem' }}>
+                  <div style={{ flex: '1 1 min(100%, 250px)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
                       <h4 style={{ fontSize: '1.1rem', margin: 0, color: 'var(--text-primary)' }}>{course.title}</h4>
                       {isCourseBlocked(course) && (
@@ -171,7 +173,7 @@ const Dashboard: React.FC = () => {
                     onClick={() => navigate(`/course/${course.id}`)}
                     className="btn btn-secondary"
                     disabled={isCourseBlocked(course)}
-                    style={{ width: 'auto', padding: '0.6rem 1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: isCourseBlocked(course) ? 0.7 : 1 }}
+                    style={{ width: 'auto', flex: '0 0 auto', padding: '0.6rem 1.2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', opacity: isCourseBlocked(course) ? 0.7 : 1 }}
                   >
                     <PlayCircle size={18} />
                     Commencer
@@ -187,7 +189,7 @@ const Dashboard: React.FC = () => {
           </section>
 
           {/* Sidebar de droite: Activité récente et Évaluations */}
-          <section style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          <section style={{ flex: '1 1 min(100%, 300px)', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
 
             {/* Reprendre l'étude */}
             {lastViewedCourses.length > 0 && (

@@ -24,6 +24,8 @@ const Login: React.FC = () => {
         const userRole = response.data.user?.role;
         if (userRole === 'enseignant') {
           navigate('/teacher/dashboard');
+        } else if (userRole === 'admin' || userRole === 'directeur_formation') {
+          navigate('/admin/dashboard');
         } else {
           navigate('/dashboard'); // Rediriger vers le tableau de bord en cas de succès
         }

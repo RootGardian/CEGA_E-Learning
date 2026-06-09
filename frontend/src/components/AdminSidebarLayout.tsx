@@ -1,54 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import socket from '../utils/socket';
-import { 
-  BookOpen, 
-  Award, 
-  User, 
-  Settings, 
+import {
   LogOut,
   TrendingUp,
-  Briefcase,
+  Users,
+  CreditCard,
+  Settings,
+  Menu,
+  X,
+  User as UserIcon,
   Bell,
   Check,
-  Menu,
-  X
+  GraduationCap
 } from 'lucide-react';
 
-export interface UserProfile {
-  id: number;
+export interface AdminProfile {
+  id: string;
   email: string;
-  firstName: string;
-  lastName: string;
-  department: string;
-  numero_etudiant?: string;
-  cohorte_id?: number;
-  isTwoFactorEnabled?: boolean;
-  phone?: string;
-  bio?: string;
-  profilePicture?: string;
-  subscriptionStatus?: 'active' | 'expired' | 'pending';
-  accessExpirationDate?: string;
-  updatedAt?: string;
-  role?: string;
-  notificationPreferences?: {
-    inAppAlerts: boolean;
-    newCourse: boolean;
-    examReminders: boolean;
-    examResults: boolean;
-  };
+  nom: string;
+  prenom: string;
+  role: string;
+  photo_url?: string;
+  notificationPreferences?: any;
 }
 
-import { getDeptName } from '../utils/departments';
-
-const SidebarLayout: React.FC = () => {
-  const [user, setUser] = useState<UserProfile | null>(null);
+const AdminSidebarLayout: React.FC = () => {
+  const [user, setUser] = useState<AdminProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [notifications, setNotifications] = useState<any[]>([]);
-  const [showNotifications, setShowNotifications] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications] = useState<any[]>([]);
+  const [unreadCount] = useState(0);
+
   const navigate = useNavigate();
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
@@ -57,14 +43,15 @@ const SidebarLayout: React.FC = () => {
     const fetchProfile = async () => {
       try {
         const profileRes = await axios.get('/api/auth/me', { withCredentials: true });
-        setUser(profileRes.data);
-      } catch (err: unknown) {
-        console.error('Erreur de chargement profil:', err);
-        if (axios.isAxiosError(err) && (err.response?.status === 401 || err.response?.status === 404)) {
-          navigate('/login');
+        if (profileRes.data.role !== 'admin' && profileRes.data.role !== 'directeur_formation') {
+          navigate('/dashboard'); 
         } else {
-          setError('Impossible de charger votre espace.');
+          setUser(profileRes.data);
         }
+      } catch (err: unknown) {
+        console.error('Erreur de chargement profil admin:', err);
+        setError('Impossible de charger votre profil.');
+        navigate('/login');
       } finally {
         setLoading(false);
       }
@@ -73,66 +60,22 @@ const SidebarLayout: React.FC = () => {
     fetchProfile();
   }, [navigate]);
 
-  useEffect(() => {
-    if (!user || !user.notificationPreferences?.inAppAlerts) return;
-
-    const loadNotifications = async () => {
-      try {
-        const res = await axios.get('/api/notifications', { withCredentials: true });
-        setNotifications(res.data);
-      } catch (err) {
-        console.error('Erreur notifications', err);
-      }
-    };
-    
-    loadNotifications();
-    const interval = setInterval(loadNotifications, 30000); // Polling every 30s
-    
-    socket.on('new_notification', () => {
-      console.log('New notification received, fetching...');
-      loadNotifications();
-    });
-
-    return () => {
-      clearInterval(interval);
-      socket.off('new_notification');
-    };
-  }, [user]);
-
-  const unreadCount = notifications.filter(n => !n.isRead).length;
-
-  const handleMarkAsRead = async (id: number) => {
-    try {
-      await axios.put(`/api/notifications/${id}/read`, {}, { withCredentials: true });
-      setNotifications(notifications.map(n => n.id === id ? { ...n, isRead: true } : n));
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleMarkAllAsRead = async () => {
-    try {
-      await axios.put('/api/notifications/read-all', {}, { withCredentials: true });
-      setNotifications(notifications.map(n => ({ ...n, isRead: true })));
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   const handleLogout = async () => {
     try {
       await axios.post('/api/auth/logout', {}, { withCredentials: true });
       navigate('/login');
     } catch (err) {
-      console.error('Logout error:', err);
-      navigate('/login'); // Force navigate anyway
+      navigate('/login');
     }
   };
+
+  const handleMarkAllAsRead = () => {};
+  const handleMarkAsRead = () => {};
 
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-primary)' }}>
-        <div style={{ color: 'var(--accent-primary)', fontSize: '1.2rem', fontWeight: 500 }}>Chargement de votre espace...</div>
+        <div style={{ color: 'var(--accent-primary)', fontSize: '1.2rem', fontWeight: 500 }}>Chargement de l'espace Administrateur...</div>
       </div>
     );
   }
@@ -192,10 +135,10 @@ const SidebarLayout: React.FC = () => {
               {notifications.length === 0 ? (
                 <p style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>Aucune notification.</p>
               ) : (
-                notifications.map((notif: any) => (
+                notifications.map((notif: any, index: number) => (
                   <div 
-                    key={notif.id} 
-                    onClick={() => !notif.isRead && handleMarkAsRead(notif.id)}
+                    key={notif.id || index} 
+                    onClick={() => !notif.isRead && handleMarkAsRead()}
                     style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', backgroundColor: notif.isRead ? 'transparent' : 'rgba(16, 185, 129, 0.05)', cursor: notif.isRead ? 'default' : 'pointer', display: 'flex', gap: '1rem' }}
                   >
                     <div style={{ flex: 1 }}>
@@ -222,7 +165,7 @@ const SidebarLayout: React.FC = () => {
       <div className="mobile-topbar hidden-desktop">
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <img src="/logo1_cega.jpeg" alt="Logo" style={{ width: '44px', height: '44px', objectFit: 'contain', borderRadius: '8px', marginRight: '0.75rem' }} />
-          <h2 className="gradient-text" style={{ fontSize: '1.3rem', margin: 0 }}>CEGA</h2>
+          <h2 className="gradient-text" style={{ fontSize: '1.3rem', margin: 0 }}>Admin</h2>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           {renderNotificationBell(true)}
@@ -243,10 +186,10 @@ const SidebarLayout: React.FC = () => {
         <div style={{ marginBottom: '3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <img src="/logo_cega.jpeg" alt="Logo CEGA" style={{ width: '80px', height: '80px', objectFit: 'contain', borderRadius: '12px', marginBottom: '1rem' }} />
-            <h2 className="gradient-text" style={{ fontSize: '1.5rem', marginBottom: '0.2rem' }}>CEGA E-Learning</h2>
+            <h2 className="gradient-text" style={{ fontSize: '1.5rem', marginBottom: '0.2rem' }}>Administration</h2>
             <div style={{ display: 'flex', alignItems: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.5rem' }}>
-              <Briefcase size={14} style={{ marginRight: '0.4rem' }} />
-              {getDeptName(user.department)}
+              <UserIcon size={14} style={{ marginRight: '0.4rem' }} />
+              Directeur de Formation
             </div>
           </div>
           <button className="hidden-desktop" onClick={() => setIsSidebarOpen(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
@@ -257,35 +200,35 @@ const SidebarLayout: React.FC = () => {
         <nav style={{ flex: 1 }}>
           <ul style={{ listStyle: 'none', padding: 0 }}>
             <li>
-              <NavLink to="/dashboard" style={navLinkStyle} onClick={() => setIsSidebarOpen(false)}>
-                <TrendingUp size={20} style={{ marginRight: '0.75rem' }} /> Tableau de bord
+              <NavLink to="/admin/dashboard" style={navLinkStyle} onClick={() => setIsSidebarOpen(false)}>
+                <TrendingUp size={20} style={{ marginRight: '0.75rem' }} /> Vue d'ensemble
               </NavLink>
             </li>
             <li>
-              <NavLink to="/my-courses" style={navLinkStyle} onClick={() => setIsSidebarOpen(false)}>
-                <BookOpen size={20} style={{ marginRight: '0.75rem' }} /> Mes Cours
+              <NavLink to="/admin/students" style={navLinkStyle} onClick={() => setIsSidebarOpen(false)}>
+                <Users size={20} style={{ marginRight: '0.75rem' }} /> Gestion des Étudiants
               </NavLink>
             </li>
             <li>
-              <NavLink to="/evaluations" style={navLinkStyle} onClick={() => setIsSidebarOpen(false)}>
-                <Award size={20} style={{ marginRight: '0.75rem' }} /> Évaluations
+              <NavLink to="/admin/formateurs" style={navLinkStyle} onClick={() => setIsSidebarOpen(false)}>
+                <GraduationCap size={20} style={{ marginRight: '0.75rem' }} /> Gestion des Formateurs
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/admin/enrollments" style={navLinkStyle} onClick={() => setIsSidebarOpen(false)}>
+                <CreditCard size={20} style={{ marginRight: '0.75rem' }} /> Inscriptions & Paiements
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/admin/settings" style={navLinkStyle} onClick={() => setIsSidebarOpen(false)}>
+                <Settings size={20} style={{ marginRight: '0.75rem' }} /> Paramètres
               </NavLink>
             </li>
           </ul>
         </nav>
 
-        <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
+        <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem', marginTop: '1.5rem' }}>
           <ul style={{ listStyle: 'none', padding: 0 }}>
-            <li>
-              <NavLink to="/profile" style={navLinkStyle} onClick={() => setIsSidebarOpen(false)}>
-                <User size={20} style={{ marginRight: '0.75rem' }} /> Mon Profil
-              </NavLink>
-            </li>
-            <li>
-              <NavLink to="/settings" style={navLinkStyle} onClick={() => setIsSidebarOpen(false)}>
-                <Settings size={20} style={{ marginRight: '0.75rem' }} /> Paramètres
-              </NavLink>
-            </li>
             <li>
               <button onClick={handleLogout} style={{ width: '100%', display: 'flex', alignItems: 'center', padding: '0.85rem 1rem', borderRadius: '0', color: 'var(--error)', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1rem', fontWeight: 500, textAlign: 'left' }}>
                 <LogOut size={20} style={{ marginRight: '0.75rem' }} /> Déconnexion
@@ -300,18 +243,14 @@ const SidebarLayout: React.FC = () => {
         <header style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '2rem' }} className="hidden-mobile">
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
             
-            {/* Cloche de notifications */}
-            {renderNotificationBell(false)}
-
-            <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-color)' }} />
-
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{user.firstName} {user.lastName}</span>
-              {user.profilePicture ? (
-                <img src={user.profilePicture} alt="Avatar" style={{ width: '45px', height: '45px', borderRadius: '0', objectFit: 'cover', border: '1px solid var(--border-color)' }} />
+              {renderNotificationBell(false)}
+              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{user.prenom} {user.nom} <span style={{fontSize: '0.8rem', color: 'var(--accent-primary)', marginLeft: '0.5rem'}}>(Admin)</span></span>
+              {user.photo_url ? (
+                <img src={user.photo_url} alt="Avatar" style={{ width: '45px', height: '45px', borderRadius: '0', objectFit: 'cover', border: '1px solid var(--border-color)' }} />
               ) : (
-                <div style={{ width: '45px', height: '45px', borderRadius: '0', backgroundColor: 'var(--accent-primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', fontWeight: 'bold' }}>
-                  {user.firstName.charAt(0)}{user.lastName.charAt(0)}
+                <div style={{ width: '45px', height: '45px', borderRadius: '0', backgroundColor: 'var(--accent-secondary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', fontWeight: 'bold' }}>
+                  {user.prenom ? user.prenom.charAt(0) : ''}{user.nom ? user.nom.charAt(0) : ''}
                 </div>
               )}
             </div>
@@ -325,4 +264,4 @@ const SidebarLayout: React.FC = () => {
   );
 };
 
-export default SidebarLayout;
+export default AdminSidebarLayout;

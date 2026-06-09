@@ -13,7 +13,22 @@ const PaymentGateway: React.FC = () => {
   const [selectedMethod, setSelectedMethod] = useState<'stripe' | 'cinetpay' | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [formationPrice, setFormationPrice] = useState<number>(150000);
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await axios.get('/api/auth/public/settings');
+        if (res.data.formationPrice) {
+          setFormationPrice(parseInt(res.data.formationPrice, 10));
+        }
+      } catch (err) {
+        console.error("Failed to fetch public settings", err);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   const handlePaymentInit = async () => {
     if (!selectedMethod) return;
@@ -23,7 +38,7 @@ const PaymentGateway: React.FC = () => {
       try {
         // En conditions réelles, on récupère l'email de l'utilisateur connecté ou des props
         const response = await axios.post('/api/payments/create-intent', {
-          amount: 150000,
+          amount: formationPrice,
           currency: 'gnf',
           description: 'Frais de scolarité CEGA E-Learning',
           email: 'etudiant@cega.edu', // A remplacer par l'email réel
@@ -59,7 +74,7 @@ const PaymentGateway: React.FC = () => {
             <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '0', border: '1px solid var(--border-color)', marginBottom: '1.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>Frais de scolarité (1ère tranche)</span>
-                <span style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--text-primary)' }}>150 000 GNF</span>
+                <span style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--text-primary)' }}>{formationPrice.toLocaleString('fr-FR')} GNF</span>
               </div>
             </div>
 
