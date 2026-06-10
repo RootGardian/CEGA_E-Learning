@@ -133,6 +133,18 @@ export const toggleGlobalAccess = async (req: Request, res: Response): Promise<v
       });
     }
 
+    // Forcer toutes les règles individuelles existantes à s'aligner sur le nouveau choix global
+    const { Op } = require('sequelize');
+    await CourseAccess.update(
+      { isUnlocked, unlockedBy: teacherId },
+      {
+        where: {
+          courseId,
+          etudiantId: { [Op.not]: null }
+        }
+      }
+    );
+
     if (isUnlocked) {
       const studentsInDept = await Etudiant.findAll({ where: { department: course.department } });
       const notifications = studentsInDept.map(student => ({

@@ -13,6 +13,8 @@ import {
   Settings
 } from 'lucide-react';
 import { getDeptName } from '../utils/departments';
+import socket from '../utils/socket';
+import { usePopup } from '../contexts/PopupContext';
 
 export interface TeacherProfile {
   id: number;
@@ -32,6 +34,7 @@ const TeacherSidebarLayout: React.FC = () => {
   const [error, setError] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
+  const { showAlert } = usePopup();
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
@@ -43,6 +46,7 @@ const TeacherSidebarLayout: React.FC = () => {
           navigate('/dashboard'); // Redirige les étudiants
         } else {
           setUser(profileRes.data);
+          if (!socket.connected) socket.connect();
         }
       } catch (err: unknown) {
         console.error('Erreur de chargement profil:', err);
@@ -54,6 +58,20 @@ const TeacherSidebarLayout: React.FC = () => {
     };
 
     fetchProfile();
+  }, [navigate]);
+
+  useEffect(() => {
+    socket.on('force_logout', async () => {
+      showAlert("Votre compte a été bloqué par l'administration. Vous allez être déconnecté.", 'error');
+      try {
+        await axios.post('/api/auth/logout', {}, { withCredentials: true });
+      } catch (err) {}
+      navigate('/login');
+    });
+
+    return () => {
+      socket.off('force_logout');
+    };
   }, [navigate]);
 
   const handleLogout = async () => {

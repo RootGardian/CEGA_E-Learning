@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Download, Edit2, CheckCircle, XCircle, Trash2, MoreVertical } from 'lucide-react';
+import { usePopup } from '../contexts/PopupContext';
 
 const AdminStudents: React.FC = () => {
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { showAlert, showConfirm } = usePopup();
   
   // Modal State
   const [showAddModal, setShowAddModal] = useState(false);
@@ -42,7 +44,7 @@ const AdminStudents: React.FC = () => {
       setNewStudent({ firstName: '', lastName: '', email: '', password: '', department: 'mining' });
       fetchStudents();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Erreur lors de la création');
+      showAlert(err.response?.data?.message || 'Erreur lors de la création', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -54,18 +56,29 @@ const AdminStudents: React.FC = () => {
       setActiveDropdown(null);
       fetchStudents();
     } catch (err) {
-      alert('Erreur lors de la mise à jour');
+      showAlert('Erreur lors de la mise à jour', 'error');
+    }
+  };
+
+  const handleToggleBlock = async (id: number, currentIsActive: boolean) => {
+    try {
+      await axios.patch(`/api/admin/students/${id}/block`, { is_active: !currentIsActive }, { withCredentials: true });
+      setActiveDropdown(null);
+      fetchStudents();
+    } catch (err) {
+      showAlert('Erreur lors de la mise à jour du statut', 'error');
     }
   };
 
   const handleDeleteStudent = async (id: number) => {
-    if (window.confirm("Êtes-vous sûr de vouloir supprimer cet étudiant ? Cette action est irréversible.")) {
+    const confirmed = await showConfirm("Êtes-vous sûr de vouloir supprimer cet étudiant ? Cette action est irréversible.");
+    if (confirmed) {
       try {
         await axios.delete(`/api/admin/students/${id}`, { withCredentials: true });
         setActiveDropdown(null);
         fetchStudents();
       } catch (err) {
-        alert("Erreur lors de la suppression de l'étudiant.");
+        showAlert("Erreur lors de la suppression de l'étudiant.", 'error');
       }
     }
   };
@@ -85,24 +98,27 @@ const AdminStudents: React.FC = () => {
       setEditingStudent(null);
       fetchStudents();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Erreur lors de la modification');
+      showAlert(err.response?.data?.message || 'Erreur lors de la modification', 'error');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch(status) {
+  const getStatusBadge = (student: any) => {
+    if (student.is_active === false) {
+      return <span style={{ padding: '0.2rem 0.6rem', borderRadius: '4px', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'var(--error)', fontSize: '0.8rem', fontWeight: 600 }}>Bloqué</span>;
+    }
+    switch(student.subscriptionStatus) {
       case 'active': return <span style={{ padding: '0.2rem 0.6rem', borderRadius: '4px', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', fontSize: '0.8rem', fontWeight: 600 }}>Actif</span>;
       case 'pending': return <span style={{ padding: '0.2rem 0.6rem', borderRadius: '4px', backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#D97706', fontSize: '0.8rem', fontWeight: 600 }}>En attente</span>;
       case 'expired': return <span style={{ padding: '0.2rem 0.6rem', borderRadius: '4px', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'var(--error)', fontSize: '0.8rem', fontWeight: 600 }}>Expiré</span>;
-      default: return <span style={{ padding: '0.2rem 0.6rem', borderRadius: '4px', backgroundColor: 'rgba(148, 163, 184, 0.1)', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 600 }}>{status}</span>;
+      default: return <span style={{ padding: '0.2rem 0.6rem', borderRadius: '4px', backgroundColor: 'rgba(148, 163, 184, 0.1)', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 600 }}>{student.subscriptionStatus}</span>;
     }
   };
 
   const handleExportCSV = () => {
     if (students.length === 0) {
-      alert("Aucune donnée à exporter.");
+      showAlert("Aucune donnée à exporter.", 'warning');
       return;
     }
 
@@ -183,7 +199,7 @@ const AdminStudents: React.FC = () => {
                     </td>
                     <td style={{ padding: '1rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{student.email}</td>
                     <td style={{ padding: '1rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{student.department}</td>
-                    <td style={{ padding: '1rem' }}>{getStatusBadge(student.subscriptionStatus)}</td>
+                    <td style={{ padding: '1rem' }}>{getStatusBadge(student)}</td>
                     <td style={{ padding: '1rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                       {student.accessExpirationDate ? new Date(student.accessExpirationDate).toLocaleDateString('fr-FR') : '-'}
                     </td>
@@ -328,9 +344,9 @@ const AdminStudents: React.FC = () => {
                 <button 
                   className="dropdown-item warning"
                   style={{ padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-primary)' }}
-                  onClick={() => handleUpdateStatus(activeStudent.id, 'expired')}
+                  onClick={() => handleToggleBlock(activeStudent.id, activeStudent.is_active)}
                 >
-                  <XCircle size={18} /> Suspendre l'accès
+                  <XCircle size={18} /> {activeStudent.is_active === false ? "Débloquer l'accès" : "Bloquer l'accès"}
                 </button>
 
                 <button 

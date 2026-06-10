@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Download } from 'lucide-react';
+import { usePopup } from '../contexts/PopupContext';
 
 const AdminEnrollments: React.FC = () => {
   const [enrollments, setEnrollments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { showAlert } = usePopup();
 
   useEffect(() => {
     const fetchEnrollments = async () => {
@@ -22,7 +24,7 @@ const AdminEnrollments: React.FC = () => {
 
   const handleExportCSV = () => {
     if (enrollments.length === 0) {
-      alert("Aucune donnée à exporter.");
+      showAlert("Aucune donnée à exporter.", 'warning');
       return;
     }
 

@@ -76,7 +76,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             role = user.role;
           }
         } else {
-          res.status(401).json({ message: 'Invalid credentials' });
+          res.status(401).json({ message: 'Adresse email introuvable.' });
           return;
         }
       }
@@ -90,7 +90,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     if (!isMatch) {
       console.log(`[DEBUG LOGIN] failed matching password`);
-      res.status(401).json({ message: 'Invalid credentials' });
+      res.status(401).json({ message: 'Mot de passe incorrect.' });
+      return;
+    }
+
+    if (user.is_active === false) {
+      res.status(403).json({ message: "Votre compte a été bloqué. Veuillez contacter l'administration de CEGA." });
       return;
     }
 

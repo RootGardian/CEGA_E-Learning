@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, Download, Edit2, Trash2, MoreVertical, BookOpen, X } from 'lucide-react';
+import { usePopup } from '../contexts/PopupContext';
 
 const AdminFormateurs: React.FC = () => {
   const [formateurs, setFormateurs] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { showAlert, showConfirm } = usePopup();
 
   // Modals
   const [showAddModal, setShowAddModal] = useState(false);
@@ -56,7 +58,7 @@ const AdminFormateurs: React.FC = () => {
       setNewFormateur({ firstName: '', lastName: '', email: '', password: '', department: 'mining' });
       fetchFormateurs();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Erreur lors de la création');
+      showAlert(err.response?.data?.message || 'Erreur lors de la création', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -71,21 +73,32 @@ const AdminFormateurs: React.FC = () => {
       setEditingFormateur(null);
       fetchFormateurs();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Erreur lors de la modification');
+      showAlert(err.response?.data?.message || 'Erreur lors de la modification', 'error');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDeleteFormateur = async (id: number) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce formateur ? Cette action est irréversible.')) {
+    const confirmed = await showConfirm('Êtes-vous sûr de vouloir supprimer ce formateur ? Cette action est irréversible.');
+    if (confirmed) {
       try {
         await axios.delete(`/api/admin/formateurs/${id}`, { withCredentials: true });
         setActiveAction(null);
         fetchFormateurs();
       } catch (err) {
-        alert("Erreur lors de la suppression du formateur.");
+        showAlert("Erreur lors de la suppression du formateur.", 'error');
       }
+    }
+  };
+
+  const handleToggleBlock = async (id: number, currentIsActive: boolean) => {
+    try {
+      await axios.patch(`/api/admin/formateurs/${id}/block`, { is_active: !currentIsActive }, { withCredentials: true });
+      setActiveAction(null);
+      fetchFormateurs();
+    } catch (err) {
+      showAlert('Erreur lors de la mise à jour du statut', 'error');
     }
   };
 
@@ -115,7 +128,7 @@ const AdminFormateurs: React.FC = () => {
       setAssignedCourses(res.data);
       setSelectedCourseId('');
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Erreur');
+      showAlert(err.response?.data?.message || 'Erreur', 'error');
     }
   };
 
@@ -126,12 +139,12 @@ const AdminFormateurs: React.FC = () => {
       const res = await axios.get(`/api/admin/formateurs/${assignTarget.id}/courses`, { withCredentials: true });
       setAssignedCourses(res.data);
     } catch (err) {
-      alert("Erreur lors du retrait du cours.");
+      showAlert("Erreur lors du retrait du cours.", 'error');
     }
   };
 
   const handleExportCSV = () => {
-    if (formateurs.length === 0) { alert("Aucune donnée à exporter."); return; }
+    if (formateurs.length === 0) { showAlert("Aucune donnée à exporter.", 'warning'); return; }
     const headers = ['Prénom', 'Nom', 'Email', 'Département'];
     const csvRows = formateurs.map(f => [f.firstName, f.lastName, f.email, f.department].map(field => `"${String(field || '').replace(/"/g, '""')}"`).join(';'));
     const csvContent = [headers.join(';'), ...csvRows].join('\n');
@@ -201,13 +214,14 @@ const AdminFormateurs: React.FC = () => {
                 <th style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.9rem' }}>Formateur</th>
                 <th style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.9rem' }}>Email</th>
                 <th style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.9rem' }}>Département</th>
+                <th style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.9rem' }}>Statut</th>
                 <th style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.9rem', textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredFormateurs.length === 0 ? (
                 <tr>
-                  <td colSpan={4} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>Aucun formateur trouvé.</td>
+                  <td colSpan={5} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>Aucun formateur trouvé.</td>
                 </tr>
               ) : (
                 filteredFormateurs.map((formateur, index) => (
@@ -220,6 +234,13 @@ const AdminFormateurs: React.FC = () => {
                       <span style={{ padding: '0.2rem 0.6rem', borderRadius: '4px', backgroundColor: 'rgba(32, 93, 77, 0.1)', color: 'var(--accent-primary)', fontSize: '0.8rem', fontWeight: 600 }}>
                         {getDeptLabel(formateur.department)}
                       </span>
+                    </td>
+                    <td style={{ padding: '1rem' }}>
+                      {formateur.is_active === false ? (
+                        <span style={{ padding: '0.2rem 0.6rem', borderRadius: '4px', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'var(--error)', fontSize: '0.8rem', fontWeight: 600 }}>Bloqué</span>
+                      ) : (
+                        <span style={{ padding: '0.2rem 0.6rem', borderRadius: '4px', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', fontSize: '0.8rem', fontWeight: 600 }}>Actif</span>
+                      )}
                     </td>
                     <td style={{ padding: '1rem', textAlign: 'right' }}>
                       <button
@@ -268,6 +289,14 @@ const AdminFormateurs: React.FC = () => {
                   onClick={() => openAssignModal(af)}
                 >
                   <BookOpen size={18} /> Gérer les matières
+                </button>
+
+                <button
+                  className="dropdown-item warning"
+                  style={{ padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-primary)' }}
+                  onClick={() => handleToggleBlock(af.id, af.is_active)}
+                >
+                  <X size={18} /> {af.is_active === false ? "Débloquer l'accès" : "Bloquer l'accès"}
                 </button>
 
                 <button

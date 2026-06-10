@@ -11,6 +11,7 @@ class Intervenant extends Model {
   declare phone: string | null;
   declare bio: string | null;
   declare profilePicture: string | null;
+  declare is_active: boolean;
 
   // timestamps!
   declare readonly createdAt: Date;
@@ -56,6 +57,11 @@ Intervenant.init(
     profilePicture: {
       type: DataTypes.TEXT,
       allowNull: true,
+    },
+    is_active: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
     },
   },
   {

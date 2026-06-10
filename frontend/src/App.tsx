@@ -22,6 +22,7 @@ import AdminStudents from './pages/AdminStudents';
 import AdminSettings from './pages/AdminSettings';
 import AdminEnrollments from './pages/AdminEnrollments';
 import AdminFormateurs from './pages/AdminFormateurs';
+import { PopupProvider } from './contexts/PopupContext';
 
 function App() {
   // Initialize theme on app load
@@ -35,6 +36,7 @@ function App() {
   }, []);
 
   return (
+    <PopupProvider>
     <Router>
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
@@ -70,6 +72,7 @@ function App() {
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
+    </PopupProvider>
   );
 }
 

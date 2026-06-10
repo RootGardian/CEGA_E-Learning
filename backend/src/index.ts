@@ -23,6 +23,7 @@ import './models/Intervenant';
 import './models/CourseAccess';
 import './models/User';
 import './models/SystemSetting';
+import './models/StudentProgress';
 import { initSocket } from './utils/socket';
 
 dotenv.config();
@@ -35,7 +36,7 @@ const port = process.env.PORT || 5000;
 initSocket(httpServer);
 
 app.use(cors({
-  origin: [process.env.FRONTEND_URL || 'http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:5173'], // Adjust as needed
+  origin: true, // Allow any origin to connect (useful for local network access)
   credentials: true, // Necessary to allow cookies to be sent
 }));
 

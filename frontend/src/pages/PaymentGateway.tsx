@@ -5,6 +5,7 @@ import axios from 'axios';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { StripePaymentForm } from '../components/StripePaymentForm';
+import { usePopup } from '../contexts/PopupContext';
 
 // Initialize Stripe outside component to avoid recreating the Stripe object on every render
 const stripePromise = loadStripe('pk_test_51TKdreHTTgYbk5AbmdIxHtghkUsUDjUoU2YDiPmV3G80IA0fFBBLvA1eXK1thbthuLl0PiHrCuAU6RVb7EIPJHn3002GBq5FOq');
@@ -15,6 +16,7 @@ const PaymentGateway: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [formationPrice, setFormationPrice] = useState<number>(150000);
   const navigate = useNavigate();
+  const { showAlert } = usePopup();
 
   React.useEffect(() => {
     const fetchSettings = async () => {
@@ -49,12 +51,12 @@ const PaymentGateway: React.FC = () => {
         setClientSecret(response.data.clientSecret);
       } catch (error) {
         console.error('Erreur lors de la création de la session Stripe:', error);
-        alert('Erreur lors de l\'initialisation du paiement');
+        showAlert('Erreur lors de l\'initialisation du paiement', 'error');
       } finally {
         setIsLoading(false);
       }
     } else {
-      alert('Redirection vers CinetPay (Mobile Money : Orange Money / MTN Momo)...');
+      showAlert('Redirection vers CinetPay (Mobile Money : Orange Money / MTN Momo)...', 'info');
       setTimeout(() => {
         navigate('/dashboard');
       }, 2000);

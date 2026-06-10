@@ -1,7 +1,7 @@
 import { Server as SocketIOServer, Socket } from 'socket.io';
 import { Server as HTTPServer } from 'http';
 import jwt from 'jsonwebtoken';
-import cookie from 'cookie';
+import * as cookie from 'cookie';
 import Etudiant from '../models/Etudiant';
 
 let io: SocketIOServer;
@@ -18,26 +18,33 @@ export const initSocket = (httpServer: HTTPServer) => {
     try {
       const cookieHeader = socket.request.headers.cookie;
       if (!cookieHeader) {
+        require('fs').appendFileSync('socket_debug.log', 'Auth Error: No cookie header\n');
         return next(new Error('Authentication error'));
       }
       const cookies = cookie.parse(cookieHeader);
       const token = cookies.token;
       
       if (!token) {
+        require('fs').appendFileSync('socket_debug.log', 'Auth Error: No token in cookie\n');
         return next(new Error('Authentication error'));
       }
 
       const decoded: any = jwt.verify(token, process.env.JWT_SECRET as string);
       (socket as any).user = decoded;
       next();
-    } catch (err) {
+    } catch (err: any) {
+      const errMessage = `Auth Error: ${err.message}`;
+      console.error(errMessage);
+      require('fs').appendFileSync('socket_debug.log', errMessage + '\n');
       next(new Error('Authentication error'));
     }
   });
 
   io.on('connection', async (socket: Socket) => {
     const user = (socket as any).user;
-    console.log(`User connected: ${user.id} (${user.role})`);
+    const msg = `User connected: ${user.id} (${user.role}) - socket ${socket.id}`;
+    console.log(msg);
+    require('fs').appendFileSync('socket_debug.log', msg + '\n');
 
     // Join a room specifically for this user to receive direct notifications
     socket.join(`user_${user.id}`);

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Users, Lock, Unlock, ArrowLeft, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { usePopup } from '../contexts/PopupContext';
 
 const TeacherCourseAccess: React.FC = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -15,6 +16,7 @@ const TeacherCourseAccess: React.FC = () => {
   const navigate = useNavigate();
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [studentSearch, setStudentSearch] = useState('');
+  const { showAlert } = usePopup();
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -58,7 +60,7 @@ const TeacherCourseAccess: React.FC = () => {
       fetchStudents(selectedCourse.id);
     } catch (err) {
       console.error(err);
-      alert('Erreur lors de la modification de l\'accès global');
+      showAlert('Erreur lors de la modification de l\'accès global', 'error');
     }
   };
 
@@ -73,7 +75,7 @@ const TeacherCourseAccess: React.FC = () => {
       setStudents(students.map(s => s.id === etudiantId ? { ...s, isUnlocked: targetStatus } : s));
     } catch (err) {
       console.error(err);
-      alert('Erreur lors de la modification de l\'accès étudiant');
+      showAlert('Erreur lors de la modification de l\'accès étudiant', 'error');
     }
   };
 

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { UserPlus, Mail, Lock, User, Briefcase, Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
+import { usePopup } from '../contexts/PopupContext';
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -13,6 +14,7 @@ const Register: React.FC = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const { showAlert } = usePopup();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -31,9 +33,9 @@ const Register: React.FC = () => {
       }
     } catch (error: unknown) {
       if (axios.isAxiosError(error) && error.response) {
-        alert("Erreur d'inscription : " + error.response.data.message);
+        showAlert("Erreur d'inscription : " + error.response.data.message, 'error');
       } else {
-        alert("Erreur d'inscription : Serveur indisponible");
+        showAlert("Erreur d'inscription : Serveur indisponible", 'error');
       }
     }
   };

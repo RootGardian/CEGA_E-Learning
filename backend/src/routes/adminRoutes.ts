@@ -17,7 +17,9 @@ import {
   getCourses,
   getFormateurCourses,
   assignCourseToFormateur,
-  unassignCourseFromFormateur
+  unassignCourseFromFormateur,
+  toggleStudentBlock,
+  toggleFormateurBlock
 } from '../controllers/adminController';
 
 const router = Router();
@@ -34,6 +36,7 @@ router.get('/students', getStudents);
 router.post('/students', createStudent);
 router.put('/students/:id', updateStudent);
 router.patch('/students/:id/status', updateStudentStatus);
+router.patch('/students/:id/block', toggleStudentBlock);
 router.delete('/students/:id', deleteStudent);
 router.get('/enrollments', getEnrollments);
 
@@ -41,6 +44,7 @@ router.get('/enrollments', getEnrollments);
 router.get('/formateurs', getFormateurs);
 router.post('/formateurs', createFormateur);
 router.put('/formateurs/:id', updateFormateur);
+router.patch('/formateurs/:id/block', toggleFormateurBlock);
 router.delete('/formateurs/:id', deleteFormateur);
 
 // Course assignment

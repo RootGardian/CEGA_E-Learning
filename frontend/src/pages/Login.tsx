@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { LogIn, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
+import { usePopup } from '../contexts/PopupContext';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const { showAlert } = usePopup();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -15,7 +17,7 @@ const Login: React.FC = () => {
       // Pour une vraie application, l'URL de l'API devrait être dans une variable d'environnement
       const response = await axios.post('/api/auth/login', { 
         email: email.trim(), 
-        password 
+        password: password.trim()
       }, {
         withCredentials: true // Important pour envoyer/recevoir le cookie HTTP-Only
       });
@@ -34,11 +36,11 @@ const Login: React.FC = () => {
       console.error('Erreur de connexion:', error);
       if (axios.isAxiosError(error) && error.response?.data?.require2FA) {
         // Logique à implémenter pour demander le token 2FA
-        alert("Ce compte nécessite la Double Authentification. (Non implémenté dans l'UI)");
+        showAlert("Ce compte nécessite la Double Authentification. (Non implémenté dans l'UI)", 'warning');
       } else if (axios.isAxiosError(error) && error.response) {
-        alert("Erreur de connexion : " + (error.response?.data?.message || "Identifiants invalides"));
+        showAlert("Erreur de connexion : " + (error.response?.data?.message || "Identifiants invalides"), 'error');
       } else {
-        alert("Erreur de connexion : Serveur indisponible. Veuillez vérifier votre connexion ou réessayer plus tard.");
+        showAlert("Erreur de connexion : Serveur indisponible. Veuillez vérifier votre connexion ou réessayer plus tard.", 'error');
       }
     }
   };

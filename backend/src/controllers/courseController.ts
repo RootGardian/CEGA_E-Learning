@@ -3,6 +3,7 @@ import Course from '../models/Course';
 import Module from '../models/Module';
 import Lesson from '../models/Lesson';
 import CourseAccess from '../models/CourseAccess';
+import StudentProgress from '../models/StudentProgress';
 
 export const getCourses = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -14,7 +15,21 @@ export const getCourses = async (req: Request, res: Response): Promise<void> => 
     const userDepartment = etudiant?.department;
 
     const courses = await Course.findAll({
-      order: [['id', 'ASC']]
+      order: [['id', 'ASC']],
+      include: [
+        {
+          model: Module,
+          as: 'modules',
+          attributes: ['id'],
+          include: [
+            {
+              model: Lesson,
+              as: 'lessons',
+              attributes: ['id']
+            }
+          ]
+        }
+      ]
     });
 
     const courseIds = courses.map(course => course.id);
@@ -22,14 +37,32 @@ export const getCourses = async (req: Request, res: Response): Promise<void> => 
       where: { courseId: courseIds }
     });
 
+    const progresses = await StudentProgress.findAll({
+      where: {
+        etudiantId: userId,
+        courseId: courseIds,
+        isCompleted: true
+      }
+    });
+
     const enrichedCourses = courses.map(course => {
       const specificAccess = accesses.find(access => access.courseId == course.id && access.etudiantId == userId);
       const globalAccess = accesses.find(access => access.courseId == course.id && access.department === userDepartment && access.etudiantId === null);
       const isUnlocked = specificAccess ? specificAccess.isUnlocked : (globalAccess ? globalAccess.isUnlocked : false);
 
+      // Calculate progress
+      const completedLessons = progresses.filter(p => p.courseId === course.id).length;
+      const courseJson = course.toJSON();
+      const totalLessons = courseJson.modules?.reduce((sum: number, m: any) => sum + (m.lessons?.length || 0), 0) || 0;
+      const progress = totalLessons === 0 ? 0 : Math.round((completedLessons / totalLessons) * 100);
+
+      // Remove the large modules array from the response to save bandwidth
+      delete courseJson.modules;
+
       return {
-        ...course.toJSON(),
-        isUnlocked
+        ...courseJson,
+        isUnlocked,
+        progress
       };
     });
 
@@ -155,6 +188,67 @@ export const getLesson = async (req: Request, res: Response): Promise<void> => {
     res.status(200).json(lesson);
   } catch (error) {
     console.error('Get lesson error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const getStudentProgress = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const courseId = req.params.courseId;
+    const userId = (req as any).user?.id;
+    
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
+    const progresses = await StudentProgress.findAll({
+      where: {
+        courseId,
+        etudiantId: userId
+      }
+    });
+
+    res.status(200).json(progresses);
+  } catch (error) {
+    console.error('Get student progress error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const saveStudentProgress = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const lessonId = req.params.lessonId;
+    const userId = (req as any).user?.id;
+    const { courseId, isCompleted, quizScore, progressData } = req.body;
+
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
+    const [progress, created] = await StudentProgress.findOrCreate({
+      where: { etudiantId: userId, lessonId },
+      defaults: {
+        etudiantId: userId,
+        lessonId,
+        courseId,
+        isCompleted: isCompleted || false,
+        quizScore: quizScore || null,
+        progressData: progressData || {}
+      }
+    });
+
+    if (!created) {
+      if (isCompleted !== undefined) progress.isCompleted = isCompleted;
+      if (quizScore !== undefined) progress.quizScore = quizScore;
+      if (progressData !== undefined) progress.progressData = progressData;
+      await progress.save();
+    }
+
+    res.status(200).json(progress);
+  } catch (error) {
+    console.error('Save student progress error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };

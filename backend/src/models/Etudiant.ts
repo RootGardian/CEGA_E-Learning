@@ -20,6 +20,7 @@ class Etudiant extends Model {
   declare subscriptionStatus: 'active' | 'expired' | 'pending';
   declare accessExpirationDate: Date | null;
   declare notificationPreferences: any;
+  declare is_active: boolean;
 
   // timestamps!
   declare readonly createdAt: Date;
@@ -109,6 +110,11 @@ Etudiant.init(
         examReminders: true,
         examResults: true
       }
+    },
+    is_active: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
     },
   },
   {

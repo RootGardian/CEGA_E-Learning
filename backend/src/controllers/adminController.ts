@@ -7,6 +7,7 @@ import Intervenant from '../models/Intervenant';
 import Course from '../models/Course';
 import CourseAccess from '../models/CourseAccess';
 import { hashPassword } from '../utils/auth';
+import { getIO } from '../utils/socket';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: '2023-10-16' as any,
@@ -385,6 +386,52 @@ export const unassignCourseFromFormateur = async (req: Request, res: Response): 
     res.status(200).json({ message: 'Cours retir\u00e9 avec succ\u00e8s' });
   } catch (error) {
     console.error('Error unassigning course:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const toggleStudentBlock = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { is_active } = req.body;
+    const student = await Etudiant.findByPk(parseInt(id as string, 10));
+    if (!student) {
+      res.status(404).json({ message: 'Étudiant introuvable.' });
+      return;
+    }
+    student.is_active = is_active;
+    await student.save();
+    
+    if (is_active === false) {
+      getIO().to(`user_${student.id}`).emit('force_logout');
+    }
+    
+    res.status(200).json({ message: `L'accès a été ${is_active ? 'débloqué' : 'bloqué'} avec succès`, student });
+  } catch (error) {
+    console.error('Error toggling student block status:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const toggleFormateurBlock = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { is_active } = req.body;
+    const formateur = await Intervenant.findByPk(parseInt(id as string, 10));
+    if (!formateur) {
+      res.status(404).json({ message: 'Formateur introuvable.' });
+      return;
+    }
+    formateur.is_active = is_active;
+    await formateur.save();
+    
+    if (is_active === false) {
+      getIO().to(`user_${formateur.id}`).emit('force_logout');
+    }
+    
+    res.status(200).json({ message: `L'accès a été ${is_active ? 'débloqué' : 'bloqué'} avec succès`, formateur });
+  } catch (error) {
+    console.error('Error toggling formateur block status:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };

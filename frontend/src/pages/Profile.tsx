@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import { User, Mail, Briefcase, Hash, Calendar, Phone, Edit2, Check, X, CreditCard, Download, Image as ImageIcon } from 'lucide-react';
 import { getDeptName } from '../utils/departments';
 import type { UserProfile } from '../components/SidebarLayout';
+import { usePopup } from '../contexts/PopupContext';
 import axios from 'axios';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -18,6 +19,7 @@ interface Transaction {
 
 const Profile: React.FC = () => {
   const { user, setUser } = useOutletContext<{ user: UserProfile, setUser: React.Dispatch<React.SetStateAction<UserProfile | null>> }>();
+  const { showAlert } = usePopup();
   
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -54,7 +56,7 @@ const Profile: React.FC = () => {
       setIsEditing(false);
     } catch (err) {
       console.error('Erreur lors de la mise à jour:', err);
-      alert('Erreur lors de la sauvegarde.');
+      showAlert('Erreur lors de la sauvegarde.', 'error');
     } finally {
       setLoading(false);
     }

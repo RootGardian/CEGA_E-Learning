@@ -41,6 +41,7 @@ export interface UserProfile {
 }
 
 import { getDeptName } from '../utils/departments';
+import { usePopup } from '../contexts/PopupContext';
 
 const SidebarLayout: React.FC = () => {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -50,6 +51,7 @@ const SidebarLayout: React.FC = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
+  const { showAlert } = usePopup();
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
@@ -58,6 +60,7 @@ const SidebarLayout: React.FC = () => {
       try {
         const profileRes = await axios.get('/api/auth/me', { withCredentials: true });
         setUser(profileRes.data);
+        if (!socket.connected) socket.connect();
       } catch (err: unknown) {
         console.error('Erreur de chargement profil:', err);
         if (axios.isAxiosError(err) && (err.response?.status === 401 || err.response?.status === 404)) {
@@ -93,11 +96,20 @@ const SidebarLayout: React.FC = () => {
       loadNotifications();
     });
 
+    socket.on('force_logout', async () => {
+      showAlert("Votre compte a été bloqué par l'administration. Vous allez être déconnecté.", 'error');
+      try {
+        await axios.post('/api/auth/logout', {}, { withCredentials: true });
+      } catch (err) {}
+      navigate('/login');
+    });
+
     return () => {
       clearInterval(interval);
       socket.off('new_notification');
+      socket.off('force_logout');
     };
-  }, [user]);
+  }, [user, navigate]);
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 

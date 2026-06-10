@@ -41,11 +41,10 @@ const Dashboard: React.FC = () => {
           headers: { 'Cache-Control': 'no-cache' }
         });
 
-        // Add mock progress for now since backend doesn't have progress yet
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // Provide a default if progress is undefined
         const enrichedCourses = coursesRes.data.map((c: any) => ({
           ...c,
-          progress: 0,
+          progress: c.progress || 0,
           lastViewed: false
         }));
         setCourses(enrichedCourses);
