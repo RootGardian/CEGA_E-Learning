@@ -89,18 +89,19 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Layouts */
 .auth-layout {
-  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
   padding: 1rem; /* Reduced for mobile */
   background-color: var(--bg-primary);
+  overflow-y: auto;
 }
 
 .auth-container {
   width: 100%;
   max-width: 440px;
   padding: 1.5rem; /* Reduced for mobile */
+  margin: auto;
 }
 
 @media (min-width: 768px) {
@@ -214,6 +215,29 @@ h1, h2, h3, h4, h5, h6 {
   background: rgba(0, 0, 0, 0.1);
 }
 
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  width: max-content;
+}
+
+.btn-back:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
 /* Links */
 .link {
   color: var(--accent-primary);
@@ -257,6 +281,15 @@ h1, h2, h3, h4, h5, h6 {
 
 [data-theme='dark'] .btn-secondary:hover {
   background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme='light'] .btn-back {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme='light'] .btn-back:hover {
+  background: rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 0, 0, 0.2);
 }
 
 /* Dropdown Menus */
@@ -443,6 +476,42 @@ h1, h2, h3, h4, h5, h6 {
   }
   .hidden-desktop {
     display: none !important;
+  }
+}
+
+/* -------------------------------------------
+   RESPONSIVE UTILITY CLASSES
+   ------------------------------------------- */
+
+/* Container pour rendre les grands tableaux défilants horizontalement sur mobile */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* En-têtes de page responsifs (titres à gauche, actions à droite) */
+.responsive-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 639px) {
+  .responsive-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .responsive-header > div:last-child {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+  .responsive-header button {
+    width: 100% !important;
   }
 }
 

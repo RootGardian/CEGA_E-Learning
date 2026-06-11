@@ -20,7 +20,11 @@ import {
   unassignCourseFromFormateur,
   toggleStudentBlock,
   toggleFormateurBlock,
-  getAllGrades
+  getAllGrades,
+  getResources,
+  addResource,
+  deleteResource,
+  getCourseStructure
 } from '../controllers/adminController';
 
 const router = Router();
@@ -56,5 +60,11 @@ router.post('/formateurs/unassign-course', unassignCourseFromFormateur);
 
 // Notes / Grades
 router.get('/grades', getAllGrades);
+
+// Resources
+router.get('/resources', getResources);
+router.post('/resources', addResource);
+router.delete('/resources/:id', deleteResource);
+router.get('/courses/:id/structure', getCourseStructure);
 
 export default router;

@@ -65,6 +65,16 @@ export const initSocket = (httpServer: HTTPServer) => {
       console.log(`User disconnected: ${user.id}`);
     });
 
+    socket.on('join_module', (moduleId: string | number) => {
+      socket.join(`module_${moduleId}`);
+      console.log(`User ${user.id} joined module room: module_${moduleId}`);
+    });
+
+    socket.on('leave_module', (moduleId: string | number) => {
+      socket.leave(`module_${moduleId}`);
+      console.log(`User ${user.id} left module room: module_${moduleId}`);
+    });
+
     // Relayer un avertissement de fraude niveau 2 à l'enseignant concerné
     socket.on('fraud_warning', async (data: { reason: string; warning: number; examId: string | number }) => {
       try {

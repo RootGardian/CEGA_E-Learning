@@ -32,9 +32,9 @@ const ForgotPassword: React.FC = () => {
   return (
     <div className="auth-layout">
       <div className="auth-container glass-panel animate-slide-up">
-        <Link to="/login" className="link" style={{ display: 'inline-flex', alignItems: 'center', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
-          <ArrowLeft size={16} style={{ marginRight: '0.5rem' }} />
-          Retour à la connexion
+        <Link to="/login" className="btn-back" style={{ marginBottom: '1.5rem', width: 'max-content' }}>
+          <ArrowLeft size={16} />
+          Retour
         </Link>
 
         <div className="auth-header">

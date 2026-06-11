@@ -519,14 +519,14 @@ const ExamRoom: React.FC = () => {
   };
 
   if (loading) {
-    return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>Préparation de l'examen...</div>;
+    return <div style={{ height: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>Préparation de l'examen...</div>;
   }
 
   // --- RENDU INTRO ---
   if (examStatus === 'intro') {
     return (
-      <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
-        <div className="glass-panel animate-fade-in" style={{ maxWidth: '800px', width: '100%', padding: 'clamp(1.5rem, 4vw, 3rem)', backgroundColor: 'var(--bg-secondary)' }}>
+      <div style={{ minHeight: '100dvh', backgroundColor: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', padding: '2rem', overflowY: 'auto' }}>
+        <div className="glass-panel animate-fade-in" style={{ margin: 'auto', maxWidth: '800px', width: '100%', padding: 'clamp(1.5rem, 4vw, 3rem)', backgroundColor: 'var(--bg-secondary)' }}>
           <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 2.2rem)', color: 'var(--text-primary)', marginBottom: '1rem', textAlign: 'center' }}>{evaluation?.title}</h1>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 'clamp(1rem, 3vw, 2.5rem)', flexWrap: 'wrap', marginBottom: '2.5rem', color: 'var(--text-secondary)', fontSize: 'clamp(0.9rem, 3vw, 1.1rem)' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Clock size={20} /> Durée : {evaluation?.duration || 'Non définie'}</span>
@@ -611,7 +611,7 @@ const ExamRoom: React.FC = () => {
   const isAnswered = q ? isQuestionAnswered(q) : false;
 
   return (
-    <div className="exam-container" style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', userSelect: 'none' }}>
+    <div className="exam-container" style={{ minHeight: '100dvh', backgroundColor: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', userSelect: 'none' }}>
       <style>{`
         @media print {
           body {

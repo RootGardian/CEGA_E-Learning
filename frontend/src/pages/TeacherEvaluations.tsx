@@ -318,7 +318,7 @@ const TeacherEvaluations: React.FC = () => {
 
   return (
     <div className="dashboard-content animate-fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+      <div className="responsive-header">
         <div>
           <h1 style={{ fontSize: 'clamp(1.8rem, 5vw, 2rem)', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Planification des Évaluations</h1>
           <p style={{ color: 'var(--text-secondary)' }}>Programmez les examens et QCM pour vos étudiants.</p>
@@ -608,7 +608,7 @@ const TeacherEvaluations: React.FC = () => {
                     style={{ width: '100%', padding: '0.75rem', backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '4px' }}
                   />
                 </div>
-                <div style={{ overflowX: 'auto' }}>
+                <div className="table-responsive">
                   <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', color: 'var(--text-primary)' }}>
                     <thead>
                       <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>

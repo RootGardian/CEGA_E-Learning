@@ -186,12 +186,12 @@ const AdminFormateurs: React.FC = () => {
 
   return (
     <div className="dashboard-content animate-fade-in">
-      <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+      <div className="responsive-header">
         <div>
           <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 2.2rem)', color: 'var(--text-primary)', marginBottom: '0.5rem', lineHeight: 1.2 }}>Gestion des Formateurs</h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Créez, modifiez et assignez des matières aux enseignants.</p>
         </div>
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', width: '100%', justifyContent: 'flex-end' }}>
           <button className="btn btn-secondary" onClick={handleExportCSV} style={{ width: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Download size={18} /> CSV
           </button>
@@ -217,7 +217,7 @@ const AdminFormateurs: React.FC = () => {
       </div>
 
       {/* Table */}
-      <div className="glass-panel" style={{ overflowX: 'auto' }}>
+      <div className="glass-panel table-responsive">
         {loading ? (
           <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>Chargement...</div>
         ) : (

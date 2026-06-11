@@ -87,7 +87,7 @@ const TeacherCourseAccess: React.FC = () => {
       <div style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'flex-start' }}>
         <button 
           onClick={() => navigate('/teacher/dashboard')}
-          style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem 1rem', transition: 'all 0.2s ease', gap: '0.5rem', fontWeight: 500, fontSize: '0.9rem' }}
+          className="btn-back"
         >
           <ArrowLeft size={18} /> Retour
         </button>
@@ -195,7 +195,7 @@ const TeacherCourseAccess: React.FC = () => {
               {loadingStudents ? (
                 <p style={{ color: 'var(--text-secondary)' }}>Chargement des étudiants...</p>
               ) : (
-                <div style={{ overflowX: 'auto', width: '100%', WebkitOverflowScrolling: 'touch' }}>
+                <div className="table-responsive">
                   <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                     <thead>
                       <tr style={{ borderBottom: '2px solid var(--border-color)' }}>

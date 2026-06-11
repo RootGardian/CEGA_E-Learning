@@ -356,10 +356,30 @@ export const saveEvaluationGrades = async (req: Request, res: Response): Promise
       const scoreToSave = (g.score === '' || g.score === null || g.score === undefined) ? null : parseFloat(g.score);
 
       const existing = await Grade.findOne({ where: { evaluationId: id, etudiantId: g.etudiantId } });
+      let wasUpdated = false;
+
       if (existing) {
-        await existing.update({ score: scoreToSave, feedback: g.feedback });
+        if (existing.score !== scoreToSave) {
+          await existing.update({ score: scoreToSave, feedback: g.feedback });
+          wasUpdated = true;
+        } else {
+          await existing.update({ feedback: g.feedback });
+        }
       } else if (scoreToSave !== null || g.feedback) {
         await Grade.create({ evaluationId: id, etudiantId: g.etudiantId, score: scoreToSave, feedback: g.feedback });
+        wasUpdated = true;
+      }
+
+      if (wasUpdated && scoreToSave !== null) {
+        // We notify the student that a grade was published
+        const course = await Course.findByPk(evaluation.courseId);
+        const courseTitle = course ? course.title : 'Cours inconnu';
+        await notifyStudent(
+          g.etudiantId,
+          'Nouvelle Note Publiée',
+          `Votre note pour l'évaluation "${evaluation.title}" (${courseTitle}) a été publiée : ${scoreToSave}`,
+          'success'
+        );
       }
     }
 
@@ -398,7 +418,8 @@ export const getFraudAlerts = async (req: Request, res: Response): Promise<void>
     // On trouve toutes les notes (Grades) de cet intervenant dont le feedback commence par 'FRAUDE'
     const grades = await Grade.findAll({
       where: { 
-        feedback: { [Op.like]: 'FRAUDE D%TECT%E%' } 
+        feedback: { [Op.like]: 'FRAUDE D%TECT%E%' },
+        createdAt: { [Op.gte]: new Date(Date.now() - 24 * 60 * 60 * 1000) }
       },
       include: [
         { 

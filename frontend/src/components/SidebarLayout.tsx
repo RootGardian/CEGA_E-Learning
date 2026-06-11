@@ -13,7 +13,9 @@ import {
   Bell,
   Check,
   Menu,
-  X
+  X,
+  Video,
+  ArrowLeft
 } from 'lucide-react';
 
 export interface UserProfile {
@@ -78,7 +80,7 @@ const SidebarLayout: React.FC = () => {
   }, [navigate]);
 
   useEffect(() => {
-    if (!user || !user.notificationPreferences?.inAppAlerts) return;
+    if (!user || user.notificationPreferences?.inAppAlerts === false) return;
 
     const loadNotifications = async () => {
       try {
@@ -92,9 +94,45 @@ const SidebarLayout: React.FC = () => {
     loadNotifications();
     const interval = setInterval(loadNotifications, 30000); // Polling every 30s
     
-    socket.on('new_notification', () => {
-      console.log('New notification received, fetching...');
+    // Note: Notification permission is requested on bell click (user gesture required by browsers)
+
+    const playNotificationSound = () => {
+      try {
+        const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); 
+        
+        gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.05);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        
+        oscillator.start(audioCtx.currentTime);
+        oscillator.stop(audioCtx.currentTime + 0.5);
+      } catch (err) {
+        console.error("Erreur son de notification:", err);
+      }
+    };
+
+    socket.on('new_notification', (data: any) => {
+      console.log('New notification received, fetching...', data);
       loadNotifications();
+      playNotificationSound();
+      
+      if ('Notification' in window && Notification.permission === 'granted') {
+        const title = (data && data.title) ? data.title : 'Nouvelle notification';
+        const message = (data && data.message) ? data.message : 'Vous avez du nouveau sur la plateforme CEGA.';
+        
+        new Notification(title, {
+          body: message,
+          icon: '/logo1_cega.jpeg'
+        });
+      }
     });
 
     socket.on('force_logout', async () => {
@@ -170,7 +208,7 @@ const SidebarLayout: React.FC = () => {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', backgroundColor: 'var(--bg-primary)' }}>
         <div style={{ color: 'var(--error)', fontSize: '1.2rem', marginBottom: '1rem' }}>{error || 'Profil introuvable.'}</div>
-        <button className="btn btn-primary" onClick={() => navigate('/login')} style={{ maxWidth: '200px' }}>Retour à la connexion</button>
+        <button className="btn-back" onClick={() => navigate('/login')}><ArrowLeft size={16} /> Retour</button>
       </div>
     );
   }
@@ -197,6 +235,10 @@ const SidebarLayout: React.FC = () => {
       <div style={{ position: 'relative' }}>
         <button 
           onClick={() => {
+            // Request native notification permission on user gesture
+            if ('Notification' in window && Notification.permission === 'default') {
+              Notification.requestPermission();
+            }
             if (!showNotifications && unreadCount > 0) {
               handleMarkAllAsRead();
             }
@@ -303,6 +345,11 @@ const SidebarLayout: React.FC = () => {
             <li>
               <NavLink to="/evaluations" style={navLinkStyle} onClick={() => setIsSidebarOpen(false)}>
                 <Award size={20} style={{ marginRight: '0.75rem' }} /> Évaluations
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/resources" style={navLinkStyle} onClick={() => setIsSidebarOpen(false)}>
+                <Video size={20} style={{ marginRight: '0.75rem' }} /> Ressources
               </NavLink>
             </li>
           </ul>

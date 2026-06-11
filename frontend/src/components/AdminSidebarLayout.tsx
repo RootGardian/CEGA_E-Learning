@@ -13,7 +13,9 @@ import {
   Bell,
   Check,
   GraduationCap,
-  FileText
+  FileText,
+  Video,
+  ArrowLeft
 } from 'lucide-react';
 
 export interface AdminProfile {
@@ -85,7 +87,7 @@ const AdminSidebarLayout: React.FC = () => {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', backgroundColor: 'var(--bg-primary)' }}>
         <div style={{ color: 'var(--error)', fontSize: '1.2rem', marginBottom: '1rem' }}>{error || 'Profil introuvable.'}</div>
-        <button className="btn btn-primary" onClick={() => navigate('/login')} style={{ maxWidth: '200px' }}>Retour à la connexion</button>
+        <button className="btn-back" onClick={() => navigate('/login')}><ArrowLeft size={16} /> Retour</button>
       </div>
     );
   }
@@ -223,6 +225,11 @@ const AdminSidebarLayout: React.FC = () => {
             <li>
               <NavLink to="/admin/enrollments" style={navLinkStyle} onClick={() => setIsSidebarOpen(false)}>
                 <CreditCard size={20} style={{ marginRight: '0.75rem' }} /> Inscriptions & Paiements
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/admin/resources" style={navLinkStyle} onClick={() => setIsSidebarOpen(false)}>
+                <Video size={20} style={{ marginRight: '0.75rem' }} /> Ressources
               </NavLink>
             </li>
             <li>

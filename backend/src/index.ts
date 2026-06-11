@@ -12,6 +12,7 @@ import teacherRoutes from './routes/teacherRoutes';
 import adminRoutes from './routes/adminRoutes';
 import evaluationRoutes from './routes/evaluationRoutes';
 import examRoutes from './routes/examRoutes';
+import commentRoutes from './routes/commentRoutes';
 import { stripeWebhook } from './controllers/paymentController';
 
 // Models import to ensure they are registered with Sequelize
@@ -26,9 +27,11 @@ import './models/CourseAccess';
 import './models/User';
 import './models/SystemSetting';
 import './models/StudentProgress';
-import './models/Evaluation';
 import './models/Grade';
+import './models/Resource';
+import './models/Comment';
 import { initSocket } from './utils/socket';
+import { startCommentCleanupJob } from './services/commentCleanup';
 
 dotenv.config();
 
@@ -58,6 +61,7 @@ app.use('/api/teacher', teacherRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/evaluations', evaluationRoutes);
 app.use('/api/evaluations', examRoutes);
+app.use('/api/comments', commentRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'CEGA E-Learning API is running' });
@@ -69,6 +73,7 @@ app.get('/api/health', (req, res) => {
 sequelize.sync({ alter: false })
   .then(() => {
     console.log('Database synced successfully.');
+    startCommentCleanupJob();
     httpServer.listen(port, () => {
       console.log(`Server is running on port ${port}`);
     });

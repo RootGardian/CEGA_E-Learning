@@ -43,8 +43,9 @@ const Evaluations: React.FC = () => {
     return <div style={{ padding: '2rem', color: 'var(--text-secondary)' }}>Chargement...</div>;
   }
 
-  const pendingEvals = evaluations.filter(ev => !ev.studentGrade);
-  const pastEvals = evaluations.filter(ev => ev.studentGrade);
+  const sortedEvals = [...evaluations].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const pendingEvals = sortedEvals.filter(ev => !ev.studentGrade);
+  const pastEvals = sortedEvals.filter(ev => ev.studentGrade);
 
   const parseDurationMs = (durationStr: string | null) => {
     if (!durationStr) return 0;

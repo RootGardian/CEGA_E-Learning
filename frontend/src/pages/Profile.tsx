@@ -109,7 +109,7 @@ const Profile: React.FC = () => {
 
   return (
     <div className="dashboard-content animate-fade-in">
-      <div style={{ marginBottom: '3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+      <div className="responsive-header">
         <div style={{ flex: '1 1 min(100%, 300px)' }}>
           <h1 style={{ fontSize: 'clamp(1.8rem, 5vw, 2rem)', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Mon Profil</h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Vos informations personnelles et académiques.</p>
@@ -119,7 +119,7 @@ const Profile: React.FC = () => {
             <Edit2 size={18} /> Modifier le profil
           </button>
         ) : (
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', flex: '1 1 auto', justifyContent: 'flex-start' }}>
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', width: '100%', justifyContent: 'flex-end' }}>
             <button onClick={() => { setIsEditing(false); setFormData({ firstName: user.firstName, lastName: user.lastName, phone: user.phone || '', bio: user.bio || '', profilePicture: user.profilePicture || '' }); }} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: 'auto', minWidth: '120px' }}>
               <X size={18} /> Annuler
             </button>
@@ -311,7 +311,7 @@ const Profile: React.FC = () => {
               {transactions.length === 0 ? (
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Aucune transaction trouvée.</p>
               ) : (
-                <div style={{ overflowX: 'auto' }}>
+                <div className="table-responsive">
                   <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                     <thead>
                       <tr style={{ borderBottom: '1px solid var(--border-color)' }}>

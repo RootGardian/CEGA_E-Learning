@@ -6,6 +6,9 @@ import SystemSetting from '../models/SystemSetting';
 import Intervenant from '../models/Intervenant';
 import Course from '../models/Course';
 import CourseAccess from '../models/CourseAccess';
+import Module from '../models/Module';
+import Lesson from '../models/Lesson';
+import Resource from '../models/Resource';
 import { hashPassword } from '../utils/auth';
 import { getIO } from '../utils/socket';
 
@@ -457,6 +460,109 @@ export const getAllGrades = async (req: Request, res: Response): Promise<void> =
     res.status(200).json(grades);
   } catch (error) {
     console.error('Error fetching all grades:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+// ==========================================
+// RESOURCES
+// ==========================================
+
+export const getResources = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const resources = await Resource.findAll({
+      include: [
+        {
+          model: Lesson,
+          as: 'lesson',
+          include: [
+            {
+              model: Module,
+              as: 'module',
+              include: [
+                {
+                  model: Course,
+                  as: 'course',
+                  attributes: ['id', 'title', 'department']
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+    res.status(200).json(resources);
+  } catch (error) {
+    console.error('Error fetching resources:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const addResource = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { title, url, lessonId } = req.body;
+    
+    if (!title || !url || !lessonId) {
+      res.status(400).json({ message: 'Titre, URL et séance (lesson) sont requis.' });
+      return;
+    }
+
+    const resource = await Resource.create({ title, url, lessonId });
+    res.status(201).json({ message: 'Ressource ajoutée avec succès.', resource });
+  } catch (error) {
+    console.error('Error adding resource:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const deleteResource = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const resource = await Resource.findByPk(parseInt(id as string, 10));
+    
+    if (!resource) {
+      res.status(404).json({ message: 'Ressource introuvable.' });
+      return;
+    }
+
+    await resource.destroy();
+    res.status(200).json({ message: 'Ressource supprimée avec succès.' });
+  } catch (error) {
+    console.error('Error deleting resource:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const getCourseStructure = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params; // Course ID
+    const course = await Course.findByPk(parseInt(id as string, 10), {
+      include: [
+        {
+          model: Module,
+          as: 'modules',
+          include: [
+            {
+              model: Lesson,
+              as: 'lessons'
+            }
+          ]
+        }
+      ],
+      order: [
+        [{ model: Module, as: 'modules' }, 'order', 'ASC'],
+        [{ model: Module, as: 'modules' }, { model: Lesson, as: 'lessons' }, 'order', 'ASC']
+      ]
+    });
+
+    if (!course) {
+      res.status(404).json({ message: 'Cours introuvable.' });
+      return;
+    }
+
+    res.status(200).json(course);
+  } catch (error) {
+    console.error('Error fetching course structure:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };

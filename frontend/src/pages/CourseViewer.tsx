@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ChevronRight, PlayCircle, BookOpen, CheckCircle, X, ArrowLeft, List, Terminal, Cpu, Layers, Milestone, Code } from 'lucide-react';
+import { ChevronRight, PlayCircle, BookOpen, CheckCircle, X, ArrowLeft, List, Terminal, Cpu, Layers, Milestone, Code, Video } from 'lucide-react';
 import socket from '../utils/socket';
 import { usePopup } from '../contexts/PopupContext';
 import LessonIA_Geo_S1 from '../components/LessonIA_Geo_S1';
+import CommentSection from '../components/CommentSection';
 
 interface LessonBlock {
   type: 'text' | 'definition' | 'analogy' | 'video' | 'image' | 'document';
@@ -35,6 +36,20 @@ interface Course {
   modules: Module[];
 }
 
+interface Resource {
+  id: number;
+  title: string;
+  url: string;
+  lessonId: number;
+  lesson: {
+    id: number;
+    title: string;
+    module: {
+      id: number;
+    };
+  };
+}
+
 const CourseViewer: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
@@ -46,8 +61,11 @@ const CourseViewer: React.FC = () => {
   const [completedLessonIds, setCompletedLessonIds] = useState<number[]>([]);
   const [lessonProgressData, setLessonProgressData] = useState<Record<number, any>>({});
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string>('etudiant');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [showModuleResources, setShowModuleResources] = useState(false);
   const { showAlert } = usePopup();
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
@@ -56,6 +74,7 @@ const CourseViewer: React.FC = () => {
     const fetchCourse = async () => {
       try {
         const authRes = await axios.get('/api/auth/me', { withCredentials: true });
+        setCurrentUser(authRes.data);
         setUserRole(authRes.data.role);
 
         const response = await axios.get(`/api/courses/${courseId}?t=${Date.now()}`, {
@@ -74,6 +93,9 @@ const CourseViewer: React.FC = () => {
             progData[p.lessonId] = p;
           });
           setLessonProgressData(progData);
+
+          const resourcesRes = await axios.get('/api/courses/resources', { withCredentials: true });
+          setResources(resourcesRes.data);
         }
       } catch (err: unknown) {
         if (axios.isAxiosError(err)) {
@@ -261,12 +283,10 @@ const CourseViewer: React.FC = () => {
           <div>
             <button
               onClick={() => navigate(userRole === 'enseignant' ? '/teacher/dashboard' : '/dashboard')}
-              className="hidden-mobile"
-              style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: '1rem', padding: 0, display: 'flex', alignItems: 'center', fontSize: '0.9rem', gap: '0.5rem', fontWeight: 500, transition: 'color 0.2s ease' }}
-              onMouseOver={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
-              onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
+              className="btn-back hidden-mobile"
+              style={{ marginBottom: '1rem' }}
             >
-              <ArrowLeft size={16} /> Retour au tableau de bord
+              <ArrowLeft size={16} /> Retour
             </button>
             <h2 style={{ fontSize: '1.25rem', color: 'var(--text-primary)', lineHeight: 1.4 }}>{course.title}</h2>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>{course.volumeHoraire}</p>
@@ -354,11 +374,13 @@ const CourseViewer: React.FC = () => {
         <div style={{ maxWidth: '800px', margin: '0 auto', width: '100%' }}>
           {activeLessonContent ? (
             activeLessonContent.title.includes('Introduction & démystification') ? (
-              <LessonIA_Geo_S1
-                initialProgress={lessonProgressData[activeLessonContent.id]?.progressData}
-                onComplete={(score, progressData) => handleLessonComplete(activeLessonContent.id, score, progressData)}
-                onProgress={(progressData) => handleLessonProgressUpdate(activeLessonContent.id, progressData)}
-              />
+              <>
+                <LessonIA_Geo_S1
+                  initialProgress={lessonProgressData[activeLessonContent.id]?.progressData}
+                  onComplete={(score, progressData) => handleLessonComplete(activeLessonContent.id, score, progressData)}
+                  onProgress={(progressData) => handleLessonProgressUpdate(activeLessonContent.id, progressData)}
+                />
+              </>
             ) : (
               <>
                 <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 2.5rem)', color: 'var(--text-primary)', marginBottom: '2rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', lineHeight: 1.3 }}>
@@ -376,8 +398,8 @@ const CourseViewer: React.FC = () => {
                 </div>
 
                 <div style={{ marginTop: '4rem', paddingTop: '2rem', borderTop: '1px solid var(--border-color)', display: 'flex', flexWrap: 'wrap-reverse', gap: '1rem', justifyContent: 'space-between' }}>
-                  <button onClick={() => setActiveLessonId(null)} className="btn btn-secondary" style={{ flex: '1 1 200px' }}>
-                    <ArrowLeft size={18} style={{ marginRight: '0.5rem' }} /> Retour au module
+                  <button onClick={() => setActiveLessonId(null)} className="btn-back">
+                    <ArrowLeft size={18} /> Retour
                   </button>
                   <button className="btn btn-primary" style={{ flex: '1 1 200px' }}>
                     Terminer et continuer
@@ -391,11 +413,13 @@ const CourseViewer: React.FC = () => {
               {(() => {
                 const activeModule = course.modules.find(m => m.id === activeModuleId);
                 if (!activeModule) return null;
-                return (
-                  <>
-                    <button onClick={() => setActiveModuleId(null)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: '2rem', display: 'flex', alignItems: 'center', padding: 0, fontWeight: 500 }}>
-                      <ArrowLeft size={18} style={{ marginRight: '0.5rem' }} /> Revenir à la vue globale
-                    </button>
+
+                if (!showModuleResources) {
+                  return (
+                    <>
+                      <button onClick={() => { setActiveModuleId(null); setShowModuleResources(false); }} className="btn-back" style={{ marginBottom: '2rem' }}>
+                        <ArrowLeft size={18} /> Retour
+                      </button>
 
                     <div style={{
                       backgroundColor: 'rgba(16, 185, 129, 0.05)',
@@ -408,14 +432,14 @@ const CourseViewer: React.FC = () => {
                       gap: '1.5rem'
                     }}>
                       <div style={{ background: 'var(--accent-primary)', color: '#000', padding: '1rem', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <BookOpen size={32} />
+                        {showModuleResources ? <Video size={32} /> : <BookOpen size={32} />}
                       </div>
                       <div>
                         <h1 style={{ fontSize: 'clamp(1.5rem, 4vw, 2rem)', color: 'var(--text-primary)', margin: '0 0 0.5rem 0', fontWeight: 700 }}>
-                          {activeModule.title}
+                          {showModuleResources ? `Ressources : ${activeModule.title}` : activeModule.title}
                         </h1>
                         <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '1.05rem' }}>
-                          Sélectionnez une séance pour commencer votre apprentissage.
+                          {showModuleResources ? 'Consultez les vidéos et documents liés à ce module.' : 'Sélectionnez une séance pour commencer votre apprentissage.'}
                         </p>
                       </div>
                     </div>
@@ -482,10 +506,147 @@ const CourseViewer: React.FC = () => {
                           </button>
                         )
                       })}
+
+                      {/* Bouton Ressources du module */}
+                      <button
+                        onClick={() => setShowModuleResources(true)}
+                        className="glass-panel"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '1.5rem',
+                          border: '1px solid rgba(16, 185, 129, 0.3)',
+                          borderRadius: '12px',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          transition: 'all 0.2s ease',
+                          width: '100%',
+                          marginTop: '1rem',
+                          background: 'rgba(16, 185, 129, 0.05)'
+                        }}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                          e.currentTarget.style.boxShadow = '0 10px 25px -5px rgba(0, 0, 0, 0.3)';
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = 'none';
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flex: 1 }}>
+                          <div style={{
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '50%',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            color: 'var(--accent-primary)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: 'bold',
+                            flexShrink: 0
+                          }}>
+                            <Video size={20} />
+                          </div>
+                          <div>
+                            <h3 style={{ margin: '0 0 0.25rem 0', color: 'var(--text-primary)', fontSize: '1.1rem', fontWeight: 600 }}>Ressources du module</h3>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                              <List size={14} /> Voir toutes les vidéos et documents
+                            </div>
+                          </div>
+                        </div>
+                        <ChevronRight size={20} style={{ color: 'var(--text-secondary)' }} />
+                      </button>
                     </div>
+                    {currentUser && <CommentSection moduleId={activeModule.id} courseId={course.id} currentUser={currentUser} />}
                   </>
                 );
-              })()}
+              }
+              
+              // View resources for the module
+              const moduleResources = resources.filter(r => r.lesson?.module?.id === activeModule.id);
+              
+              return (
+                <>
+                  <button onClick={() => setShowModuleResources(false)} className="btn-back" style={{ marginBottom: '2rem' }}>
+                    <ArrowLeft size={18} /> Retour
+                  </button>
+
+                  <div style={{
+                    backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                    border: '1px solid rgba(16, 185, 129, 0.2)',
+                    borderRadius: '16px',
+                    padding: '2rem',
+                    marginBottom: '3rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1.5rem'
+                  }}>
+                    <div style={{ background: 'var(--accent-primary)', color: '#000', padding: '1rem', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Video size={32} />
+                    </div>
+                    <div>
+                      <h1 style={{ fontSize: 'clamp(1.5rem, 4vw, 2rem)', color: 'var(--text-primary)', margin: '0 0 0.5rem 0', fontWeight: 700 }}>
+                        Ressources : {activeModule.title}
+                      </h1>
+                      <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '1.05rem' }}>
+                        Consultez les vidéos et liens pédagogiques liés à ce module.
+                      </p>
+                    </div>
+                  </div>
+
+                  {moduleResources.length === 0 ? (
+                    <div className="glass-panel" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                      <Video size={48} style={{ marginBottom: '1rem', opacity: 0.4 }} />
+                      <p style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                        Aucune ressource disponible pour ce module.
+                      </p>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: '1.5rem' }}>
+                      {moduleResources.map(resource => {
+                        const match = resource.url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
+                        const youtubeId = match ? match[1] : '';
+                        
+                        return (
+                          <div key={resource.id} className="glass-panel" style={{ overflow: 'hidden', padding: 0, display: 'flex', flexDirection: 'column' }}>
+                            {youtubeId ? (
+                              <div style={{ position: 'relative', paddingBottom: '56.25%', backgroundColor: '#000' }}>
+                                <iframe
+                                  src={`https://www.youtube.com/embed/${youtubeId}`}
+                                  title={resource.title}
+                                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allowFullScreen
+                                ></iframe>
+                              </div>
+                            ) : (
+                              <div style={{ height: '160px', backgroundColor: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <BookOpen size={48} color="rgba(16, 185, 129, 0.5)" />
+                              </div>
+                            )}
+                            <div style={{ padding: '1rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                              <h3 style={{ fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>{resource.title}</h3>
+                              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: 'auto' }}>
+                                Séance : {resource.lesson.title}
+                              </div>
+                              {!youtubeId && (
+                                <a href={resource.url} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', marginTop: '1rem', color: 'var(--accent-primary)', textDecoration: 'none', fontSize: '0.9rem', fontWeight: 500 }}>
+                                  Ouvrir le lien →
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              );
+            })()}
             </div>
           ) : (
             <div className="course-overview animate-fade-in" style={{ padding: 'clamp(1rem, 2vw, 2rem)' }}>

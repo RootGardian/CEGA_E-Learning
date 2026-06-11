@@ -4,7 +4,8 @@ import Etudiant from './Etudiant';
 
 class Notification extends Model {
   declare id: number;
-  declare etudiantId: number;
+  declare etudiantId: number | null;
+  declare userId: string | null;
   declare title: string;
   declare message: string;
   declare type: 'info' | 'success' | 'warning' | 'error';
@@ -24,11 +25,15 @@ Notification.init(
     },
     etudiantId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: Etudiant,
         key: 'id',
       },
+    },
+    userId: {
+      type: DataTypes.UUID,
+      allowNull: true,
     },
     title: {
       type: DataTypes.STRING,

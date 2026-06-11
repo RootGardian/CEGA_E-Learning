@@ -12,6 +12,7 @@ import CourseViewer from './pages/CourseViewer';
 import SidebarLayout from './components/SidebarLayout';
 import MyCourses from './pages/MyCourses';
 import Evaluations from './pages/Evaluations';
+import Resources from './pages/Resources';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import ExamRoom from './pages/ExamRoom';
@@ -27,6 +28,7 @@ import AdminSettings from './pages/AdminSettings';
 import AdminGrades from './pages/AdminGrades';
 import AdminEnrollments from './pages/AdminEnrollments';
 import AdminFormateurs from './pages/AdminFormateurs';
+import AdminResources from './pages/AdminResources';
 import PwaInstallPrompt from './components/PwaInstallPrompt';
 import { PopupProvider } from './contexts/PopupContext';
 
@@ -53,6 +55,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/my-courses" element={<MyCourses />} />
           <Route path="/evaluations" element={<Evaluations />} />
+          <Route path="/resources" element={<Resources />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
@@ -73,7 +76,7 @@ function App() {
           <Route path="/admin/grades" element={<AdminGrades />} />
           <Route path="/admin/settings" element={<AdminSettings />} />
           <Route path="/admin/enrollments" element={<AdminEnrollments />} />
-
+          <Route path="/admin/resources" element={<AdminResources />} />
         </Route>
         <Route path="/course/:courseId" element={<CourseViewer />} />
         <Route path="/payment-gateway" element={<PaymentGateway />} />
