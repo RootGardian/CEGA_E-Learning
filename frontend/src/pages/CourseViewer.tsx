@@ -38,7 +38,7 @@ interface Course {
 const CourseViewer: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
-  
+
   const [course, setCourse] = useState<Course | null>(null);
   const [activeLessonId, setActiveLessonId] = useState<number | null>(null);
   const [activeLessonContent, setActiveLessonContent] = useState<Lesson | null>(null);
@@ -49,7 +49,7 @@ const CourseViewer: React.FC = () => {
   const [userRole, setUserRole] = useState<string>('etudiant');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { showAlert } = usePopup();
-  
+
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
   useEffect(() => {
@@ -68,7 +68,7 @@ const CourseViewer: React.FC = () => {
           const progRes = await axios.get(`/api/courses/${courseId}/progress`, { withCredentials: true });
           const completedIds = progRes.data.filter((p: any) => p.isCompleted).map((p: any) => p.lessonId);
           setCompletedLessonIds(completedIds);
-          
+
           const progData: Record<number, any> = {};
           progRes.data.forEach((p: any) => {
             progData[p.lessonId] = p;
@@ -152,10 +152,10 @@ const CourseViewer: React.FC = () => {
         quizScore: score,
         progressData
       }, { withCredentials: true });
-      
+
       // Update local state to unlock the next one immediately
       setCompletedLessonIds(prev => prev.includes(lessonId) ? prev : [...prev, lessonId]);
-      
+
       if (progressData) {
         setLessonProgressData(prev => ({ ...prev, [lessonId]: { ...prev[lessonId], progressData } }));
       }
@@ -179,16 +179,16 @@ const CourseViewer: React.FC = () => {
     switch (block.type) {
       case 'text':
         return <p key={index} style={{ marginBottom: '1.5rem', lineHeight: 1.7, color: 'var(--text-secondary)' }}>{block.content}</p>;
-      
+
       case 'definition':
         return (
-          <div key={index} style={{ 
-            marginBottom: '2rem', 
-            padding: '1.5rem', 
-            backgroundColor: 'var(--bg-secondary)', 
-            border: '1px solid var(--border-color)', 
+          <div key={index} style={{
+            marginBottom: '2rem',
+            padding: '1.5rem',
+            backgroundColor: 'var(--bg-secondary)',
+            border: '1px solid var(--border-color)',
             borderLeft: '4px solid var(--accent-primary)',
-            borderRadius: '0' 
+            borderRadius: '0'
           }}>
             <h4 style={{ display: 'flex', alignItems: 'center', color: 'var(--accent-primary)', marginBottom: '0.5rem', fontSize: '1.1rem' }}>
               <BookOpen size={20} style={{ marginRight: '0.5rem' }} />
@@ -197,16 +197,16 @@ const CourseViewer: React.FC = () => {
             <p style={{ margin: 0, color: 'var(--text-primary)', fontWeight: 500 }}>{block.content}</p>
           </div>
         );
-      
+
       case 'analogy':
         return (
-          <div key={index} style={{ 
-            marginBottom: '2rem', 
-            padding: '1.5rem', 
-            backgroundColor: '#F8FAFC', 
-            border: '1px solid var(--border-color)', 
+          <div key={index} style={{
+            marginBottom: '2rem',
+            padding: '1.5rem',
+            backgroundColor: '#F8FAFC',
+            border: '1px solid var(--border-color)',
             borderLeft: '4px solid #F59E0B',
-            borderRadius: '0' 
+            borderRadius: '0'
           }}>
             <h4 style={{ display: 'flex', alignItems: 'center', color: '#D97706', marginBottom: '0.5rem', fontSize: '1.1rem' }}>
               Analogie Pédagogique
@@ -233,8 +233,8 @@ const CourseViewer: React.FC = () => {
       {/* Mobile Topbar */}
       <div className="mobile-topbar hidden-desktop">
         <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0, paddingRight: '1rem' }}>
-          <button 
-            onClick={() => navigate(userRole === 'enseignant' ? '/teacher/dashboard' : '/dashboard')} 
+          <button
+            onClick={() => navigate(userRole === 'enseignant' ? '/teacher/dashboard' : '/dashboard')}
             style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', cursor: 'pointer', color: 'var(--text-primary)', marginRight: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.4rem', transition: 'all 0.2s ease' }}
             title="Retour"
           >
@@ -250,7 +250,7 @@ const CourseViewer: React.FC = () => {
       </div>
 
       {/* Sidebar Overlay for Mobile */}
-      <div 
+      <div
         className={`sidebar-overlay ${isSidebarOpen ? 'is-visible' : ''}`}
         onClick={() => setIsSidebarOpen(false)}
       ></div>
@@ -259,8 +259,8 @@ const CourseViewer: React.FC = () => {
       <div className={`sidebar ${isSidebarOpen ? 'is-open' : ''}`} style={{ width: 'min(350px, 90vw)', padding: 0 }}>
         <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <button 
-              onClick={() => navigate(userRole === 'enseignant' ? '/teacher/dashboard' : '/dashboard')} 
+            <button
+              onClick={() => navigate(userRole === 'enseignant' ? '/teacher/dashboard' : '/dashboard')}
               className="hidden-mobile"
               style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: '1rem', padding: 0, display: 'flex', alignItems: 'center', fontSize: '0.9rem', gap: '0.5rem', fontWeight: 500, transition: 'color 0.2s ease' }}
               onMouseOver={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
@@ -278,7 +278,7 @@ const CourseViewer: React.FC = () => {
 
         <div style={{ padding: '1rem' }}>
           <div style={{ marginBottom: '1rem' }}>
-            <button 
+            <button
               onClick={() => {
                 setActiveModuleId(null);
                 setActiveLessonId(null);
@@ -303,48 +303,49 @@ const CourseViewer: React.FC = () => {
               Vue Globale du Parcours
             </button>
           </div>
-          
+
           <h3 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--text-secondary)', letterSpacing: '0.05em', marginBottom: '0.75rem', paddingLeft: '0.5rem' }}>Modules</h3>
-          
+
           {course.modules.map((mod) => {
             const unlocked = isModuleUnlocked(mod.id);
             return (
-            <div key={mod.id} style={{ marginBottom: '0.5rem' }}>
-              <button 
-                onClick={() => {
-                  if (!unlocked) return;
-                  setActiveModuleId(mod.id);
-                  setActiveLessonId(null);
-                  if (window.innerWidth < 768) setIsSidebarOpen(false);
-                }}
-                disabled={!unlocked}
-                title={!unlocked ? "Terminez le module précédent pour débloquer" : ""}
-                style={{ 
-                  width: '100%', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  padding: '1rem', 
-                  backgroundColor: activeModuleId === mod.id && !activeLessonId ? 'rgba(16, 185, 129, 0.05)' : 'var(--bg-secondary)',
-                  border: '1px solid',
-                  borderColor: activeModuleId === mod.id && !activeLessonId ? 'var(--accent-primary)' : 'var(--border-color)',
-                  borderRadius: '8px',
-                  cursor: unlocked ? 'pointer' : 'not-allowed',
-                  textAlign: 'left',
-                  fontWeight: 600,
-                  color: activeModuleId === mod.id && !activeLessonId ? 'var(--accent-primary)' : 'var(--text-primary)',
-                  transition: 'all 0.2s ease',
-                  opacity: unlocked ? 1 : 0.5
-                }}
-              >
-                {unlocked ? (
-                  <ChevronRight size={18} style={{ marginRight: '0.5rem', color: activeModuleId === mod.id && !activeLessonId ? 'var(--accent-primary)' : 'var(--text-secondary)' }} />
-                ) : (
-                  <span style={{ marginRight: '0.5rem', fontSize: '14px' }}>🔒</span>
-                )}
-                <span style={{ flex: 1, lineHeight: 1.3 }}>{mod.title}</span>
-              </button>
-            </div>
-          )})}
+              <div key={mod.id} style={{ marginBottom: '0.5rem' }}>
+                <button
+                  onClick={() => {
+                    if (!unlocked) return;
+                    setActiveModuleId(mod.id);
+                    setActiveLessonId(null);
+                    if (window.innerWidth < 768) setIsSidebarOpen(false);
+                  }}
+                  disabled={!unlocked}
+                  title={!unlocked ? "Terminez le module précédent pour débloquer" : ""}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '1rem',
+                    backgroundColor: activeModuleId === mod.id && !activeLessonId ? 'rgba(16, 185, 129, 0.05)' : 'var(--bg-secondary)',
+                    border: '1px solid',
+                    borderColor: activeModuleId === mod.id && !activeLessonId ? 'var(--accent-primary)' : 'var(--border-color)',
+                    borderRadius: '8px',
+                    cursor: unlocked ? 'pointer' : 'not-allowed',
+                    textAlign: 'left',
+                    fontWeight: 600,
+                    color: activeModuleId === mod.id && !activeLessonId ? 'var(--accent-primary)' : 'var(--text-primary)',
+                    transition: 'all 0.2s ease',
+                    opacity: unlocked ? 1 : 0.5
+                  }}
+                >
+                  {unlocked ? (
+                    <ChevronRight size={18} style={{ marginRight: '0.5rem', color: activeModuleId === mod.id && !activeLessonId ? 'var(--accent-primary)' : 'var(--text-secondary)' }} />
+                  ) : (
+                    <span style={{ marginRight: '0.5rem', fontSize: '14px' }}>🔒</span>
+                  )}
+                  <span style={{ flex: 1, lineHeight: 1.3 }}>{mod.title}</span>
+                </button>
+              </div>
+            )
+          })}
         </div>
       </div>
 
@@ -353,37 +354,37 @@ const CourseViewer: React.FC = () => {
         <div style={{ maxWidth: '800px', margin: '0 auto', width: '100%' }}>
           {activeLessonContent ? (
             activeLessonContent.title.includes('Introduction & démystification') ? (
-              <LessonIA_Geo_S1 
+              <LessonIA_Geo_S1
                 initialProgress={lessonProgressData[activeLessonContent.id]?.progressData}
                 onComplete={(score, progressData) => handleLessonComplete(activeLessonContent.id, score, progressData)}
                 onProgress={(progressData) => handleLessonProgressUpdate(activeLessonContent.id, progressData)}
               />
             ) : (
-            <>
-              <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 2.5rem)', color: 'var(--text-primary)', marginBottom: '2rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', lineHeight: 1.3 }}>
-                {activeLessonContent.title}
-              </h1>
-              
-              <div className="lesson-content">
-                {activeLessonContent.content && activeLessonContent.content.length > 0 ? (
-                  activeLessonContent.content.map((block, index) => renderContentBlock(block, index))
-                ) : (
-                  <div style={{ padding: '3rem', textAlign: 'center', border: '1px dashed var(--border-color)', color: 'var(--text-secondary)' }}>
-                    Ce contenu est en cours de rédaction.
-                  </div>
-                )}
-              </div>
+              <>
+                <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 2.5rem)', color: 'var(--text-primary)', marginBottom: '2rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', lineHeight: 1.3 }}>
+                  {activeLessonContent.title}
+                </h1>
 
-              <div style={{ marginTop: '4rem', paddingTop: '2rem', borderTop: '1px solid var(--border-color)', display: 'flex', flexWrap: 'wrap-reverse', gap: '1rem', justifyContent: 'space-between' }}>
-                <button onClick={() => setActiveLessonId(null)} className="btn btn-secondary" style={{ flex: '1 1 200px' }}>
-                  <ArrowLeft size={18} style={{ marginRight: '0.5rem' }} /> Retour au module
-                </button>
-                <button className="btn btn-primary" style={{ flex: '1 1 200px' }}>
-                  Terminer et continuer
-                  <CheckCircle size={18} style={{ marginLeft: '0.5rem' }} />
-                </button>
-              </div>
-            </>
+                <div className="lesson-content">
+                  {activeLessonContent.content && activeLessonContent.content.length > 0 ? (
+                    activeLessonContent.content.map((block, index) => renderContentBlock(block, index))
+                  ) : (
+                    <div style={{ padding: '3rem', textAlign: 'center', border: '1px dashed var(--border-color)', color: 'var(--text-secondary)' }}>
+                      Ce contenu est en cours de rédaction.
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ marginTop: '4rem', paddingTop: '2rem', borderTop: '1px solid var(--border-color)', display: 'flex', flexWrap: 'wrap-reverse', gap: '1rem', justifyContent: 'space-between' }}>
+                  <button onClick={() => setActiveLessonId(null)} className="btn btn-secondary" style={{ flex: '1 1 200px' }}>
+                    <ArrowLeft size={18} style={{ marginRight: '0.5rem' }} /> Retour au module
+                  </button>
+                  <button className="btn btn-primary" style={{ flex: '1 1 200px' }}>
+                    Terminer et continuer
+                    <CheckCircle size={18} style={{ marginLeft: '0.5rem' }} />
+                  </button>
+                </div>
+              </>
             )
           ) : activeModuleId ? (
             <div className="module-overview animate-fade-in" style={{ padding: 'clamp(1rem, 2vw, 2rem)' }}>
@@ -395,12 +396,12 @@ const CourseViewer: React.FC = () => {
                     <button onClick={() => setActiveModuleId(null)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: '2rem', display: 'flex', alignItems: 'center', padding: 0, fontWeight: 500 }}>
                       <ArrowLeft size={18} style={{ marginRight: '0.5rem' }} /> Revenir à la vue globale
                     </button>
-                    
-                    <div style={{ 
-                      backgroundColor: 'rgba(16, 185, 129, 0.05)', 
-                      border: '1px solid rgba(16, 185, 129, 0.2)', 
-                      borderRadius: '16px', 
-                      padding: '2rem', 
+
+                    <div style={{
+                      backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                      border: '1px solid rgba(16, 185, 129, 0.2)',
+                      borderRadius: '16px',
+                      padding: '2rem',
                       marginBottom: '3rem',
                       display: 'flex',
                       alignItems: 'center',
@@ -423,63 +424,64 @@ const CourseViewer: React.FC = () => {
                       {activeModule.lessons.map((lesson, index) => {
                         const unlocked = isLessonUnlocked(lesson.id);
                         return (
-                        <button
-                          key={lesson.id}
-                          onClick={() => { if (unlocked) setActiveLessonId(lesson.id); }}
-                          disabled={!unlocked}
-                          title={!unlocked ? "Terminez la séance précédente pour débloquer" : ""}
-                          className="glass-panel"
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            padding: '1.5rem',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: '12px',
-                            cursor: unlocked ? 'pointer' : 'not-allowed',
-                            textAlign: 'left',
-                            transition: 'all 0.2s ease',
-                            width: '100%',
-                            opacity: unlocked ? 1 : 0.5
-                          }}
-                          onMouseOver={(e) => {
-                            if (!unlocked) return;
-                            e.currentTarget.style.borderColor = 'var(--accent-primary)';
-                            e.currentTarget.style.transform = 'translateY(-2px)';
-                            e.currentTarget.style.boxShadow = '0 10px 25px -5px rgba(0, 0, 0, 0.3)';
-                          }}
-                          onMouseOut={(e) => {
-                            if (!unlocked) return;
-                            e.currentTarget.style.borderColor = 'var(--border-color)';
-                            e.currentTarget.style.transform = 'translateY(0)';
-                            e.currentTarget.style.boxShadow = 'none';
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flex: 1 }}>
-                            <div style={{ 
-                              width: '40px', 
-                              height: '40px', 
-                              borderRadius: '50%', 
-                              backgroundColor: unlocked ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255, 255, 255, 0.05)', 
-                              color: unlocked ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                          <button
+                            key={lesson.id}
+                            onClick={() => { if (unlocked) setActiveLessonId(lesson.id); }}
+                            disabled={!unlocked}
+                            title={!unlocked ? "Terminez la séance précédente pour débloquer" : ""}
+                            className="glass-panel"
+                            style={{
                               display: 'flex',
                               alignItems: 'center',
-                              justifyContent: 'center',
-                              fontWeight: 'bold',
-                              flexShrink: 0
-                            }}>
-                              {unlocked ? (index + 1) : '🔒'}
-                            </div>
-                            <div>
-                              <h3 style={{ margin: '0 0 0.25rem 0', color: unlocked ? 'var(--text-primary)' : 'var(--text-secondary)', fontSize: '1.1rem', fontWeight: 600 }}>{lesson.title}</h3>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                                <PlayCircle size={14} /> Séance interactive
+                              justifyContent: 'space-between',
+                              padding: '1.5rem',
+                              border: '1px solid var(--border-color)',
+                              borderRadius: '12px',
+                              cursor: unlocked ? 'pointer' : 'not-allowed',
+                              textAlign: 'left',
+                              transition: 'all 0.2s ease',
+                              width: '100%',
+                              opacity: unlocked ? 1 : 0.5
+                            }}
+                            onMouseOver={(e) => {
+                              if (!unlocked) return;
+                              e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                              e.currentTarget.style.transform = 'translateY(-2px)';
+                              e.currentTarget.style.boxShadow = '0 10px 25px -5px rgba(0, 0, 0, 0.3)';
+                            }}
+                            onMouseOut={(e) => {
+                              if (!unlocked) return;
+                              e.currentTarget.style.borderColor = 'var(--border-color)';
+                              e.currentTarget.style.transform = 'translateY(0)';
+                              e.currentTarget.style.boxShadow = 'none';
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flex: 1 }}>
+                              <div style={{
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '50%',
+                                backgroundColor: unlocked ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255, 255, 255, 0.05)',
+                                color: unlocked ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontWeight: 'bold',
+                                flexShrink: 0
+                              }}>
+                                {unlocked ? (index + 1) : '🔒'}
+                              </div>
+                              <div>
+                                <h3 style={{ margin: '0 0 0.25rem 0', color: unlocked ? 'var(--text-primary)' : 'var(--text-secondary)', fontSize: '1.1rem', fontWeight: 600 }}>{lesson.title}</h3>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                                  <PlayCircle size={14} /> Séance interactive
+                                </div>
                               </div>
                             </div>
-                          </div>
-                          {unlocked && <ChevronRight size={20} style={{ color: 'var(--text-secondary)' }} />}
-                        </button>
-                      )})}
+                            {unlocked && <ChevronRight size={20} style={{ color: 'var(--text-secondary)' }} />}
+                          </button>
+                        )
+                      })}
                     </div>
                   </>
                 );
@@ -488,11 +490,11 @@ const CourseViewer: React.FC = () => {
           ) : (
             <div className="course-overview animate-fade-in" style={{ padding: 'clamp(1rem, 2vw, 2rem)' }}>
               {/* Hero Section */}
-              <div style={{ 
-                backgroundColor: 'rgba(16, 185, 129, 0.05)', 
-                border: '1px solid rgba(16, 185, 129, 0.2)', 
-                borderRadius: '16px', 
-                padding: 'clamp(2rem, 4vw, 3rem)', 
+              <div style={{
+                backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                border: '1px solid rgba(16, 185, 129, 0.2)',
+                borderRadius: '16px',
+                padding: 'clamp(2rem, 4vw, 3rem)',
                 marginBottom: '3rem',
                 display: 'flex',
                 flexDirection: 'column',
@@ -522,32 +524,32 @@ const CourseViewer: React.FC = () => {
                   const icons = [BookOpen, Terminal, Cpu, Code, Layers];
                   const Icon = icons[modIndex % icons.length];
                   const unlocked = isModuleUnlocked(mod.id);
-                  
+
                   return (
-                    <div key={mod.id} className="module-card glass-panel" style={{ 
-                      padding: '1.75rem', 
-                      display: 'flex', 
+                    <div key={mod.id} className="module-card glass-panel" style={{
+                      padding: '1.75rem',
+                      display: 'flex',
                       flexDirection: 'column',
                       border: '1px solid var(--border-color)',
                       transition: 'all 0.3s ease',
                       opacity: unlocked ? 1 : 0.6,
                       cursor: unlocked ? 'pointer' : 'not-allowed'
                     }}
-                    onClick={() => {
-                      if (!unlocked) return;
-                      setActiveModuleId(mod.id);
-                      document.querySelector('.main-content')?.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
-                    title={!unlocked ? "Terminez le module précédent pour débloquer" : ""}
+                      onClick={() => {
+                        if (!unlocked) return;
+                        setActiveModuleId(mod.id);
+                        document.querySelector('.main-content')?.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      title={!unlocked ? "Terminez le module précédent pour débloquer" : ""}
                     >
-                      <div style={{ 
-                        background: 'rgba(16, 185, 129, 0.1)', 
-                        color: 'var(--accent-primary)', 
-                        width: '48px', 
-                        height: '48px', 
-                        borderRadius: '12px', 
-                        display: 'flex', 
-                        alignItems: 'center', 
+                      <div style={{
+                        background: 'rgba(16, 185, 129, 0.1)',
+                        color: 'var(--accent-primary)',
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
                         justifyContent: 'center',
                         marginBottom: '1.25rem'
                       }}>
@@ -560,7 +562,7 @@ const CourseViewer: React.FC = () => {
                       <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.5rem', flex: 1 }}>
                         Découvrez les notions essentielles de ce module et maîtrisez les concepts clés pas à pas.
                       </p>
-                      
+
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         {mod.lessons.map((lesson) => (
                           <button

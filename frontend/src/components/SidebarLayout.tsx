@@ -116,7 +116,6 @@ const SidebarLayout: React.FC = () => {
   useEffect(() => {
     if (!user || user.role !== 'etudiant') return;
 
-    // Mise à jour toutes les 10 secondes pour que vous puissiez voir le compteur monter rapidement !
     const trackTimeInterval = setInterval(async () => {
       try {
         await axios.post('/api/auth/track-time', { minutes: 1 }, { withCredentials: true });
@@ -124,7 +123,7 @@ const SidebarLayout: React.FC = () => {
       } catch (err) {
         console.error('Erreur track-time:', err);
       }
-    }, 10000); // 10 secondes au lieu de 60s pour la démo
+    }, 60000); // 60 secondes pour incrémenter de 1 minute
 
     return () => clearInterval(trackTimeInterval);
   }, [user?.id, user?.role]);

@@ -526,15 +526,15 @@ const ExamRoom: React.FC = () => {
   if (examStatus === 'intro') {
     return (
       <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
-        <div className="glass-panel animate-fade-in" style={{ maxWidth: '800px', width: '100%', padding: '3rem', backgroundColor: 'var(--bg-secondary)' }}>
-          <h1 style={{ fontSize: '2.2rem', color: 'var(--text-primary)', marginBottom: '1rem', textAlign: 'center' }}>{evaluation?.title}</h1>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '2.5rem', marginBottom: '2.5rem', color: 'var(--text-secondary)', fontSize: '1.1rem' }}>
+        <div className="glass-panel animate-fade-in" style={{ maxWidth: '800px', width: '100%', padding: 'clamp(1.5rem, 4vw, 3rem)', backgroundColor: 'var(--bg-secondary)' }}>
+          <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 2.2rem)', color: 'var(--text-primary)', marginBottom: '1rem', textAlign: 'center' }}>{evaluation?.title}</h1>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 'clamp(1rem, 3vw, 2.5rem)', flexWrap: 'wrap', marginBottom: '2.5rem', color: 'var(--text-secondary)', fontSize: 'clamp(0.9rem, 3vw, 1.1rem)' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Clock size={20} /> Durée : {evaluation?.duration || 'Non définie'}</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><CheckCircle size={20} /> {questions.length} Questions</span>
           </div>
 
           <div
-            style={{ backgroundColor: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '12px', padding: '2rem', marginBottom: '3rem', cursor: typingComplete ? 'default' : 'pointer' }}
+            style={{ backgroundColor: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '12px', padding: 'clamp(1.2rem, 3vw, 2rem)', marginBottom: '3rem', cursor: typingComplete ? 'default' : 'pointer' }}
             onClick={() => {
               if (!typingComplete) {
                 setFastForward(true);
@@ -543,7 +543,7 @@ const ExamRoom: React.FC = () => {
               }
             }}
           >
-            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#ef4444', margin: '0 0 1.5rem 0', fontSize: '1.4rem' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', color: '#ef4444', margin: '0 0 1.5rem 0', fontSize: 'clamp(1.1rem, 4vw, 1.4rem)' }}>
               <ShieldAlert size={28} />
               Règles Strictes de l'Examen
               {!typingComplete && <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginLeft: 'auto', fontWeight: 'normal' }}>Cliquez pour passer l'animation</span>}
@@ -592,12 +592,12 @@ const ExamRoom: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'center', opacity: typingComplete ? 1 : 0, transition: 'opacity 0.5s ease', pointerEvents: typingComplete ? 'auto' : 'none' }}>
             <button
               onClick={startExam}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1.2rem 3rem', backgroundColor: 'var(--accent-primary)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '1.2rem', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 20px rgba(16, 185, 129, 0.4)', transition: 'transform 0.2s' }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', width: '100%', padding: 'clamp(1rem, 3vw, 1.2rem) clamp(1rem, 3vw, 3rem)', backgroundColor: 'var(--accent-primary)', color: 'white', border: 'none', borderRadius: '8px', fontSize: 'clamp(1rem, 3vw, 1.2rem)', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 20px rgba(16, 185, 129, 0.4)', transition: 'transform 0.2s' }}
               onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
               onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
             >
-              <Play size={22} fill="white" />
-              J'ai lu et compris les règles, Commencer l'examen
+              <Play size={22} fill="white" style={{ flexShrink: 0 }} />
+              <span style={{ textAlign: 'center' }}>J'ai lu et compris les règles, Commencer l'examen</span>
             </button>
           </div>
         </div>
@@ -707,7 +707,7 @@ const ExamRoom: React.FC = () => {
         style={{
           flex: 1,
           overflowY: 'auto',
-          padding: '3rem 1rem',
+          padding: 'clamp(1.5rem, 4vw, 3rem) 1rem',
           display: 'flex',
           justifyContent: 'center',
           opacity: (isFocused && !showWarningOverlay) ? 1 : 0,
@@ -717,9 +717,9 @@ const ExamRoom: React.FC = () => {
       >
         <div style={{ width: '100%', maxWidth: '800px', position: 'relative', zIndex: 1 }}>
 
-          <div style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '2.5rem', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
-              <h3 style={{ margin: 0, fontSize: '1.3rem', color: 'var(--text-primary)', lineHeight: '1.5' }}>
+          <div style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: 'clamp(1.5rem, 4vw, 2.5rem)', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', gap: '1rem' }}>
+              <h3 style={{ margin: 0, fontSize: 'clamp(1.1rem, 4vw, 1.3rem)', color: 'var(--text-primary)', lineHeight: '1.5' }}>
                 <span style={{ color: 'var(--accent-primary)', marginRight: '0.75rem', fontSize: '1.5rem' }}>Q{currentQuestionIndex + 1}.</span>
                 {q.text}
               </h3>

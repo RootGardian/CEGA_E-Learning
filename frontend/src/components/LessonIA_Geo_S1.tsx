@@ -92,14 +92,14 @@ const LessonIA_Geo_S1: React.FC<LessonProps> = ({ initialProgress, onComplete, o
           text: "Branche du ML utilisant des réseaux neuronaux profonds (10+ couches). Excelle sur les données visuelles volumineuses. En géosciences : analyse d'images satellite, reconnaissance de patterns sur carottes, interprétation de données sismiques 3D. Nécessite GPU et grandes quantités de données."
         }
       };
-      
+
       const d = vennData[type];
       const infoEl = document.getElementById('vennInfo');
       if (infoEl) {
         infoEl.innerHTML = '<h4>' + d.title + '</h4><p>' + d.text + '</p>';
       }
-      
-      ['ia','ml','dl'].forEach(t => document.getElementById('vc-' + t)?.classList.remove('selected'));
+
+      ['ia', 'ml', 'dl'].forEach(t => document.getElementById('vc-' + t)?.classList.remove('selected'));
       document.getElementById('vc-' + type)?.classList.add('selected');
     };
 
@@ -108,7 +108,7 @@ const LessonIA_Geo_S1: React.FC<LessonProps> = ({ initialProgress, onComplete, o
     };
   }, []);
 
-  
+
   const tabs = [
     { id: 's1', title: 'Introduction' },
     { id: 's2', title: "Pourquoi l'IA ?" },
@@ -143,7 +143,8 @@ const LessonIA_Geo_S1: React.FC<LessonProps> = ({ initialProgress, onComplete, o
 
       <div className="lesson-content-area" style={{ padding: '2rem 0' }}>
         {activeTab === 's1' && (
-          <div className="animate-slide-up" dangerouslySetInnerHTML={{ __html: `
+          <div className="animate-slide-up" dangerouslySetInnerHTML={{
+            __html: `
     <div class="hero">
       <div class="eyebrow">Module 1 — Fondations &amp; Démystification</div>
       <h2>Introduction à <span>l'IA</span> en géosciences</h2>
@@ -204,9 +205,10 @@ const LessonIA_Geo_S1: React.FC<LessonProps> = ({ initialProgress, onComplete, o
     
   ` }} />
         )}
-        
+
         {activeTab === 's2' && (
-          <div className="animate-slide-up" dangerouslySetInnerHTML={{ __html: `
+          <div className="animate-slide-up" dangerouslySetInnerHTML={{
+            __html: `
     <div class="hero">
       <div class="eyebrow">Partie I</div>
       <h2>Pourquoi parler d'IA en géosciences ?</h2>
@@ -334,7 +336,8 @@ const LessonIA_Geo_S1: React.FC<LessonProps> = ({ initialProgress, onComplete, o
         )}
 
         {activeTab === 's3' && (
-          <div className="animate-slide-up" dangerouslySetInnerHTML={{ __html: `
+          <div className="animate-slide-up" dangerouslySetInnerHTML={{
+            __html: `
     <div class="hero">
       <div class="eyebrow">Partie II</div>
       <h2>Démystification des concepts fondamentaux</h2>
@@ -493,7 +496,8 @@ const LessonIA_Geo_S1: React.FC<LessonProps> = ({ initialProgress, onComplete, o
         )}
 
         {activeTab === 's4' && (
-          <div className="animate-slide-up" dangerouslySetInnerHTML={{ __html: `
+          <div className="animate-slide-up" dangerouslySetInnerHTML={{
+            __html: `
     <div class="hero">
       <div class="eyebrow">Partie III</div>
       <h2>IA vs Géostatistique — choisir le bon outil</h2>
@@ -561,7 +565,8 @@ const LessonIA_Geo_S1: React.FC<LessonProps> = ({ initialProgress, onComplete, o
         )}
 
         {activeTab === 's5' && (
-          <div className="animate-slide-up" dangerouslySetInnerHTML={{ __html: `
+          <div className="animate-slide-up" dangerouslySetInnerHTML={{
+            __html: `
     <div class="hero">
       <div class="eyebrow">Partie IV</div>
       <h2>La boîte à outils — types de problèmes IA</h2>
@@ -646,7 +651,8 @@ const LessonIA_Geo_S1: React.FC<LessonProps> = ({ initialProgress, onComplete, o
         )}
 
         {activeTab === 's6' && (
-          <div className="animate-slide-up" dangerouslySetInnerHTML={{ __html: `
+          <div className="animate-slide-up" dangerouslySetInnerHTML={{
+            __html: `
     <div class="hero">
       <div class="eyebrow">Partie VI — Pratique</div>
       <h2>Python &amp; Audit de données de forage</h2>
@@ -819,7 +825,7 @@ erreurs.<span class="c-blue">to_csv</span>(<span class="c-green">'rapport_erreur
   ` }} />
         )}
 
-        
+
         {activeTab === 's7' && (
           <div className="animate-slide-up">
             <div className="hero">
@@ -845,7 +851,7 @@ erreurs.<span class="c-blue">to_csv</span>(<span class="c-green">'rapport_erreur
                         background: 'var(--bg-secondary)',
                         color: 'var(--text-secondary)'
                       };
-                      
+
                       if (!quizSubmitted) {
                         if (isSelected) {
                           optionStyle.border = '1px solid var(--lesson-accent)';
@@ -868,8 +874,8 @@ erreurs.<span class="c-blue">to_csv</span>(<span class="c-green">'rapport_erreur
                       }
 
                       return (
-                        <div 
-                          key={opt.id} 
+                        <div
+                          key={opt.id}
                           style={optionStyle}
                           onClick={() => handleSelectOption(q.id, opt.id)}
                         >
@@ -916,10 +922,10 @@ erreurs.<span class="c-blue">to_csv</span>(<span class="c-green">'rapport_erreur
         )}
 
       </div>
-      
-      
+
+
       <div className="lesson-footer-nav" style={{ display: 'flex', justifyContent: 'space-between', marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid var(--border-color)' }}>
-        <button 
+        <button
           className="btn btn-secondary"
           onClick={() => {
             const idx = tabs.findIndex(t => t.id === activeTab);
@@ -930,14 +936,14 @@ erreurs.<span class="c-blue">to_csv</span>(<span class="c-green">'rapport_erreur
           Précédent
         </button>
         {activeTab === 's6' ? (
-          <button 
+          <button
             className="btn btn-primary"
             onClick={() => setActiveTab('s7')}
           >
             Passer le quiz <ChevronRight size={18} style={{ marginLeft: '8px' }} />
           </button>
         ) : activeTab === 's7' ? (
-          <button 
+          <button
             className="btn btn-primary"
             onClick={() => {
               if (!quizSubmitted) {
@@ -956,7 +962,7 @@ erreurs.<span class="c-blue">to_csv</span>(<span class="c-green">'rapport_erreur
             {quizSubmitted ? "Quiz terminé" : "Terminer et soumettre le quiz"}
           </button>
         ) : (
-          <button 
+          <button
             className="btn btn-primary"
             onClick={() => {
               const idx = tabs.findIndex(t => t.id === activeTab);
