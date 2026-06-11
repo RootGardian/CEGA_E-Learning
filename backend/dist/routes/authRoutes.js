@@ -7,6 +7,8 @@ const router = (0, express_1.Router)();
 router.post('/register', authController_1.register);
 router.post('/login', authController_1.login);
 router.post('/logout', authController_1.logout);
+// Global public settings (e.g. price)
+router.get('/public/settings', authController_1.getPublicSettings);
 // Protected routes for 2FA setup
 router.post('/2fa/enable', authMiddleware_1.protect, authController_1.enable2FA);
 router.post('/2fa/verify', authMiddleware_1.protect, authController_1.verify2FA);

@@ -28,3 +28,13 @@ export const requireRole = (role: string) => {
     }
   };
 };
+
+export const restrictTo = (...roles: string[]) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if ((req as any).user && roles.includes((req as any).user.role)) {
+      next();
+    } else {
+      res.status(403).json({ message: 'Access denied: You do not have permission to perform this action' });
+    }
+  };
+};

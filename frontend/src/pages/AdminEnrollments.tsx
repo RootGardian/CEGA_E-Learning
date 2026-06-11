@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Download } from 'lucide-react';
+import { Download, FileText } from 'lucide-react';
+import { exportToCSV, exportToPDF } from '../utils/exportUtils';
 import { usePopup } from '../contexts/PopupContext';
 
 const AdminEnrollments: React.FC = () => {
@@ -27,36 +28,33 @@ const AdminEnrollments: React.FC = () => {
       showAlert("Aucune donnée à exporter.", 'warning');
       return;
     }
+    const exportData = enrollments.map(txn => ({
+      "Date": new Date(txn.createdAt).toLocaleDateString('fr-FR'),
+      "Étudiant": txn.Etudiant ? `${txn.Etudiant.firstName} ${txn.Etudiant.lastName}` : 'Inconnu',
+      "Email": txn.Etudiant?.email || '',
+      "Département": txn.Etudiant?.department || '',
+      "Montant": txn.amount,
+      "Devise": txn.currency,
+      "Statut": txn.status,
+      "Réf Stripe": txn.stripePaymentIntentId || ''
+    }));
+    exportToCSV(exportData, `inscriptions_${new Date().toISOString().split('T')[0]}`);
+  };
 
-    const headers = ['Date', 'Étudiant', 'Email', 'Département', 'Montant', 'Devise', 'Statut', 'Réf Stripe'];
-    
-    const csvRows = enrollments.map(txn => {
-      const date = new Date(txn.createdAt).toLocaleDateString('fr-FR');
-      const studentName = txn.Etudiant ? `${txn.Etudiant.firstName} ${txn.Etudiant.lastName}` : 'Inconnu';
-      const email = txn.Etudiant?.email || '';
-      const dept = txn.Etudiant?.department || '';
-      const amount = txn.amount;
-      const currency = txn.currency;
-      const status = txn.status;
-      const stripeRef = txn.stripePaymentIntentId || '';
-
-      return [date, studentName, email, dept, amount, currency, status, stripeRef]
-        .map(field => `"${String(field).replace(/"/g, '""')}"`)
-        .join(';');
-    });
-
-    const csvContent = [headers.join(';'), ...csvRows].join('\n');
-    
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `inscriptions_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleExportPDF = () => {
+    if (enrollments.length === 0) {
+      showAlert("Aucune donnée à exporter.", 'warning');
+      return;
+    }
+    const headers = ["Date", "Étudiant", "Email", "Montant", "Statut"];
+    const exportData = enrollments.map(txn => [
+      new Date(txn.createdAt).toLocaleDateString('fr-FR'),
+      txn.Etudiant ? `${txn.Etudiant.firstName} ${txn.Etudiant.lastName}` : 'Inconnu',
+      txn.Etudiant?.email || '',
+      `${txn.amount} ${txn.currency}`,
+      txn.status
+    ]);
+    exportToPDF(headers, exportData, `inscriptions_${new Date().toISOString().split('T')[0]}`, 'Transactions & Inscriptions');
   };
 
   const getStatusBadge = (status: string) => {
@@ -77,7 +75,10 @@ const AdminEnrollments: React.FC = () => {
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
           <button className="btn btn-secondary" onClick={handleExportCSV} style={{ width: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Download size={18} /> Exporter
+            <Download size={18} /> CSV
+          </button>
+          <button className="btn btn-secondary" onClick={handleExportPDF} style={{ width: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'var(--accent-primary)', color: 'white', borderColor: 'var(--accent-primary)' }}>
+            <FileText size={18} /> PDF
           </button>
         </div>
       </div>

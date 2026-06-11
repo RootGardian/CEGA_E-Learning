@@ -8,7 +8,9 @@ class Transaction extends Model {
   declare amount: number;
   declare currency: string;
   declare status: 'succeeded' | 'failed' | 'pending';
-  declare stripePaymentIntentId: string;
+  declare paymentMethod: 'stripe' | 'cinetpay';
+  declare stripePaymentIntentId: string | null;
+  declare cinetpayTransactionId: string | null;
   declare description: string | null;
 
   // timestamps!
@@ -45,9 +47,18 @@ Transaction.init(
       allowNull: false,
       defaultValue: 'pending',
     },
-    stripePaymentIntentId: {
+    paymentMethod: {
       type: DataTypes.STRING,
       allowNull: false,
+      defaultValue: 'stripe',
+    },
+    stripePaymentIntentId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    cinetpayTransactionId: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     description: {
       type: DataTypes.STRING,

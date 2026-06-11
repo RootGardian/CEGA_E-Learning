@@ -22,6 +22,18 @@ interface Course {
   upcomingEvaluation?: boolean;
   isLocked?: boolean;
   isUnlocked?: boolean;
+  completedLessonsCount?: number;
+  totalLessonsCount?: number;
+}
+
+interface Evaluation {
+  id: number;
+  title: string;
+  type: string;
+  date: string;
+  duration: string | null;
+  course?: { id: number; title: string };
+  studentGrade?: { score: number | null };
 }
 
 
@@ -32,6 +44,7 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
 
   const [courses, setCourses] = useState<Course[]>([]);
+  const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -56,7 +69,17 @@ const Dashboard: React.FC = () => {
       }
     };
 
+    const fetchEvaluations = async () => {
+      try {
+        const evalsRes = await axios.get('/api/evaluations', { withCredentials: true });
+        setEvaluations(evalsRes.data);
+      } catch (err) {
+        console.error('Erreur de chargement evals:', err);
+      }
+    };
+
     fetchCourses();
+    fetchEvaluations();
 
     socket.on('course_updated', () => {
       fetchCourses();
@@ -79,7 +102,21 @@ const Dashboard: React.FC = () => {
   const myCourses = courses.filter(c => c.department === user.department || c.department === 'geosciences' || c.department === 'all');
   const isCourseBlocked = (course: Course) => Boolean(course.isLocked || course.isUnlocked === false);
   const lastViewedCourses = myCourses.filter(c => c.lastViewed);
-  const upcomingEvals = myCourses.filter(c => c.upcomingEvaluation);
+  
+  // Upcoming evaluations: pending (no grade)
+  const upcomingEvaluations = evaluations
+    .filter(ev => !ev.studentGrade)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  
+  const totalCompletedLessons = myCourses.reduce((sum, c) => sum + (c.completedLessonsCount || 0), 0);
+  
+  const studyMinutes = user.studyTime || 0;
+  const studyHours = Math.floor(studyMinutes / 60);
+  const studyRemainingMinutes = studyMinutes % 60;
+  const studyTimeString = studyHours > 0 
+    ? `${studyHours}h${studyRemainingMinutes > 0 ? ' ' + studyRemainingMinutes + 'm' : ''}`
+    : `${studyMinutes}m`;
+
 
   return (
     <div className="dashboard-content animate-fade-in">
@@ -105,18 +142,18 @@ const Dashboard: React.FC = () => {
               <Clock size={24} />
             </div>
             <div>
-              <h3 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.2rem' }}>12h</h3>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Temps d'étude ce mois</p>
+              <h3 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.2rem' }}>{studyTimeString}</h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Temps passé sur la plateforme</p>
             </div>
           </div>
 
           <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-            <div style={{ padding: '1rem', borderRadius: '0', backgroundColor: 'transparent', border: '1px solid var(--border-color)', color: 'var(--error)' }}>
+            <div style={{ padding: '1rem', borderRadius: '0', backgroundColor: 'transparent', border: '1px solid var(--border-color)', color: 'var(--success)' }}>
               <Award size={24} />
             </div>
             <div>
-              <h3 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.2rem' }}>{upcomingEvals.length}</h3>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Évaluations à venir</p>
+              <h3 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.2rem' }}>{totalCompletedLessons}</h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Séances terminées</p>
             </div>
           </div>
         </div>
@@ -205,22 +242,26 @@ const Dashboard: React.FC = () => {
             {/* Prochaines évaluations */}
             <div className="glass-panel" style={{ padding: '1.5rem' }}>
               <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--text-primary)' }}>Prochaines Évaluations</h3>
-              {upcomingEvals.length > 0 ? (
-                <ul style={{ listStyle: 'none', padding: 0 }}>
-                  {upcomingEvals.map(evalCourse => (
-                    <li key={evalCourse.id} style={{ display: 'flex', alignItems: 'center', gap: '1rem', paddingBottom: '1rem', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)' }}>
-                      <div style={{ padding: '0.6rem', backgroundColor: 'transparent', border: '1px solid var(--border-color)', color: 'var(--error)', borderRadius: '0' }}>
-                        <Award size={20} />
-                      </div>
-                      <div>
-                        <h4 style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>QCM - {evalCourse.title}</h4>
-                        <span style={{ fontSize: '0.8rem', color: 'var(--error)', fontWeight: 500 }}>Dans 3 jours</span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
+              {upcomingEvaluations.length === 0 ? (
                 <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Aucune évaluation prévue prochainement.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {upcomingEvaluations.slice(0, 3).map(ev => (
+                    <div key={ev.id} style={{ padding: '1rem', backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
+                      <h4 style={{ fontSize: '0.95rem', marginBottom: '0.25rem', color: 'var(--text-primary)' }}>{ev.title}</h4>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+                        {new Date(ev.date).toLocaleDateString('fr-FR')} à {new Date(ev.date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                      <button 
+                        onClick={() => navigate('/evaluations')} 
+                        className="btn btn-secondary" 
+                        style={{ width: '100%', padding: '0.5rem', fontSize: '0.85rem' }}
+                      >
+                        Voir les détails
+                      </button>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
 

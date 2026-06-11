@@ -10,6 +10,8 @@ import courseRoutes from './routes/courseRoutes';
 import notificationRoutes from './routes/notificationRoutes';
 import teacherRoutes from './routes/teacherRoutes';
 import adminRoutes from './routes/adminRoutes';
+import evaluationRoutes from './routes/evaluationRoutes';
+import examRoutes from './routes/examRoutes';
 import { stripeWebhook } from './controllers/paymentController';
 
 // Models import to ensure they are registered with Sequelize
@@ -24,6 +26,8 @@ import './models/CourseAccess';
 import './models/User';
 import './models/SystemSetting';
 import './models/StudentProgress';
+import './models/Evaluation';
+import './models/Grade';
 import { initSocket } from './utils/socket';
 
 dotenv.config();
@@ -52,6 +56,8 @@ app.use('/api/courses', courseRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/teacher', teacherRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/evaluations', evaluationRoutes);
+app.use('/api/evaluations', examRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'CEGA E-Learning API is running' });

@@ -435,3 +435,28 @@ export const toggleFormateurBlock = async (req: Request, res: Response): Promise
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+// ==========================================
+// GRADES (Toutes les notes pour l'admin)
+// ==========================================
+
+export const getAllGrades = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const Grade = require('../models/Grade').default;
+    const Etudiant = require('../models/Etudiant').default;
+    const Evaluation = require('../models/Evaluation').default;
+
+    const grades = await Grade.findAll({
+      include: [
+        { model: Etudiant, as: 'etudiant', attributes: ['id', 'firstName', 'lastName', 'email', 'department'] },
+        { model: Evaluation, as: 'evaluation', attributes: ['id', 'title'] }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    res.status(200).json(grades);
+  } catch (error) {
+    console.error('Error fetching all grades:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};

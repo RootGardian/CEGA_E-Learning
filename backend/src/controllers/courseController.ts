@@ -62,7 +62,9 @@ export const getCourses = async (req: Request, res: Response): Promise<void> => 
       return {
         ...courseJson,
         isUnlocked,
-        progress
+        progress,
+        completedLessonsCount: completedLessons,
+        totalLessonsCount: totalLessons
       };
     });
 

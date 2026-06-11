@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, login, logout, enable2FA, verify2FA, forgotPassword, resetPassword, getMe, updateProfile, updatePassword, getPublicSettings } from '../controllers/authController';
+import { register, login, logout, enable2FA, verify2FA, forgotPassword, resetPassword, getMe, updateProfile, updatePassword, getPublicSettings, trackTime } from '../controllers/authController';
 import { protect } from '../middlewares/authMiddleware';
 
 const router = Router();
@@ -23,5 +23,6 @@ router.post('/reset-password/:token', resetPassword);
 router.get('/me', protect, getMe);
 router.put('/me', protect, updateProfile);
 router.put('/password', protect, updatePassword);
+router.post('/track-time', protect, trackTime);
 
 export default router;

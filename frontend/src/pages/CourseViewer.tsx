@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ChevronDown, ChevronRight, PlayCircle, BookOpen, FileText, CheckCircle, X, ArrowLeft, List, Terminal, Cpu, Layers, Milestone, Code } from 'lucide-react';
+import { ChevronRight, PlayCircle, BookOpen, CheckCircle, X, ArrowLeft, List, Terminal, Cpu, Layers, Milestone, Code } from 'lucide-react';
 import socket from '../utils/socket';
 import { usePopup } from '../contexts/PopupContext';
 import LessonIA_Geo_S1 from '../components/LessonIA_Geo_S1';
@@ -262,9 +262,11 @@ const CourseViewer: React.FC = () => {
             <button 
               onClick={() => navigate(userRole === 'enseignant' ? '/teacher/dashboard' : '/dashboard')} 
               className="hidden-mobile"
-              style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: '1rem', padding: 0, display: 'flex', alignItems: 'center', fontSize: '0.9rem' }}
+              style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: '1rem', padding: 0, display: 'flex', alignItems: 'center', fontSize: '0.9rem', gap: '0.5rem', fontWeight: 500, transition: 'color 0.2s ease' }}
+              onMouseOver={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+              onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
             >
-              ← Retour au tableau de bord
+              <ArrowLeft size={16} /> Retour au tableau de bord
             </button>
             <h2 style={{ fontSize: '1.25rem', color: 'var(--text-primary)', lineHeight: 1.4 }}>{course.title}</h2>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>{course.volumeHoraire}</p>

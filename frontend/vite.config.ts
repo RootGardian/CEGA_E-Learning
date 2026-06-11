@@ -18,16 +18,17 @@ export default defineConfig({
         theme_color: '#F8FAFC',
         background_color: '#F8FAFC',
         display: 'standalone',
+        start_url: '/',
         icons: [
           {
-            src: '/logo1_cega.jpeg',
+            src: '/icons/icon-192x192.png',
             sizes: '192x192',
-            type: 'image/jpeg'
+            type: 'image/png'
           },
           {
-            src: '/logo1_cega.jpeg',
+            src: '/icons/logo-512x512.png',
             sizes: '512x512',
-            type: 'image/jpeg',
+            type: 'image/png',
             purpose: 'any maskable'
           }
         ]
@@ -38,12 +39,12 @@ export default defineConfig({
     host: true, // Listen on all network interfaces
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://127.0.0.1:5000',
         changeOrigin: true,
         secure: false,
       },
       '/socket.io': {
-        target: 'ws://localhost:5000',
+        target: 'ws://127.0.0.1:5000',
         changeOrigin: true,
         ws: true,
       }

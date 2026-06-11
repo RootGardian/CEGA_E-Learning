@@ -21,6 +21,7 @@ class Etudiant extends Model {
   declare accessExpirationDate: Date | null;
   declare notificationPreferences: any;
   declare is_active: boolean;
+  declare studyTime: number;
 
   // timestamps!
   declare readonly createdAt: Date;
@@ -115,6 +116,11 @@ Etudiant.init(
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: true,
+    },
+    studyTime: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
     },
   },
   {

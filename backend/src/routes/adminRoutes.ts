@@ -19,7 +19,8 @@ import {
   assignCourseToFormateur,
   unassignCourseFromFormateur,
   toggleStudentBlock,
-  toggleFormateurBlock
+  toggleFormateurBlock,
+  getAllGrades
 } from '../controllers/adminController';
 
 const router = Router();
@@ -52,5 +53,8 @@ router.get('/courses', getCourses);
 router.get('/formateurs/:id/courses', getFormateurCourses);
 router.post('/formateurs/assign-course', assignCourseToFormateur);
 router.post('/formateurs/unassign-course', unassignCourseFromFormateur);
+
+// Notes / Grades
+router.get('/grades', getAllGrades);
 
 export default router;

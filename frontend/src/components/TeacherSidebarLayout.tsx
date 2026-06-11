@@ -10,7 +10,8 @@ import {
   Menu,
   X,
   User,
-  Settings
+  Settings,
+  Calendar
 } from 'lucide-react';
 import { getDeptName } from '../utils/departments';
 import socket from '../utils/socket';
@@ -169,6 +170,16 @@ const TeacherSidebarLayout: React.FC = () => {
             <li>
               <NavLink to="/teacher/access" style={navLinkStyle} onClick={() => setIsSidebarOpen(false)}>
                 <ShieldAlert size={20} style={{ marginRight: '0.75rem' }} /> Contrôle d'Accès
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/teacher/evaluations" style={navLinkStyle} onClick={() => setIsSidebarOpen(false)}>
+                <Calendar size={20} style={{ marginRight: '0.75rem' }} /> Évaluations
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/teacher/alerts" style={navLinkStyle} onClick={() => setIsSidebarOpen(false)}>
+                <ShieldAlert size={20} style={{ marginRight: '0.75rem', color: '#ef4444' }} /> Alertes
               </NavLink>
             </li>
           </ul>

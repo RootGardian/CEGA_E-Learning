@@ -6,7 +6,7 @@ import axios from 'axios';
 
 const TeacherDashboard: React.FC = () => {
   const { user } = useOutletContext<{ user: TeacherProfile }>();
-  const [stats, setStats] = useState({ courses: '-', students: '-' });
+  const [stats, setStats] = useState<{ courses: string | number; students: string | number; alerts: string | number; recentActions?: { id: string; type: string; title: string; description: string; date: string }[] }>({ courses: '-', students: '-', alerts: '-' });
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -58,14 +58,32 @@ const TeacherDashboard: React.FC = () => {
           </div>
           <div>
             <h3 style={{ color: 'var(--text-secondary)', fontSize: '1rem', marginBottom: '0.5rem', fontWeight: 500 }}>Alertes</h3>
-            <p style={{ color: 'var(--text-primary)', fontSize: '2rem', fontWeight: 700, margin: 0 }}>0</p>
+            <p style={{ color: 'var(--text-primary)', fontSize: '2rem', fontWeight: 700, margin: 0 }}>{stats.alerts}</p>
           </div>
         </div>
       </div>
 
       <div className="glass-panel" style={{ padding: '2rem' }}>
         <h2 style={{ fontSize: '1.25rem', color: 'var(--text-primary)', marginBottom: '1.5rem' }}>Dernières Actions</h2>
-        <p style={{ color: 'var(--text-secondary)' }}>Aucune action récente.</p>
+        
+        {stats.recentActions && stats.recentActions.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {stats.recentActions.map(action => (
+              <div key={action.id} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', backgroundColor: 'var(--bg-secondary)', borderRadius: '8px', borderLeft: `4px solid ${action.type === 'alert' ? 'var(--error)' : 'var(--accent-primary)'}` }}>
+                {action.type === 'alert' ? <ShieldAlert size={20} color="var(--error)" /> : <BookOpen size={20} color="var(--accent-primary)" />}
+                <div>
+                  <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1rem' }}>{action.title}</h4>
+                  <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{action.description}</p>
+                </div>
+                <div style={{ marginLeft: 'auto', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                  {new Date(action.date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p style={{ color: 'var(--text-secondary)' }}>Aucune action récente.</p>
+        )}
       </div>
     </div>
   );

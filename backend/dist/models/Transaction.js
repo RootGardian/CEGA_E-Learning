@@ -36,9 +36,18 @@ Transaction.init({
         allowNull: false,
         defaultValue: 'pending',
     },
-    stripePaymentIntentId: {
+    paymentMethod: {
         type: sequelize_1.DataTypes.STRING,
         allowNull: false,
+        defaultValue: 'stripe',
+    },
+    stripePaymentIntentId: {
+        type: sequelize_1.DataTypes.STRING,
+        allowNull: true,
+    },
+    cinetpayTransactionId: {
+        type: sequelize_1.DataTypes.STRING,
+        allowNull: true,
     },
     description: {
         type: sequelize_1.DataTypes.STRING,

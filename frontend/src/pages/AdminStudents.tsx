@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Download, Edit2, CheckCircle, XCircle, Trash2, MoreVertical } from 'lucide-react';
+import { Download, Edit2, CheckCircle, XCircle, Trash2, MoreVertical, FileText } from 'lucide-react';
+import { exportToCSV, exportToPDF } from '../utils/exportUtils';
 import { usePopup } from '../contexts/PopupContext';
 
 const AdminStudents: React.FC = () => {
@@ -121,34 +122,32 @@ const AdminStudents: React.FC = () => {
       showAlert("Aucune donnée à exporter.", 'warning');
       return;
     }
+    const exportData = students.map(s => ({
+      "Nom": s.lastName,
+      "Prénom": s.firstName,
+      "Email": s.email,
+      "Département": s.department,
+      "Statut d'Accès": s.subscriptionStatus,
+      "Expiration": s.accessExpirationDate ? new Date(s.accessExpirationDate).toLocaleDateString('fr-FR') : '-'
+    }));
+    exportToCSV(exportData, `etudiants_${new Date().toISOString().split('T')[0]}`);
+  };
 
-    const headers = ['Nom', 'Prénom', 'Email', 'Département', 'Statut', 'Expiration'];
-    
-    const csvRows = students.map(student => {
-      const nom = student.lastName;
-      const prenom = student.firstName;
-      const email = student.email;
-      const dept = student.department;
-      const status = student.subscriptionStatus;
-      const exp = student.accessExpirationDate ? new Date(student.accessExpirationDate).toLocaleDateString('fr-FR') : '';
-
-      return [nom, prenom, email, dept, status, exp]
-        .map(field => `"${String(field || '').replace(/"/g, '""')}"`)
-        .join(';');
-    });
-
-    const csvContent = [headers.join(';'), ...csvRows].join('\n');
-    
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `etudiants_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleExportPDF = () => {
+    if (students.length === 0) {
+      showAlert("Aucune donnée à exporter.", 'warning');
+      return;
+    }
+    const headers = ["Nom", "Prénom", "Email", "Département", "Statut d'Accès", "Expiration"];
+    const exportData = students.map(s => [
+      s.lastName,
+      s.firstName,
+      s.email,
+      s.department,
+      s.subscriptionStatus,
+      s.accessExpirationDate ? new Date(s.accessExpirationDate).toLocaleDateString('fr-FR') : '-'
+    ]);
+    exportToPDF(headers, exportData, `etudiants_${new Date().toISOString().split('T')[0]}`, 'Liste des Étudiants');
   };
 
   return (
@@ -160,7 +159,10 @@ const AdminStudents: React.FC = () => {
         </div>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
           <button className="btn btn-secondary" onClick={handleExportCSV} style={{ width: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Download size={18} /> Exporter
+            <Download size={18} /> CSV
+          </button>
+          <button className="btn btn-secondary" onClick={handleExportPDF} style={{ width: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'var(--accent-primary)', color: 'white', borderColor: 'var(--accent-primary)' }}>
+            <FileText size={18} /> PDF
           </button>
           <button className="btn btn-primary" style={{ width: 'auto' }} onClick={() => setShowAddModal(true)}>+ Nouvel Étudiant</button>
         </div>

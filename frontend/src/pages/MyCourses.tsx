@@ -21,6 +21,8 @@ const MyCourses: React.FC = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterDept, setFilterDept] = useState('all');
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -54,8 +56,11 @@ const MyCourses: React.FC = () => {
   }, [user.department]);
 
   const filteredCourses = courses.filter(c => 
-    c.title.toLowerCase().includes(searchQuery.toLowerCase())
+    c.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
+    (filterDept === 'all' || c.department === filterDept)
   );
+
+  const availableDepts = Array.from(new Set(courses.map(c => c.department)));
   const isCourseBlocked = (course: Course) => {
     if ((user as any).role === 'enseignant') return false;
     return Boolean(course.isLocked || course.isUnlocked === false);
@@ -89,9 +94,34 @@ const MyCourses: React.FC = () => {
             }}
           />
         </div>
-        <button className="btn btn-secondary" style={{ width: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Filter size={18} /> Filtrer
-        </button>
+        <div style={{ position: 'relative' }}>
+          <button 
+            className="btn btn-secondary" 
+            onClick={() => setShowFilterMenu(!showFilterMenu)}
+            style={{ width: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Filter size={18} /> Filtrer {filterDept !== 'all' && <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--accent-primary)', marginLeft: '4px' }}></span>}
+          </button>
+          
+          {showFilterMenu && (
+            <div className="glass-panel animate-fade-in" style={{ position: 'absolute', top: '100%', right: 0, marginTop: '0.5rem', minWidth: '220px', zIndex: 10, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              <button 
+                onClick={() => { setFilterDept('all'); setShowFilterMenu(false); }} 
+                style={{ padding: '0.75rem 1rem', background: filterDept === 'all' ? 'rgba(16, 185, 129, 0.1)' : 'none', border: 'none', borderBottom: '1px solid var(--border-color)', color: filterDept === 'all' ? 'var(--accent-primary)' : 'var(--text-primary)', cursor: 'pointer', textAlign: 'left', width: '100%', fontWeight: filterDept === 'all' ? 600 : 400 }}
+              >
+                Tous les départements
+              </button>
+              {availableDepts.map((dept, idx) => (
+                <button 
+                  key={dept}
+                  onClick={() => { setFilterDept(dept); setShowFilterMenu(false); }} 
+                  style={{ padding: '0.75rem 1rem', background: filterDept === dept ? 'rgba(16, 185, 129, 0.1)' : 'none', border: 'none', borderBottom: idx === availableDepts.length - 1 ? 'none' : '1px solid var(--border-color)', color: filterDept === dept ? 'var(--accent-primary)' : 'var(--text-primary)', cursor: 'pointer', textAlign: 'left', width: '100%', fontWeight: filterDept === dept ? 600 : 400 }}
+                >
+                  {getDeptName(dept)}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {loading ? (

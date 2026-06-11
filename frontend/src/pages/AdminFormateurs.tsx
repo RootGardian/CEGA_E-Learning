@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Download, Edit2, Trash2, MoreVertical, BookOpen, X } from 'lucide-react';
+import { Plus, Download, Edit2, Trash2, MoreVertical, BookOpen, X, FileText } from 'lucide-react';
+import { exportToCSV, exportToPDF } from '../utils/exportUtils';
 import { usePopup } from '../contexts/PopupContext';
 
 const AdminFormateurs: React.FC = () => {
@@ -145,18 +146,27 @@ const AdminFormateurs: React.FC = () => {
 
   const handleExportCSV = () => {
     if (formateurs.length === 0) { showAlert("Aucune donnée à exporter.", 'warning'); return; }
-    const headers = ['Prénom', 'Nom', 'Email', 'Département'];
-    const csvRows = formateurs.map(f => [f.firstName, f.lastName, f.email, f.department].map(field => `"${String(field || '').replace(/"/g, '""')}"`).join(';'));
-    const csvContent = [headers.join(';'), ...csvRows].join('\n');
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `formateurs_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const exportData = formateurs.map(f => ({
+      "Prénom": f.firstName,
+      "Nom": f.lastName,
+      "Email": f.email,
+      "Département": getDeptLabel(f.department),
+      "Statut": f.is_active === false ? "Bloqué" : "Actif"
+    }));
+    exportToCSV(exportData, `formateurs_${new Date().toISOString().split('T')[0]}`);
+  };
+
+  const handleExportPDF = () => {
+    if (formateurs.length === 0) { showAlert("Aucune donnée à exporter.", 'warning'); return; }
+    const headers = ["Prénom", "Nom", "Email", "Département", "Statut"];
+    const exportData = formateurs.map(f => [
+      f.firstName,
+      f.lastName,
+      f.email,
+      getDeptLabel(f.department),
+      f.is_active === false ? "Bloqué" : "Actif"
+    ]);
+    exportToPDF(headers, exportData, `formateurs_${new Date().toISOString().split('T')[0]}`, 'Liste des Formateurs');
   };
 
   const getDeptLabel = (dept: string) => {
@@ -183,7 +193,10 @@ const AdminFormateurs: React.FC = () => {
         </div>
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           <button className="btn btn-secondary" onClick={handleExportCSV} style={{ width: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Download size={18} /> Exporter
+            <Download size={18} /> CSV
+          </button>
+          <button className="btn btn-secondary" onClick={handleExportPDF} style={{ width: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'var(--accent-primary)', color: 'white', borderColor: 'var(--accent-primary)' }}>
+            <FileText size={18} /> PDF
           </button>
           <button className="btn btn-primary" onClick={() => setShowAddModal(true)} style={{ width: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Plus size={18} /> Ajouter

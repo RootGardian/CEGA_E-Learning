@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updatePassword = exports.updateProfile = exports.getMe = exports.resetPassword = exports.forgotPassword = exports.verify2FA = exports.enable2FA = exports.logout = exports.login = exports.register = void 0;
+exports.getPublicSettings = exports.updatePassword = exports.updateProfile = exports.getMe = exports.resetPassword = exports.forgotPassword = exports.verify2FA = exports.enable2FA = exports.logout = exports.login = exports.register = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const speakeasy_1 = __importDefault(require("speakeasy"));
 const qrcode_1 = __importDefault(require("qrcode"));
@@ -11,7 +11,10 @@ const crypto_1 = __importDefault(require("crypto"));
 const Etudiant_1 = __importDefault(require("../models/Etudiant"));
 const auth_1 = require("../utils/auth");
 const email_1 = require("../utils/email");
+const emailTemplates_1 = require("../utils/emailTemplates");
 const Intervenant_1 = __importDefault(require("../models/Intervenant"));
+const User_1 = __importDefault(require("../models/User"));
+const SystemSetting_1 = __importDefault(require("../models/SystemSetting"));
 const generateToken = (userId, role = 'etudiant') => {
     return jsonwebtoken_1.default.sign({ id: userId, role }, process.env.JWT_SECRET, {
         expiresIn: '1d',
@@ -33,8 +36,10 @@ const register = async (req, res) => {
             email,
             password: hashedPassword,
         });
-        // Optional: Send welcome email
-        await (0, email_1.sendEmail)(email, 'Welcome to CEGA E-Learning', 'Thank you for registering on our platform!');
+        // Send professional welcome email
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const welcome = (0, emailTemplates_1.welcomeEmail)(firstName, `${frontendUrl}/login`);
+        await (0, email_1.sendEmail)(email, welcome.subject, welcome.text, welcome.html);
         const token = generateToken(user.id);
         res.cookie('token', token, {
             httpOnly: true,
@@ -61,17 +66,33 @@ const login = async (req, res) => {
                 role = 'enseignant';
             }
             else {
-                res.status(401).json({ message: 'Invalid credentials' });
-                return;
+                user = await User_1.default.findOne({ where: { email } });
+                if (user) {
+                    if (user.role === 'directeur_formation') {
+                        role = 'admin';
+                    }
+                    else {
+                        role = user.role;
+                    }
+                }
+                else {
+                    res.status(401).json({ message: 'Adresse email introuvable.' });
+                    return;
+                }
             }
         }
-        // Since we have existing users, we must handle passwords with care.
-        // If comparePassword fails and we suspect they are an old user, we could have a fallback strategy here.
-        // For now, we assume the pepper logic works (e.g. if we just added a pepper, old hashes won't match,
-        // so in a real scenario you'd need to rehash or handle gracefully).
-        const isMatch = await (0, auth_1.comparePassword)(password, user.password);
+        // Handle password depending on table (password vs password_hash)
+        const storedPassword = user.password || user.password_hash || user.getDataValue?.('password') || user.getDataValue?.('password_hash');
+        console.log(`[DEBUG LOGIN] email=${email}, role=${role}, storedPassword=`, storedPassword ? 'EXISTS' : 'NULL');
+        const isMatch = await (0, auth_1.comparePassword)(password, storedPassword);
+        console.log(`[DEBUG LOGIN] isMatch=${isMatch}`);
         if (!isMatch) {
-            res.status(401).json({ message: 'Invalid credentials' });
+            console.log(`[DEBUG LOGIN] failed matching password`);
+            res.status(401).json({ message: 'Mot de passe incorrect.' });
+            return;
+        }
+        if (user.is_active === false) {
+            res.status(403).json({ message: "Votre compte a été bloqué. Veuillez contacter l'administration de CEGA." });
             return;
         }
         if (user.isTwoFactorEnabled) {
@@ -189,23 +210,8 @@ const forgotPassword = async (req, res) => {
         await user.save();
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
         const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
-        const emailHtml = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-        <h2 style="color: #0f172a;">Réinitialisation de votre mot de passe</h2>
-        <p>Bonjour ${user.firstName || ''},</p>
-        <p>Vous avez demandé la réinitialisation de votre mot de passe pour votre compte CEGA E-Learning.</p>
-        <p>Cliquez sur le bouton ci-dessous pour créer un nouveau mot de passe. Ce lien est valide pendant <strong>1 heure</strong>.</p>
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${resetUrl}" style="background-color: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
-            Réinitialiser mon mot de passe
-          </a>
-        </div>
-        <p style="color: #64748b; font-size: 0.9em; border-top: 1px solid #e2e8f0; padding-top: 15px;">
-          Si vous n'avez pas demandé cette réinitialisation, veuillez ignorer cet email. Votre compte est en sécurité.
-        </p>
-      </div>
-    `;
-        const emailSent = await (0, email_1.sendEmail)(email, 'CEGA E-Learning - Réinitialisation du mot de passe', `Pour réinitialiser votre mot de passe, cliquez sur ce lien : ${resetUrl}\nSi vous n'êtes pas à l'origine de cette demande, ignorez cet email.`, emailHtml);
+        const resetEmail = (0, emailTemplates_1.resetPasswordEmail)(user.firstName || '', resetUrl);
+        const emailSent = await (0, email_1.sendEmail)(email, resetEmail.subject, resetEmail.text, resetEmail.html);
         if (!emailSent) {
             // En cas d'échec d'envoi de mail, on efface le token par sécurité
             user.resetPasswordToken = null;
@@ -263,6 +269,11 @@ const getMe = async (req, res) => {
         if (role === 'enseignant') {
             user = await Intervenant_1.default.findByPk(id, {
                 attributes: { exclude: ['password', 'twoFactorSecret'] }
+            });
+        }
+        else if (role === 'admin' || role === 'directeur_formation') {
+            user = await User_1.default.findByPk(id, {
+                attributes: { exclude: ['password_hash', 'twoFactorSecret'] }
             });
         }
         else {
@@ -341,3 +352,25 @@ const updatePassword = async (req, res) => {
     }
 };
 exports.updatePassword = updatePassword;
+const getPublicSettings = async (req, res) => {
+    try {
+        const settings = await SystemSetting_1.default.findAll();
+        const settingsMap = {};
+        settings.forEach(s => {
+            // Expose only safe public settings
+            if (['formationPrice', 'siteName', 'supportEmail'].includes(s.key)) {
+                settingsMap[s.key] = s.value;
+            }
+        });
+        if (!settingsMap['formationPrice'])
+            settingsMap['formationPrice'] = '150000';
+        if (!settingsMap['siteName'])
+            settingsMap['siteName'] = 'CEGA E-Learning';
+        res.status(200).json(settingsMap);
+    }
+    catch (error) {
+        console.error('Error fetching public settings:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+exports.getPublicSettings = getPublicSettings;

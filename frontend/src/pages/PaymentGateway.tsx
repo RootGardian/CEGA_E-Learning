@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { CreditCard, Smartphone, CheckCircle, ArrowRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+
 import axios from 'axios';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
@@ -15,7 +15,7 @@ const PaymentGateway: React.FC = () => {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [formationPrice, setFormationPrice] = useState<number>(150000);
-  const navigate = useNavigate();
+
   const { showAlert } = usePopup();
 
   React.useEffect(() => {
@@ -35,8 +35,8 @@ const PaymentGateway: React.FC = () => {
   const handlePaymentInit = async () => {
     if (!selectedMethod) return;
 
+    setIsLoading(true);
     if (selectedMethod === 'stripe') {
-      setIsLoading(true);
       try {
         // En conditions réelles, on récupère l'email de l'utilisateur connecté ou des props
         const response = await axios.post('/api/payments/create-intent', {
@@ -56,10 +56,30 @@ const PaymentGateway: React.FC = () => {
         setIsLoading(false);
       }
     } else {
-      showAlert('Redirection vers CinetPay (Mobile Money : Orange Money / MTN Momo)...', 'info');
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 2000);
+      try {
+        const response = await axios.post('/api/payments/cinetpay/init', {
+          amount: formationPrice,
+          currency: 'XOF', // CinetPay sandbox usually works better with XOF/XAF for OM
+          description: 'Frais de scolarité CEGA E-Learning',
+          email: 'etudiant@cega.edu', // A remplacer par l'email réel
+          firstName: 'Etudiant',
+          lastName: 'CEGA',
+          phone: '+22500000000' // Numéro factice, CinetPay doc: pour direct_pay non requis, mais bon à avoir
+        }, {
+          withCredentials: true
+        });
+
+        if (response.data && response.data.payment_url) {
+          window.location.href = response.data.payment_url;
+        } else {
+          showAlert('Erreur: Impossible de récupérer le lien de paiement CinetPay', 'error');
+        }
+      } catch (error) {
+        console.error('Erreur lors de la création de la session CinetPay:', error);
+        showAlert('Erreur lors de l\'initialisation du paiement CinetPay', 'error');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 

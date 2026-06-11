@@ -10,7 +10,7 @@ const getNotifications = async (req, res) => {
         const userId = req.user.id;
         const notifications = await Notification_1.default.findAll({
             where: { etudiantId: userId },
-            order: [['createdAt', 'DESC']],
+            order: [['created_at', 'DESC']],
             limit: 50, // On limite aux 50 dernières pour la performance
         });
         res.status(200).json(notifications);

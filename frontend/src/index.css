@@ -37,12 +37,18 @@
   -webkit-tap-highlight-color: transparent; /* PWA touch improvement */
 }
 
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden; /* Lock the body to prevent the header from moving on mobile */
+  margin: 0;
+  padding: 0;
+}
+
 body {
   font-family: 'Inter', sans-serif;
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  min-height: 100vh;
-  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -328,6 +334,9 @@ h1, h2, h3, h4, h5, h6 {
   background-color: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
   z-index: 50;
+  position: sticky;
+  top: 0;
+  flex-shrink: 0;
 }
 
 /* Sidebar Drawer (Mobile) / Fixed Sidebar (Desktop) */
@@ -375,6 +384,8 @@ h1, h2, h3, h4, h5, h6 {
 /* Main Content Area */
 .main-content {
   flex: 1;
+  min-height: 0; /* Fix flexbox content pushing parent height */
+  min-width: 0;
   padding: 1rem; /* Smaller padding for mobile */
   overflow-y: auto;
   overflow-x: hidden;

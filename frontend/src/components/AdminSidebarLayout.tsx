@@ -12,7 +12,8 @@ import {
   User as UserIcon,
   Bell,
   Check,
-  GraduationCap
+  GraduationCap,
+  FileText
 } from 'lucide-react';
 
 export interface AdminProfile {
@@ -212,6 +213,11 @@ const AdminSidebarLayout: React.FC = () => {
             <li>
               <NavLink to="/admin/formateurs" style={navLinkStyle} onClick={() => setIsSidebarOpen(false)}>
                 <GraduationCap size={20} style={{ marginRight: '0.75rem' }} /> Gestion des Formateurs
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/admin/grades" style={navLinkStyle} onClick={() => setIsSidebarOpen(false)}>
+                <FileText size={20} style={{ marginRight: '0.75rem' }} /> Notes & Résultats
               </NavLink>
             </li>
             <li>

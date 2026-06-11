@@ -18,7 +18,83 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
     const courseCount = await Course.count({ where: { department: teacher.department } });
     const studentCount = await Etudiant.count({ where: { department: teacher.department } });
 
-    res.status(200).json({ courses: courseCount, students: studentCount });
+    const Grade = require('../models/Grade').default;
+    const Evaluation = require('../models/Evaluation').default;
+    const { Op } = require('sequelize');
+
+    const alertCount = await Grade.count({
+      where: { 
+        feedback: { [Op.like]: 'FRAUDE D%TECT%E%' } 
+      },
+      include: [
+        { 
+          model: Evaluation,
+          as: 'evaluation',
+          where: { intervenantId: teacher.id },
+          required: true
+        }
+      ]
+    });
+
+    const recentEvals = await Evaluation.findAll({
+      where: { intervenantId: teacher.id },
+      order: [['createdAt', 'DESC']],
+      limit: 3
+    });
+
+    const recentAlerts = await Grade.findAll({
+      where: { 
+        feedback: { [Op.like]: 'FRAUDE D%TECT%E%' } 
+      },
+      include: [
+        { 
+          model: Evaluation,
+          as: 'evaluation',
+          where: { intervenantId: teacher.id },
+          required: true
+        },
+        {
+          model: Etudiant,
+          as: 'etudiant',
+          attributes: ['firstName', 'lastName']
+        }
+      ],
+      order: [['createdAt', 'DESC']],
+      limit: 3
+    });
+
+    let recentActions: any[] = [];
+    
+    recentEvals.forEach((ev: any) => {
+      recentActions.push({
+        id: `ev-${ev.id}`,
+        type: 'evaluation',
+        title: 'Évaluation créée',
+        description: `Vous avez créé l'évaluation "${ev.title}"`,
+        date: ev.createdAt
+      });
+    });
+
+    recentAlerts.forEach((al: any) => {
+      recentActions.push({
+        id: `al-${al.id}`,
+        type: 'alert',
+        title: 'Alerte de fraude',
+        description: `Fraude détectée pour ${al.etudiant?.firstName} ${al.etudiant?.lastName} sur "${al.evaluation?.title}"`,
+        date: al.createdAt
+      });
+    });
+
+    // Sort by date DESC and take top 5
+    recentActions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    recentActions = recentActions.slice(0, 5);
+
+    res.status(200).json({ 
+      courses: courseCount, 
+      students: studentCount, 
+      alerts: alertCount,
+      recentActions 
+    });
   } catch (error) {
     console.error('getDashboardStats error:', error);
     res.status(500).json({ message: 'Server error' });

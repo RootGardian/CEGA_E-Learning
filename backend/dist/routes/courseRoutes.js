@@ -10,4 +10,7 @@ const router = express_1.default.Router();
 router.get('/', authMiddleware_1.protect, courseController_1.getCourses);
 router.get('/lessons/:id', authMiddleware_1.protect, courseController_1.getLesson);
 router.get('/:id', authMiddleware_1.protect, courseController_1.getCourseDetails);
+// Progress routes
+router.get('/:courseId/progress', authMiddleware_1.protect, courseController_1.getStudentProgress);
+router.post('/lessons/:lessonId/progress', authMiddleware_1.protect, courseController_1.saveStudentProgress);
 exports.default = router;

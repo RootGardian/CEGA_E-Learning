@@ -64,6 +64,33 @@ export const initSocket = (httpServer: HTTPServer) => {
     socket.on('disconnect', () => {
       console.log(`User disconnected: ${user.id}`);
     });
+
+    // Relayer un avertissement de fraude niveau 2 à l'enseignant concerné
+    socket.on('fraud_warning', async (data: { reason: string; warning: number; examId: string | number }) => {
+      try {
+        const Evaluation = require('../models/Evaluation').default;
+        const Etudiant = require('../models/Etudiant').default;
+        const evaluation = await Evaluation.findByPk(data.examId);
+        if (!evaluation) return;
+
+        // Récupérer le nom de l'étudiant
+        const student = await Etudiant.findByPk(user.id);
+        const studentName = student ? `${student.firstName} ${student.lastName}` : `Étudiant #${user.id}`;
+
+        // Notifier l'enseignant dans sa room
+        io.to(`user_${evaluation.intervenantId}`).emit('student_fraud_warning', {
+          studentId: user.id,
+          studentName,
+          examId: data.examId,
+          examTitle: evaluation.title,
+          warning: data.warning,
+          reason: data.reason,
+          timestamp: new Date().toISOString()
+        });
+      } catch (err) {
+        console.error('fraud_warning relay error:', err);
+      }
+    });
   });
 
   return io;

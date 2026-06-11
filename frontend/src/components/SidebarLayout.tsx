@@ -32,6 +32,7 @@ export interface UserProfile {
   accessExpirationDate?: string;
   updatedAt?: string;
   role?: string;
+  studyTime?: number;
   notificationPreferences?: {
     inAppAlerts: boolean;
     newCourse: boolean;
@@ -111,6 +112,23 @@ const SidebarLayout: React.FC = () => {
     };
   }, [user, navigate]);
 
+  // Time tracking effect
+  useEffect(() => {
+    if (!user || user.role !== 'etudiant') return;
+
+    // Mise à jour toutes les 10 secondes pour que vous puissiez voir le compteur monter rapidement !
+    const trackTimeInterval = setInterval(async () => {
+      try {
+        await axios.post('/api/auth/track-time', { minutes: 1 }, { withCredentials: true });
+        setUser(prev => prev ? { ...prev, studyTime: (prev.studyTime || 0) + 1 } : prev);
+      } catch (err) {
+        console.error('Erreur track-time:', err);
+      }
+    }, 10000); // 10 secondes au lieu de 60s pour la démo
+
+    return () => clearInterval(trackTimeInterval);
+  }, [user?.id, user?.role]);
+
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   const handleMarkAsRead = async (id: number) => {
@@ -179,7 +197,12 @@ const SidebarLayout: React.FC = () => {
     return (
       <div style={{ position: 'relative' }}>
         <button 
-          onClick={() => setShowNotifications(!showNotifications)}
+          onClick={() => {
+            if (!showNotifications && unreadCount > 0) {
+              handleMarkAllAsRead();
+            }
+            setShowNotifications(!showNotifications);
+          }}
           style={{ background: 'transparent', border: 'none', cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem' }}
         >
           <Bell size={24} color={isMobile ? "var(--text-primary)" : "var(--text-secondary)"} />

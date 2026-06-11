@@ -46,6 +46,11 @@ Intervenant.init({
         type: sequelize_1.DataTypes.TEXT,
         allowNull: true,
     },
+    is_active: {
+        type: sequelize_1.DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true,
+    },
 }, {
     sequelize: db_1.default,
     tableName: 'intervenants',

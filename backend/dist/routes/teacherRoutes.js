@@ -7,6 +7,7 @@ const router = (0, express_1.Router)();
 // Protect all routes and require 'enseignant' role
 router.use(authMiddleware_1.protect);
 router.use((0, authMiddleware_1.requireRole)('enseignant'));
+router.get('/dashboard-stats', teacherController_1.getDashboardStats);
 router.get('/courses', teacherController_1.getTeacherCourses);
 router.get('/courses/:id/students', teacherController_1.getCourseStudents);
 router.post('/courses/:id/unlock-global', teacherController_1.toggleGlobalAccess);

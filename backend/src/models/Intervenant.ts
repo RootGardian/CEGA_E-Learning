@@ -12,6 +12,8 @@ class Intervenant extends Model {
   declare bio: string | null;
   declare profilePicture: string | null;
   declare is_active: boolean;
+  declare resetPasswordToken: string | null;
+  declare resetPasswordExpires: Date | null;
 
   // timestamps!
   declare readonly createdAt: Date;
@@ -62,6 +64,14 @@ Intervenant.init(
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: true,
+    },
+    resetPasswordToken: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    resetPasswordExpires: {
+      type: DataTypes.DATE,
+      allowNull: true,
     },
   },
   {

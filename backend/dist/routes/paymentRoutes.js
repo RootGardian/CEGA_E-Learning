@@ -7,8 +7,12 @@ const express_1 = __importDefault(require("express"));
 const paymentController_1 = require("../controllers/paymentController");
 const authMiddleware_1 = require("../middlewares/authMiddleware");
 const router = express_1.default.Router();
-// Endpoint pour créer une intention de paiement
+// Endpoint pour créer une intention de paiement (Stripe)
 router.post('/create-intent', paymentController_1.createPaymentIntent);
+// Endpoints pour CinetPay
+router.post('/cinetpay/init', paymentController_1.initCinetPayPayment);
+// Le webhook peut être appelé par CinetPay qui n'a pas de token JWT, donc pas de protect
+router.post('/cinetpay/webhook', paymentController_1.cinetpayWebhook);
 // Historique des transactions
 router.get('/history', authMiddleware_1.protect, paymentController_1.getTransactions);
 exports.default = router;

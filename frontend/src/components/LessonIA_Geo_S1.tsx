@@ -4,59 +4,6 @@ import './LessonIA.css';
 import { quizDataS1 } from '../data/quizData_S1';
 import type { QuizQuestion } from '../data/quizData_S1';
 
-const quizData = [
-  {
-    id: 1,
-    question: "1. Une équipe d'exploration veut identifier des zones favorables à la minéralisation en intégrant des données géophysiques, géochimiques et de forages. Quel outil choisir ?",
-    options: [
-      { id: 1, text: "Kriging (géostatistique)", feedback: "Le Kriging est optimal pour l'estimation spatiale de ressources déjà délimitées — pas pour la découverte de nouvelles cibles.", isCorrect: false },
-      { id: 2, text: "IA / Machine Learning", feedback: "Correct ! Le ML est idéal pour ce type de ciblage exploratoire multivarié et non-linéaire. C'est exactement ce que font KoBold Metals et GoldSpot Discoveries.", isCorrect: true },
-      { id: 3, text: "Statistique classique", feedback: "La statistique classique décrit les données mais ignore la dimension spatiale et les relations multivariées complexes.", isCorrect: false },
-      { id: 4, text: "Deep Learning (CNN)", feedback: "Le Deep Learning est optimal pour les données visuelles (images satellite, carottes) — pas pour des données tabulaires géochimiques.", isCorrect: false }
-    ]
-  },
-  {
-    id: 2,
-    question: "2. Un modèle d'IA obtient 99% de précision sur les données d'entraînement mais seulement 62% sur de nouveaux échantillons. De quoi souffre-t-il ?",
-    options: [
-      { id: 1, text: "Sous-apprentissage (underfitting)", feedback: "Le sous-apprentissage se manifeste par de mauvaises performances sur les deux ensembles de données.", isCorrect: false },
-      { id: 2, text: "Sur-apprentissage (overfitting)", feedback: "Correct ! Haute performance sur l'entraînement + mauvaise généralisation = sur-apprentissage (overfitting). Le modèle a mémorisé les données au lieu d'apprendre les patterns généraux.", isCorrect: true },
-      { id: 3, text: "Effet boîte noire", feedback: "L'effet boîte noire décrit l'opacité des décisions du modèle, pas la différence de performance entraînement/test.", isCorrect: false },
-      { id: 4, text: "Biais des données", feedback: "Un biais de données est lié à la représentativité des données d'entraînement, pas à cet écart de performance.", isCorrect: false }
-    ]
-  },
-  {
-    id: 3,
-    question: "3. Vous avez des données géochimiques de 5 000 échantillons sans étiquettes de classe. Vous souhaitez découvrir des groupes naturels d'associations élémentaires. Quel type d'IA ?",
-    options: [
-      { id: 1, text: "Régression", feedback: "La régression prédit une valeur continue (quantité), pas des groupes.", isCorrect: false },
-      { id: 2, text: "Classification supervisée", feedback: "La classification supervisée nécessite des étiquettes connues pour entraîner le modèle — ce que vous n'avez pas ici.", isCorrect: false },
-      { id: 3, text: "Clustering (non-supervisé)", feedback: "Correct ! Le clustering (K-Means, DBSCAN) est un apprentissage non-supervisé qui découvre des groupes similaires sans étiquettes préalables — idéal pour les familles géochimiques.", isCorrect: true },
-      { id: 4, text: "Détection d'anomalies", feedback: "La détection d'anomalies cherche des points inhabituels, pas des groupes cohérents.", isCorrect: false }
-    ]
-  },
-  {
-    id: 4,
-    question: "4. Dans un fichier CSV de forage, la colonne GOLD_G_T est de type 'object' alors qu'elle devrait être numérique. Quelle est la cause la plus probable ?",
-    options: [
-      { id: 1, text: "Problème de connexion réseau lors de l'import", feedback: "Une mauvaise connexion n'affecte pas le type d'une colonne dans un fichier CSV déjà enregistré.", isCorrect: false },
-      { id: 2, text: "Présence de valeurs textuelles comme <0.01 ou NS", feedback: "Correct ! Des valeurs textuelles comme <0.01 (sous le seuil de détection) ou NS (Non Spécifié) forcent pandas à typer toute la colonne en 'object'. C'est un problème classique de données brutes de laboratoire.", isCorrect: true },
-      { id: 3, text: "Trop de valeurs manquantes (NaN)", feedback: "Les valeurs manquantes (NaN) seules ne changent pas le type d'une colonne numérique en object.", isCorrect: false },
-      { id: 4, text: "Lignes dupliquées dans le fichier", feedback: "Les doublons ne modifient pas le type d'une colonne.", isCorrect: false }
-    ]
-  },
-  {
-    id: 5,
-    question: "5. Un collègue vous dit : 'Nous avons entraîné un modèle IA qui prédit les zones minéralisées avec 85% de précision — nous pouvons arrêter les forages de validation.' Quelle est votre réponse ?",
-    options: [
-      { id: 1, text: "D'accord, 85% c'est suffisant pour la certification JORC", feedback: "La certification JORC requiert une validation physique des ressources — un modèle IA seul ne suffit pas réglementairement, et ce n'est pas la réponse complète.", isCorrect: false },
-      { id: 2, text: "Refuser — l'IA n'est pas fiable pour l'exploration", feedback: "Refuser totalement serait une mauvaise compréhension — l'IA peut fortement optimiser et réduire le nombre de forages nécessaires.", isCorrect: false },
-      { id: 3, text: "L'IA optimise le ciblage mais la validation terrain reste indispensable", feedback: "Correct ! L'IA optimise le ciblage et réduit le nombre de forages nécessaires, mais ne les remplace pas. La validation terrain reste indispensable : l'algorithme ne signe pas le rapport.", isCorrect: true },
-      { id: 4, text: "Refaire le modèle jusqu'à obtenir 100%", feedback: "Remettre en question le modèle sans raison précise n'est pas constructif — 85% peut être un excellent résultat selon le contexte.", isCorrect: false }
-    ]
-  }
-];
-
 
 interface LessonProps {
   initialProgress?: any;

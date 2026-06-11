@@ -6,6 +6,7 @@ import crypto from 'crypto';
 import Etudiant from '../models/Etudiant';
 import { hashPassword, comparePassword } from '../utils/auth';
 import { sendEmail } from '../utils/email';
+import { welcomeEmail, resetPasswordEmail } from '../utils/emailTemplates';
 
 import Intervenant from '../models/Intervenant';
 import User from '../models/User';
@@ -37,8 +38,10 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       password: hashedPassword,
     });
 
-    // Optional: Send welcome email
-    await sendEmail(email, 'Welcome to CEGA E-Learning', 'Thank you for registering on our platform!');
+    // Send professional welcome email
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const welcome = welcomeEmail(firstName, `${frontendUrl}/login`);
+    await sendEmail(email, welcome.subject, welcome.text, welcome.html);
 
     const token = generateToken(user.id);
 
@@ -210,9 +213,14 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
   try {
     const { email } = req.body;
 
-    // Pour des raisons de sécurité, on retourne "succès" même si l'email n'existe pas
-    // pour éviter l'énumération des utilisateurs.
-    const user = await Etudiant.findOne({ where: { email } });
+    let user: any = await Etudiant.findOne({ where: { email } });
+    if (!user) {
+      user = await Intervenant.findOne({ where: { email } });
+    }
+    if (!user) {
+      user = await User.findOne({ where: { email } });
+    }
+
     if (!user) {
       res.status(200).json({ message: 'Si cette adresse existe, un email a été envoyé.' });
       return;
@@ -224,47 +232,43 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
     const expireDate = new Date();
     expireDate.setHours(expireDate.getHours() + 1);
 
-    user.resetPasswordToken = resetToken;
-    user.resetPasswordExpires = expireDate;
+    if (user.reset_password_token !== undefined) {
+      user.reset_password_token = resetToken;
+      user.reset_password_expires = expireDate;
+    } else {
+      user.resetPasswordToken = resetToken;
+      user.resetPasswordExpires = expireDate;
+    }
     await user.save();
 
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
 
-    const emailHtml = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-        <h2 style="color: #0f172a;">Réinitialisation de votre mot de passe</h2>
-        <p>Bonjour ${user.firstName || ''},</p>
-        <p>Vous avez demandé la réinitialisation de votre mot de passe pour votre compte CEGA E-Learning.</p>
-        <p>Cliquez sur le bouton ci-dessous pour créer un nouveau mot de passe. Ce lien est valide pendant <strong>1 heure</strong>.</p>
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${resetUrl}" style="background-color: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
-            Réinitialiser mon mot de passe
-          </a>
-        </div>
-        <p style="color: #64748b; font-size: 0.9em; border-top: 1px solid #e2e8f0; padding-top: 15px;">
-          Si vous n'avez pas demandé cette réinitialisation, veuillez ignorer cet email. Votre compte est en sécurité.
-        </p>
-      </div>
-    `;
+    const resetEmail = resetPasswordEmail(user.firstName || user.prenom || '', resetUrl);
 
     const emailSent = await sendEmail(
       email,
-      'CEGA E-Learning - Réinitialisation du mot de passe',
-      `Pour réinitialiser votre mot de passe, cliquez sur ce lien : ${resetUrl}\nSi vous n'êtes pas à l'origine de cette demande, ignorez cet email.`,
-      emailHtml
+      resetEmail.subject,
+      resetEmail.text,
+      resetEmail.html
     );
 
     if (!emailSent) {
       // En cas d'échec d'envoi de mail, on efface le token par sécurité
-      user.resetPasswordToken = null;
-      user.resetPasswordExpires = null;
+      if (user.reset_password_token !== undefined) {
+        user.reset_password_token = null;
+        user.reset_password_expires = null;
+      } else {
+        user.resetPasswordToken = null;
+        user.resetPasswordExpires = null;
+      }
       await user.save();
       res.status(500).json({ message: "Erreur lors de l'envoi de l'email." });
       return;
     }
 
     res.status(200).json({ message: 'Si cette adresse existe, un email a été envoyé.' });
+
   } catch (error) {
     console.error('Forgot password error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -276,20 +280,24 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
     const { token } = req.params;
     const { password } = req.body;
 
-    // Chercher un utilisateur avec ce token ET une date d'expiration dans le futur
-    const user = await Etudiant.findOne({
-      where: {
-        resetPasswordToken: token
-      }
-    });
+    // Chercher un utilisateur avec ce token
+    let user: any = await Etudiant.findOne({ where: { resetPasswordToken: token } });
+    
+    if (!user) {
+      user = await Intervenant.findOne({ where: { resetPasswordToken: token } });
+    }
+    if (!user) {
+      user = await User.findOne({ where: { reset_password_token: token } });
+    }
 
     if (!user) {
       res.status(400).json({ message: 'Le lien est invalide ou a expiré.' });
       return;
     }
 
-    // Vérifier manuellement l'expiration car certains SGBD gèrent mal les comparaisons de dates directes dans le where
-    if (!user.resetPasswordExpires || user.resetPasswordExpires < new Date()) {
+    // Vérifier l'expiration
+    const expires = user.resetPasswordExpires || user.reset_password_expires;
+    if (!expires || expires < new Date()) {
       res.status(400).json({ message: 'Le lien est invalide ou a expiré.' });
       return;
     }
@@ -298,9 +306,16 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
     const hashedPassword = await hashPassword(password);
 
     // Mettre à jour l'utilisateur et effacer le token
-    user.password = hashedPassword;
-    user.resetPasswordToken = null;
-    user.resetPasswordExpires = null;
+    if (user.password_hash !== undefined) {
+      user.password_hash = hashedPassword;
+      user.reset_password_token = null;
+      user.reset_password_expires = null;
+    } else {
+      user.password = hashedPassword;
+      user.resetPasswordToken = null;
+      user.resetPasswordExpires = null;
+    }
+    
     await user.save();
 
     res.status(200).json({ message: 'Votre mot de passe a été réinitialisé avec succès.' });
@@ -313,7 +328,7 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
 export const getMe = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id, role } = (req as any).user;
-    
+
     let user: any;
     if (role === 'enseignant') {
       user = await Intervenant.findByPk(id, {
@@ -410,13 +425,35 @@ export const getPublicSettings = async (req: Request, res: Response): Promise<vo
         settingsMap[s.key] = s.value;
       }
     });
-    
+
     if (!settingsMap['formationPrice']) settingsMap['formationPrice'] = '150000';
     if (!settingsMap['siteName']) settingsMap['siteName'] = 'CEGA E-Learning';
 
     res.status(200).json(settingsMap);
   } catch (error) {
     console.error('Error fetching public settings:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const trackTime = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = (req as any).user?.id;
+    const userRole = (req as any).user?.role;
+    
+    // Only track time for students for now
+    if (userRole === 'etudiant') {
+      const minutes = req.body.minutes || 1;
+      const user = await Etudiant.findByPk(userId);
+      if (user) {
+        user.studyTime = (user.studyTime || 0) + minutes;
+        await user.save();
+      }
+    }
+    
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Track time error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };

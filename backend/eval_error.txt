@@ -1,0 +1,66 @@
+SequelizeDatabaseError: column "title" of relation "evaluations" does not exist\nError
+    at Query.run (C:\Users\alber\Documents\GitHub\CEGA_E_Learning\backend\node_modules\sequelize\src\dialects\postgres\query.js:76:25)
+    at C:\Users\alber\Documents\GitHub\CEGA_E_Learning\backend\node_modules\sequelize\src\sequelize.js:650:28
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async PostgresQueryInterface.insert (C:\Users\alber\Documents\GitHub\CEGA_E_Learning\backend\node_modules\sequelize\src\dialects\abstract\query-interface.js:795:21)
+    at async Evaluation.save (C:\Users\alber\Documents\GitHub\CEGA_E_Learning\backend\node_modules\sequelize\src\model.js:4154:35)
+    at async Evaluation.create (C:\Users\alber\Documents\GitHub\CEGA_E_Learning\backend\node_modules\sequelize\src\model.js:2305:12)
+    at async createEvaluation (C:\Users\alber\Documents\GitHub\CEGA_E_Learning\backend\src\controllers\evaluationController.ts:69:24)\n{
+  "name": "SequelizeDatabaseError",
+  "parent": {
+    "length": 129,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42703",
+    "position": "33",
+    "file": "parse_target.c",
+    "line": "1068",
+    "routine": "checkInsertTargets",
+    "sql": "INSERT INTO \"evaluations\" (\"id\",\"title\",\"type\",\"description\",\"date\",\"duration\",\"courseId\",\"intervenantId\",\"createdAt\",\"updatedAt\") VALUES (DEFAULT,$1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING \"id\",\"title\",\"type\",\"description\",\"date\",\"duration\",\"courseId\",\"intervenantId\",\"createdAt\",\"updatedAt\";",
+    "parameters": [
+      "Partiels mi semestre",
+      "QCM",
+      "",
+      "2026-06-12 10:00:00.000 +00:00",
+      "2H",
+      "1",
+      1,
+      "2026-06-11 00:51:48.190 +00:00",
+      "2026-06-11 00:51:48.190 +00:00"
+    ]
+  },
+  "original": {
+    "length": 129,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42703",
+    "position": "33",
+    "file": "parse_target.c",
+    "line": "1068",
+    "routine": "checkInsertTargets",
+    "sql": "INSERT INTO \"evaluations\" (\"id\",\"title\",\"type\",\"description\",\"date\",\"duration\",\"courseId\",\"intervenantId\",\"createdAt\",\"updatedAt\") VALUES (DEFAULT,$1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING \"id\",\"title\",\"type\",\"description\",\"date\",\"duration\",\"courseId\",\"intervenantId\",\"createdAt\",\"updatedAt\";",
+    "parameters": [
+      "Partiels mi semestre",
+      "QCM",
+      "",
+      "2026-06-12 10:00:00.000 +00:00",
+      "2H",
+      "1",
+      1,
+      "2026-06-11 00:51:48.190 +00:00",
+      "2026-06-11 00:51:48.190 +00:00"
+    ]
+  },
+  "sql": "INSERT INTO \"evaluations\" (\"id\",\"title\",\"type\",\"description\",\"date\",\"duration\",\"courseId\",\"intervenantId\",\"createdAt\",\"updatedAt\") VALUES (DEFAULT,$1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING \"id\",\"title\",\"type\",\"description\",\"date\",\"duration\",\"courseId\",\"intervenantId\",\"createdAt\",\"updatedAt\";",
+  "parameters": [
+    "Partiels mi semestre",
+    "QCM",
+    "",
+    "2026-06-12 10:00:00.000 +00:00",
+    "2H",
+    "1",
+    1,
+    "2026-06-11 00:51:48.190 +00:00",
+    "2026-06-11 00:51:48.190 +00:00"
+  ]
+}
