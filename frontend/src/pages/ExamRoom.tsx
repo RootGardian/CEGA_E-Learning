@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Clock, CheckCircle, ShieldAlert, Play, ArrowRight } from 'lucide-react';
 import { usePopup } from '../contexts/PopupContext';
-import type { QCMQuestion } from '../data/qcmData';
+
 
 interface ExamEvaluation {
   id: number;
@@ -72,7 +72,7 @@ const ExamRoom: React.FC = () => {
   const { showAlert, showConfirm } = usePopup();
 
   const [evaluation, setEvaluation] = useState<ExamEvaluation | null>(null);
-  const [questions, setQuestions] = useState<QCMQuestion[]>([]);
+  const [questions, setQuestions] = useState<any[]>([]);
   const [answers, setAnswers] = useState<Record<number, unknown>>({});
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -117,7 +117,7 @@ const ExamRoom: React.FC = () => {
         setQuestions(res.data.questions);
 
         // Parse duration if it exists
-        if (res.data.evaluation.duration) {
+        if (res.data.evaluation.duration && res.data.evaluation.date) {
           const durStr = res.data.evaluation.duration.toLowerCase();
           let minutes = 60; // default
           if (durStr.includes('h')) {
@@ -129,19 +129,21 @@ const ExamRoom: React.FC = () => {
           } else if (!isNaN(parseInt(durStr))) {
             minutes = parseInt(durStr) * 60;
           }
-          setTimeLeft(minutes * 60);
+
+          const totalSeconds = minutes * 60;
+          const examDate = new Date(res.data.evaluation.date);
+          const now = new Date();
+          const elapsedSeconds = Math.floor((now.getTime() - examDate.getTime()) / 1000);
+          const remainingSeconds = Math.max(0, totalSeconds - elapsedSeconds);
+
+          setTimeLeft(remainingSeconds);
         }
 
         // Initialize answers
         const initialAnswers: Record<number, unknown> = {};
-        res.data.questions.forEach((q: QCMQuestion) => {
-          if (q.type === 'QCM') initialAnswers[q.id] = [];
-          else if (q.type === 'APPARIEMENT' || q.type === 'TEXTE_A_TROUS') initialAnswers[q.id] = {};
-          else if (q.type === 'ORDONNANCEMENT') {
-            // Shuffle initially for sequencing
-            const itemIds = q.content.items?.map(i => i.id) || [];
-            initialAnswers[q.id] = itemIds.sort(() => Math.random() - 0.5);
-          }
+        res.data.questions.forEach((q: any) => {
+          if (q.type === 'QRM') initialAnswers[q.id] = [];
+          else if (q.type === 'COURTE') initialAnswers[q.id] = '';
           else initialAnswers[q.id] = null;
         });
         setAnswers(initialAnswers);
@@ -241,31 +243,7 @@ const ExamRoom: React.FC = () => {
     });
   };
 
-  const handlePairChange = (qId: number, left: string, right: string) => {
-    setAnswers(prev => ({
-      ...prev,
-      [qId]: { ...((prev[qId] as Record<string, string>) || {}), [left]: right }
-    }));
-  };
 
-  const handleBlankChange = (qId: number, blankId: string, value: string) => {
-    setAnswers(prev => ({
-      ...prev,
-      [qId]: { ...((prev[qId] as Record<string, string>) || {}), [blankId]: value }
-    }));
-  };
-
-  const moveItem = (qId: number, index: number, direction: 'up' | 'down') => {
-    setAnswers(prev => {
-      const arr = [...(prev[qId] as string[])];
-      if (direction === 'up' && index > 0) {
-        [arr[index - 1], arr[index]] = [arr[index], arr[index - 1]];
-      } else if (direction === 'down' && index < arr.length - 1) {
-        [arr[index], arr[index + 1]] = [arr[index + 1], arr[index]];
-      }
-      return { ...prev, [qId]: arr };
-    });
-  };
 
   // Soumission
   const handleSubmit = useCallback(async (autoSubmit = false, isFraud = false, fraudReason = '') => {
@@ -492,28 +470,16 @@ const ExamRoom: React.FC = () => {
   };
 
   // Fonction pour vérifier si la question actuelle a été répondue
-  const isQuestionAnswered = (q: QCMQuestion) => {
+  const isQuestionAnswered = (q: any) => {
     const ans = answers[q.id];
-    if (q.type === 'VRAI_FAUX' || q.type === 'QCU') {
+    if (q.type === 'VRAI_FAUX' || q.type === 'QCM') {
       return ans !== undefined && ans !== null;
     }
-    if (q.type === 'QCM') {
+    if (q.type === 'QRM') {
       return Array.isArray(ans) && ans.length > 0;
     }
-    if (q.type === 'APPARIEMENT') {
-      const obj = ans as Record<string, string>;
-      if (!obj) return false;
-      // Vérifier si toutes les clés paires sont remplies
-      return q.content.pairs?.every(p => obj[p.left] && obj[p.left] !== '') || false;
-    }
-    if (q.type === 'TEXTE_A_TROUS') {
-      const obj = ans as Record<string, string>;
-      if (!obj) return false;
-      return Object.keys(q.content.blanks || {}).every(bId => obj[bId] && obj[bId] !== '');
-    }
-    if (q.type === 'ORDONNANCEMENT') {
-      // Par défaut ordonnancement a toujours une valeur initiale
-      return true;
+    if (q.type === 'COURTE') {
+      return typeof ans === 'string' && ans.trim().length > 0;
     }
     return false;
   };
@@ -525,7 +491,7 @@ const ExamRoom: React.FC = () => {
   // --- RENDU INTRO ---
   if (examStatus === 'intro') {
     return (
-      <div style={{ minHeight: '100dvh', backgroundColor: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', padding: '2rem', overflowY: 'auto' }}>
+      <div style={{ height: '100dvh', backgroundColor: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', padding: '2rem', overflowY: 'auto' }}>
         <div className="glass-panel animate-fade-in" style={{ margin: 'auto', maxWidth: '800px', width: '100%', padding: 'clamp(1.5rem, 4vw, 3rem)', backgroundColor: 'var(--bg-secondary)' }}>
           <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 2.2rem)', color: 'var(--text-primary)', marginBottom: '1rem', textAlign: 'center' }}>{evaluation?.title}</h1>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 'clamp(1rem, 3vw, 2.5rem)', flexWrap: 'wrap', marginBottom: '2.5rem', color: 'var(--text-secondary)', fontSize: 'clamp(0.9rem, 3vw, 1.1rem)' }}>
@@ -611,7 +577,7 @@ const ExamRoom: React.FC = () => {
   const isAnswered = q ? isQuestionAnswered(q) : false;
 
   return (
-    <div className="exam-container" style={{ minHeight: '100dvh', backgroundColor: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', userSelect: 'none' }}>
+    <div className="exam-container" style={{ height: '100dvh', backgroundColor: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', userSelect: 'none' }}>
       <style>{`
         @media print {
           body {
@@ -721,7 +687,7 @@ const ExamRoom: React.FC = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', gap: '1rem' }}>
               <h3 style={{ margin: 0, fontSize: 'clamp(1.1rem, 4vw, 1.3rem)', color: 'var(--text-primary)', lineHeight: '1.5' }}>
                 <span style={{ color: 'var(--accent-primary)', marginRight: '0.75rem', fontSize: '1.5rem' }}>Q{currentQuestionIndex + 1}.</span>
-                {q.text}
+                {q.question}
               </h3>
               <span style={{ fontSize: '0.9rem', backgroundColor: 'rgba(255,255,255,0.05)', padding: '0.3rem 0.8rem', borderRadius: '4px', color: 'var(--text-secondary)', whiteSpace: 'nowrap', marginLeft: '1rem' }}>
                 {q.points} pt(s)
@@ -731,112 +697,69 @@ const ExamRoom: React.FC = () => {
             <div style={{ marginTop: '2rem' }}>
               {/* RENDU SELON LE TYPE */}
 
-              {(q.type === 'VRAI_FAUX' || q.type === 'QCU') && q.content.options?.map(opt => (
-                <label key={opt.id} style={{ display: 'block', padding: '1.2rem', border: '1px solid var(--border-color)', borderRadius: '8px', marginBottom: '0.75rem', cursor: 'pointer', backgroundColor: answers[q.id] === opt.id ? 'var(--accent-primary)' : 'var(--bg-primary)', transition: 'all 0.2s' }}>
-                  <input
-                    type="radio"
-                    name={`q-${q.id}`}
-                    value={opt.id}
-                    checked={answers[q.id] === opt.id}
-                    onChange={() => handleAnswerChange(q.id, opt.id)}
-                    style={{ display: 'none' }}
-                  />
-                  <span style={{ color: answers[q.id] === opt.id ? 'white' : 'var(--text-primary)', fontSize: '1.1rem' }}>{opt.text}</span>
-                </label>
-              ))}
-
-              {q.type === 'QCM' && q.content.options?.map(opt => {
-                const isChecked = (answers[q.id] as string[])?.includes(opt.id) || false;
+              {(q.type === 'VRAI_FAUX' || q.type === 'QCM') && q.options?.map((opt: string, idx: number) => {
+                const optId = String(idx + 1); // 1-indexed to match REPONSE_CORRECTE
                 return (
-                  <label key={opt.id} style={{ display: 'block', padding: '1.2rem', border: '1px solid var(--border-color)', borderRadius: '8px', marginBottom: '0.75rem', cursor: 'pointer', backgroundColor: isChecked ? 'rgba(var(--accent-primary-rgb), 0.1)' : 'var(--bg-primary)', borderColor: isChecked ? 'var(--accent-primary)' : 'var(--border-color)', transition: 'all 0.2s' }}>
+                  <label key={optId} style={{ display: 'block', padding: '1.2rem', border: '1px solid var(--border-color)', borderRadius: '8px', marginBottom: '0.75rem', cursor: 'pointer', backgroundColor: answers[q.id] === optId ? 'var(--accent-primary)' : 'var(--bg-primary)', transition: 'all 0.2s' }}>
+                    <input
+                      type="radio"
+                      name={`q-${q.id}`}
+                      value={optId}
+                      checked={answers[q.id] === optId}
+                      onChange={() => handleAnswerChange(q.id, optId)}
+                      style={{ display: 'none' }}
+                    />
+                    <span style={{ color: answers[q.id] === optId ? 'white' : 'var(--text-primary)', fontSize: '1.1rem' }}>{opt}</span>
+                  </label>
+                );
+              })}
+
+              {q.type === 'QRM' && q.options?.map((opt: string, idx: number) => {
+                const optId = String(idx + 1); // 1-indexed to match REPONSE_CORRECTE
+                const isChecked = (answers[q.id] as string[])?.includes(optId) || false;
+                return (
+                  <label key={optId} style={{ display: 'block', padding: '1.2rem', border: '1px solid var(--border-color)', borderRadius: '8px', marginBottom: '0.75rem', cursor: 'pointer', backgroundColor: isChecked ? 'rgba(var(--accent-primary-rgb), 0.1)' : 'var(--bg-primary)', borderColor: isChecked ? 'var(--accent-primary)' : 'var(--border-color)', transition: 'all 0.2s' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                       <input
                         type="checkbox"
                         checked={isChecked}
-                        onChange={() => handleCheckboxChange(q.id, opt.id)}
+                        onChange={() => handleCheckboxChange(q.id, optId)}
                         style={{ transform: 'scale(1.4)' }}
                       />
-                      <span style={{ color: 'var(--text-primary)', fontSize: '1.1rem' }}>{opt.text}</span>
+                      <span style={{ color: 'var(--text-primary)', fontSize: '1.1rem' }}>{opt}</span>
                     </div>
                   </label>
                 );
               })}
 
-              {q.type === 'APPARIEMENT' && q.content.pairs?.map((pair, pIdx) => {
-                const allRightOptions = q.content.pairs?.map(p => p.right).sort() || [];
-                const ansObj = answers[q.id] as Record<string, string> | undefined;
-                return (
-                  <div key={pIdx} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.2rem', padding: '1.2rem', backgroundColor: 'var(--bg-primary)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                    <div style={{ color: 'var(--text-primary)', fontWeight: 500, fontSize: '1.1rem' }}>{pair.left}</div>
-                    <select
-                      value={(ansObj && ansObj[pair.left]) || ''}
-                      onChange={(e) => handlePairChange(q.id, pair.left, e.target.value)}
-                      style={{ padding: '0.8rem', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '6px', fontSize: '1rem' }}
-                    >
-                      <option value="">-- Sélectionnez l'association correspondante --</option>
-                      {allRightOptions.map((opt, oIdx) => (
-                        <option key={oIdx} value={opt}>{opt}</option>
-                      ))}
-                    </select>
-                  </div>
-                );
-              })}
-
-              {q.type === 'ORDONNANCEMENT' && (answers[q.id] as string[])?.map((itemId: string, iIdx: number) => {
-                const item = q.content.items?.find(i => i.id === itemId);
-                const arrLen = (answers[q.id] as string[]).length;
-                return (
-                  <div key={itemId} style={{ display: 'flex', alignItems: 'center', gap: '1.2rem', padding: '1.2rem', backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', marginBottom: '0.75rem' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                      <button onClick={() => moveItem(q.id, iIdx, 'up')} disabled={iIdx === 0} style={{ padding: '0.3rem 0.6rem', background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: '4px', cursor: iIdx === 0 ? 'not-allowed' : 'pointer' }}>▲</button>
-                      <button onClick={() => moveItem(q.id, iIdx, 'down')} disabled={iIdx === arrLen - 1} style={{ padding: '0.3rem 0.6rem', background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: '4px', cursor: iIdx === arrLen - 1 ? 'not-allowed' : 'pointer' }}>▼</button>
-                    </div>
-                    <div style={{ color: 'var(--accent-secondary)', fontWeight: 'bold', fontSize: '1.4rem', minWidth: '30px', textAlign: 'center' }}>{iIdx + 1}</div>
-                    <div style={{ color: 'var(--text-primary)', fontSize: '1.1rem' }}>{item?.text}</div>
-                  </div>
-                );
-              })}
-
-              {q.type === 'TEXTE_A_TROUS' && q.content.text && (
-                <div style={{ lineHeight: '2.5', fontSize: '1.2rem', color: 'var(--text-primary)', padding: '1.5rem', backgroundColor: 'var(--bg-primary)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                  {q.content.text.split(/(\[trou\d+\])/g).map((part, idx) => {
-                    const match = part.match(/\[(trou\d+)\]/);
-                    if (match) {
-                      const blankId = match[1];
-                      const blankDef = q.content.blanks?.[blankId];
-                      const ansObj = answers[q.id] as Record<string, string> | undefined;
-                      return (
-                        <select
-                          key={idx}
-                          value={(ansObj && ansObj[blankId]) || ''}
-                          onChange={(e) => handleBlankChange(q.id, blankId, e.target.value)}
-                          style={{ margin: '0 0.5rem', padding: '0.4rem 0.8rem', backgroundColor: 'var(--bg-secondary)', border: '2px solid var(--accent-primary)', color: 'var(--text-primary)', borderRadius: '6px', fontWeight: 'bold', fontSize: '1.1rem' }}
-                        >
-                          <option value="">...</option>
-                          {blankDef?.options.map((opt, oIdx) => (
-                            <option key={oIdx} value={opt}>{opt}</option>
-                          ))}
-                        </select>
-                      );
-                    }
-                    return <span key={idx}>{part}</span>;
-                  })}
+              {q.type === 'COURTE' && (
+                <div style={{ display: 'block', padding: '1.2rem', border: '1px solid var(--border-color)', borderRadius: '8px', marginBottom: '0.75rem', backgroundColor: 'var(--bg-primary)' }}>
+                  <input
+                    type="text"
+                    value={(answers[q.id] as string) || ''}
+                    onChange={(e) => handleAnswerChange(q.id, e.target.value)}
+                    placeholder="Votre réponse..."
+                    style={{ width: '100%', padding: '0.8rem', fontSize: '1.1rem', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: '6px' }}
+                  />
                 </div>
               )}
+
 
             </div>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '2.5rem', marginBottom: '4rem' }}>
             {isLastQuestion ? (
-              <button
-                onClick={() => handleSubmit()}
-                disabled={submitting || !isAnswered}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1.2rem 3rem', backgroundColor: 'var(--accent-primary)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '1.2rem', fontWeight: 'bold', cursor: (submitting || !isAnswered) ? 'not-allowed' : 'pointer', opacity: (submitting || !isAnswered) ? 0.5 : 1, boxShadow: (!submitting && isAnswered) ? '0 4px 15px rgba(var(--accent-primary-rgb), 0.4)' : 'none', transition: 'all 0.2s' }}
-              >
-                <CheckCircle size={24} />
-                {submitting ? 'Envoi en cours...' : 'Soumettre ma copie'}
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '1rem', width: '100%' }}>
+                <button
+                  onClick={() => handleSubmit()}
+                  disabled={submitting || !isAnswered}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1.2rem 3rem', backgroundColor: 'var(--accent-primary)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '1.2rem', fontWeight: 'bold', cursor: (submitting || !isAnswered) ? 'not-allowed' : 'pointer', opacity: (submitting || !isAnswered) ? 0.5 : 1, boxShadow: (!submitting && isAnswered) ? '0 4px 15px rgba(var(--accent-primary-rgb), 0.4)' : 'none', transition: 'all 0.2s' }}
+                >
+                  <CheckCircle size={24} />
+                  {submitting ? 'Envoi en cours...' : 'Soumettre ma copie et démarrer la correction'}
+                </button>
+              </div>
             ) : (
               <button
                 onClick={handleNext}

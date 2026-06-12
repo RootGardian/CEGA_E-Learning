@@ -248,11 +248,17 @@ const TeacherSidebarLayout: React.FC = () => {
                     <div style={{ flex: 1 }}>
                       <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: n.isRead ? 500 : 600 }}>{n.title}</h4>
                       <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{n.message}</p>
-                      {(n.createdAt || n.created_at) && (
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                          {new Date(n.createdAt || n.created_at).toLocaleDateString('fr-FR')} à {new Date(n.createdAt || n.created_at).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})}
-                        </span>
-                      )}
+                      {(() => {
+                        const dStr = n.createdAt || n.created_at;
+                        if (!dStr) return null;
+                        const d = new Date(dStr);
+                        if (isNaN(d.getTime())) return null;
+                        return (
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                            {d.toLocaleDateString('fr-FR')} à {d.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})}
+                          </span>
+                        );
+                      })()}
                     </div>
                     {!n.isRead && (
                       <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--accent-primary)', marginTop: '0.4rem' }} />

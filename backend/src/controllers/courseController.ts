@@ -47,7 +47,7 @@ export const getCourses = async (req: Request, res: Response): Promise<void> => 
 
     const enrichedCourses = courses.map(course => {
       const specificAccess = accesses.find(access => access.courseId == course.id && access.etudiantId == userId);
-      const globalAccess = accesses.find(access => access.courseId == course.id && access.department === userDepartment && access.etudiantId === null);
+      const globalAccess = accesses.find(access => access.courseId == course.id && (access.department === userDepartment || access.department === 'all' || course.department === 'all') && access.etudiantId === null);
       const isUnlocked = specificAccess ? specificAccess.isUnlocked : (globalAccess ? globalAccess.isUnlocked : false);
 
       // Calculate progress
@@ -123,7 +123,7 @@ export const getCourseDetails = async (req: Request, res: Response): Promise<voi
 
     const accesses = await CourseAccess.findAll({ where: { courseId: course.id } });
     const specificAccess = accesses.find(access => access.etudiantId == userId);
-    const globalAccess = accesses.find(access => access.department === userDepartment && access.etudiantId === null);
+    const globalAccess = accesses.find(access => (access.department === userDepartment || access.department === 'all' || course.department === 'all') && access.etudiantId === null);
     const isUnlocked = specificAccess ? specificAccess.isUnlocked : (globalAccess ? globalAccess.isUnlocked : false);
 
     if (!isUnlocked) {
@@ -179,7 +179,7 @@ export const getLesson = async (req: Request, res: Response): Promise<void> => {
 
     const accesses = await CourseAccess.findAll({ where: { courseId } });
     const specificAccess = accesses.find(access => access.etudiantId == userId);
-    const globalAccess = accesses.find(access => access.department === userDepartment && access.etudiantId === null);
+    const globalAccess = accesses.find(access => (access.department === userDepartment || access.department === 'all' || course?.department === 'all') && access.etudiantId === null);
     const isUnlocked = specificAccess ? specificAccess.isUnlocked : (globalAccess ? globalAccess.isUnlocked : false);
 
     if (!isUnlocked) {
@@ -269,7 +269,7 @@ export const getStudentResources = async (req: Request, res: Response): Promise<
     
     const unlockedCourseIds = courses.filter(course => {
       const specificAccess = accesses.find(a => a.courseId == course.id && a.etudiantId == userId);
-      const globalAccess = accesses.find(a => a.courseId == course.id && a.department === userDepartment && a.etudiantId === null);
+      const globalAccess = accesses.find(a => a.courseId == course.id && (a.department === userDepartment || a.department === 'all' || course.department === 'all') && a.etudiantId === null);
       return specificAccess ? specificAccess.isUnlocked : (globalAccess ? globalAccess.isUnlocked : false);
     }).map(c => c.id);
 

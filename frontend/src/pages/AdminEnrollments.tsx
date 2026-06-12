@@ -29,7 +29,7 @@ const AdminEnrollments: React.FC = () => {
       return;
     }
     const exportData = enrollments.map(txn => ({
-      "Date": new Date(txn.createdAt).toLocaleDateString('fr-FR'),
+      "Date": !isNaN(new Date(txn.createdAt).getTime()) ? new Date(txn.createdAt).toLocaleDateString('fr-FR') : 'Inconnue',
       "Étudiant": txn.Etudiant ? `${txn.Etudiant.firstName} ${txn.Etudiant.lastName}` : 'Inconnu',
       "Email": txn.Etudiant?.email || '',
       "Département": txn.Etudiant?.department || '',
@@ -48,7 +48,7 @@ const AdminEnrollments: React.FC = () => {
     }
     const headers = ["Date", "Étudiant", "Email", "Montant", "Statut"];
     const exportData = enrollments.map(txn => [
-      new Date(txn.createdAt).toLocaleDateString('fr-FR'),
+      !isNaN(new Date(txn.createdAt).getTime()) ? new Date(txn.createdAt).toLocaleDateString('fr-FR') : 'Inconnue',
       txn.Etudiant ? `${txn.Etudiant.firstName} ${txn.Etudiant.lastName}` : 'Inconnu',
       txn.Etudiant?.email || '',
       `${txn.amount} ${txn.currency}`,
@@ -107,7 +107,10 @@ const AdminEnrollments: React.FC = () => {
                 enrollments.map(txn => (
                   <tr key={txn.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
                     <td style={{ padding: '1rem', color: 'var(--text-primary)', fontSize: '0.9rem' }}>
-                      {new Date(txn.createdAt).toLocaleDateString('fr-FR')} {new Date(txn.createdAt).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})}
+                      {(() => {
+                        const d = new Date(txn.createdAt);
+                        return isNaN(d.getTime()) ? 'Date inconnue' : `${d.toLocaleDateString('fr-FR')} ${d.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})}`;
+                      })()}
                     </td>
                     <td style={{ padding: '1rem', color: 'var(--text-primary)' }}>
                       {txn.Etudiant ? `${txn.Etudiant.firstName} ${txn.Etudiant.lastName}` : 'Étudiant Inconnu'}

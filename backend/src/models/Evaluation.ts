@@ -17,6 +17,7 @@ class Evaluation extends Model {
   declare isGlobal: boolean;
   declare targetStudentId: number | null;
   declare qcmQuestions: any | null;
+  declare status: string; // 'draft', 'published', 'validated'
 
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
@@ -91,6 +92,11 @@ Evaluation.init(
     qcmQuestions: {
       type: DataTypes.JSONB,
       allowNull: true,
+    },
+    status: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: 'published',
     },
   },
   {

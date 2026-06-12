@@ -241,7 +241,7 @@ const Evaluations: React.FC = () => {
                     <div style={{ flex: '1 1 min(100%, 150px)' }}>
                       <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '0.2rem', wordBreak: 'break-word' }}>{ev.course?.title || ev.title}</h3>
                       <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{ev.type} • {dateString}</p>
-                      {ev.studentGrade.feedback && (
+                      {ev.studentGrade?.feedback && (
                         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontStyle: 'italic', marginTop: '0.5rem' }}>
                           "{ev.studentGrade.feedback}"
                         </p>
@@ -256,7 +256,7 @@ const Evaluations: React.FC = () => {
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent-primary)' }}>
-                        {ev.studentGrade.score !== null ? `${ev.studentGrade.score}/20` : 'En attente'}
+                        {ev.studentGrade?.score !== null && ev.studentGrade?.score !== undefined ? `${ev.studentGrade.score}/20` : 'En attente'}
                       </div>
                       {ev.classAverage && (
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>

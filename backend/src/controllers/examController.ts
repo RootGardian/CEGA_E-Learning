@@ -6,32 +6,7 @@ import Etudiant from '../models/Etudiant';
 import { qcmBank, QCMQuestion } from '../utils/qcmData';
 import { Op } from 'sequelize';
 
-// Strip correct answers from the questions before sending to frontend
-const sanitizeQuestion = (q: QCMQuestion) => {
-  const sanitized = JSON.parse(JSON.stringify(q));
-  if (sanitized.content.options) {
-    sanitized.content.options.forEach((opt: any) => delete opt.isCorrect);
-  }
-  if (sanitized.content.pairs) {
-    // For pairs, we should shuffle the right side independently, but to keep it simple
-    // the frontend will just render left and a dropdown of all right options.
-    // The backend doesn't need to strip anything because pairs are just text, 
-    // the frontend will shuffle them. Wait, if we send the pairs intact, the frontend 
-    // knows the correct pairs. For true security, the backend should send lefts and rights separately.
-    // But since it's a test, we can trust the frontend to shuffle and not inspect network.
-  }
-  if (sanitized.content.items) {
-    sanitized.content.items.forEach((item: any) => delete item.correctOrder);
-  }
-  if (sanitized.content.blanks) {
-    Object.keys(sanitized.content.blanks).forEach(key => {
-      delete sanitized.content.blanks[key].correctAnswer;
-    });
-  }
-  return sanitized;
-};
-
-// Fisher-Yates shuffle
+// Shuffle utility
 const shuffleArray = (array: any[]) => {
   const newArr = [...array];
   for (let i = newArr.length - 1; i > 0; i--) {
@@ -60,11 +35,23 @@ export const getExamData = async (req: any, res: any) => {
       return res.status(403).json({ message: 'Accès non autorisé.' });
     }
     if (evaluation.isGlobal) {
-      const access = await CourseAccess.findOne({
-        where: { courseId: evaluation.courseId, etudiantId: studentId, isUnlocked: true }
-      });
-      if (!access) {
-        return res.status(403).json({ message: 'Vous n\'avez pas accès à ce cours.' });
+      const Course = require('../models/Course').default;
+      const course = await Course.findByPk(evaluation.courseId);
+
+      if (course && course.department !== 'all') {
+        const etudiant = await Etudiant.findByPk(studentId);
+        const accesses = await CourseAccess.findAll({
+          where: { courseId: evaluation.courseId }
+        });
+
+        const specificAccess = accesses.find(a => a.etudiantId === studentId);
+        const globalAccess = accesses.find(a => a.department === etudiant?.department && a.etudiantId === null);
+        
+        const isUnlocked = specificAccess ? specificAccess.isUnlocked : (globalAccess ? globalAccess.isUnlocked : false);
+
+        if (!isUnlocked) {
+          return res.status(403).json({ message: 'Vous n\'avez pas accès à ce cours.' });
+        }
       }
     }
 
@@ -90,9 +77,18 @@ export const getExamData = async (req: any, res: any) => {
       return res.status(400).json({ message: 'Vous avez déjà passé cet examen.', score: existingGrade.score });
     }
 
-    // Get selected questions
-    const selectedIds = evaluation.qcmQuestions || [];
-    let questions = qcmBank.filter(q => selectedIds.includes(q.id)).map(sanitizeQuestion);
+    // Get selected questions from Excel import
+    const storedQuestions = evaluation.qcmQuestions || [];
+    
+    if (storedQuestions.length === 0) {
+      return res.status(403).json({ message: "L'examen n'est pas encore prêt. Le professeur n'a pas encore configuré les questions." });
+    }
+
+    let questions = storedQuestions.map((q: any) => {
+      const sanitized = { ...q };
+      delete sanitized.reponseCorrecte;
+      return sanitized;
+    });
     
     // Shuffle questions
     questions = shuffleArray(questions);
@@ -101,7 +97,8 @@ export const getExamData = async (req: any, res: any) => {
       evaluation: {
         id: evaluation.id,
         title: evaluation.title,
-        duration: evaluation.duration
+        duration: evaluation.duration,
+        date: evaluation.date
       },
       questions
     });
@@ -131,74 +128,32 @@ export const submitExam = async (req: any, res: any) => {
       return res.status(400).json({ message: 'Vous avez déjà passé cet examen.' });
     }
 
-    const selectedIds = evaluation.qcmQuestions || [];
-    const questionsToGrade = qcmBank.filter(q => selectedIds.includes(q.id));
+    const questionsToGrade = evaluation.qcmQuestions || [];
 
     let totalScore = 0;
     let maxPossibleScore = 0;
 
-    questionsToGrade.forEach(q => {
+    questionsToGrade.forEach((q: any) => {
       maxPossibleScore += q.points;
       const studentAns = answers[q.id];
-      if (!studentAns) return; // 0 points
+      if (studentAns === undefined || studentAns === null || studentAns === '') return; // 0 points
 
       let qScore = 0;
 
-      if (q.type === 'VRAI_FAUX' || q.type === 'QCU') {
-        const correctOpt = q.content.options?.find(o => o.isCorrect);
-        if (correctOpt && studentAns === correctOpt.id) {
+      if (q.type === 'QCM' || q.type === 'VRAI_FAUX') {
+        if (String(studentAns).trim() === String(q.reponseCorrecte).trim()) {
           qScore = q.points;
         }
-      } 
-      else if (q.type === 'QCM') {
-        const correctOpts = q.content.options?.filter(o => o.isCorrect).map(o => o.id) || [];
-        const studentOpts = Array.isArray(studentAns) ? studentAns : [];
+      } else if (q.type === 'QRM') {
+        const correctOpts = String(q.reponseCorrecte).split(',').map((s: string) => s.trim());
+        const studentOpts = Array.isArray(studentAns) ? studentAns.map(String) : [String(studentAns)];
         
-        if (q.gradingType === 'BINARY') {
-          const isPerfect = correctOpts.length === studentOpts.length && correctOpts.every(c => studentOpts.includes(c));
-          if (isPerfect) qScore = q.points;
-        } 
-        else if (q.gradingType === 'PRORATA') {
-          const pointPerItem = q.points / correctOpts.length;
-          studentOpts.forEach(opt => {
-            if (correctOpts.includes(opt)) qScore += pointPerItem;
-            else qScore -= pointPerItem;
-          });
-          if (qScore < 0) qScore = 0;
+        const isPerfect = correctOpts.length === studentOpts.length && correctOpts.every((c: string) => studentOpts.includes(c));
+        if (isPerfect) qScore = q.points;
+      } else if (q.type === 'COURTE') {
+        if (String(studentAns).trim().toLowerCase() === String(q.reponseCorrecte).trim().toLowerCase()) {
+          qScore = q.points;
         }
-      }
-      else if (q.type === 'APPARIEMENT') {
-        const pairs = q.content.pairs || [];
-        const pointPerItem = q.points / pairs.length;
-        // studentAns: { [left]: right }
-        Object.keys(studentAns).forEach(left => {
-          const correctPair = pairs.find(p => p.left === left);
-          if (correctPair && correctPair.right === studentAns[left]) {
-            qScore += pointPerItem;
-          }
-        });
-      }
-      else if (q.type === 'ORDONNANCEMENT') {
-        const items = q.content.items || [];
-        const pointPerItem = q.points / items.length;
-        // studentAns: [ itemId1, itemId2, ... ] in order
-        studentAns.forEach((itemId: string, index: number) => {
-          const correctItem = items.find(i => i.id === itemId);
-          if (correctItem && correctItem.correctOrder === index + 1) {
-            qScore += pointPerItem;
-          }
-        });
-      }
-      else if (q.type === 'TEXTE_A_TROUS') {
-        const blanks = q.content.blanks || {};
-        const blankKeys = Object.keys(blanks);
-        const pointPerItem = q.points / blankKeys.length;
-        // studentAns: { trou1: 'answer', trou2: 'answer' }
-        Object.keys(studentAns).forEach(blank => {
-          if (blanks[blank] && blanks[blank].correctAnswer === studentAns[blank]) {
-            qScore += pointPerItem;
-          }
-        });
       }
 
       totalScore += qScore;
@@ -213,11 +168,18 @@ export const submitExam = async (req: any, res: any) => {
 
     finalScore = Math.round(finalScore * 100) / 100;
 
+    let autoFeedback = "";
+    if (finalScore < 10) autoFeedback = "Insuffisant";
+    else if (finalScore < 12) autoFeedback = "Passable";
+    else if (finalScore < 14) autoFeedback = "Assez bien";
+    else if (finalScore < 16) autoFeedback = "Bien";
+    else autoFeedback = "Très bien";
+
     await Grade.create({
       evaluationId: id,
       etudiantId: studentId,
       score: finalScore,
-      feedback: isFraud ? `FRAUDE DÉTECTÉE : ${fraudReason || 'Inconnue'}` : "Correction automatique (QCM)."
+      feedback: isFraud ? `FRAUDE DÉTECTÉE : ${fraudReason || 'Inconnue'}` : `Correction automatique : ${autoFeedback}`
     });
 
     res.status(200).json({ message: 'Examen soumis avec succès.', score: finalScore });

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { verifyEmail, login, logout, enable2FA, verify2FA, forgotPassword, resetPassword, getMe, updateProfile, updatePassword, getPublicSettings, getPublicFormations, trackTime } from '../controllers/authController';
+import { verifyEmail, login, logout, googleAuth, enable2FA, verify2FA, forgotPassword, resetPassword, getMe, updateProfile, updatePassword, getPublicSettings, getPublicFormations, trackTime } from '../controllers/authController';
 import { protect } from '../middlewares/authMiddleware';
 
 const router = Router();
@@ -7,6 +7,7 @@ const router = Router();
 router.post('/verify-email', verifyEmail);
 router.post('/login', login);
 router.post('/logout', logout);
+router.post('/google', googleAuth);
 
 // Global public settings (e.g. price)
 router.get('/public/settings', getPublicSettings);

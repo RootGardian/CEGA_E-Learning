@@ -58,7 +58,7 @@ const PaymentGateway: React.FC = () => {
           description: 'Frais de scolarité CEGA E-Learning',
           registrationData,
         });
-        
+
         setClientSecret(response.data.clientSecret);
       } catch (error) {
         console.error('Erreur lors de la création de la session Stripe:', error);

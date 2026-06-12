@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { UserPlus, Mail, Lock, User, Briefcase, Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
 import { usePopup } from '../contexts/PopupContext';
+import { GoogleLogin } from '@react-oauth/google';
+import Footer from '../components/Footer';
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -15,8 +17,24 @@ const Register: React.FC = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [formations, setFormations] = useState<any[]>([]);
+  const [isGoogleAuth, setIsGoogleAuth] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { showAlert } = usePopup();
+
+  useEffect(() => {
+    if (location.state?.googleDetails) {
+      const details = location.state.googleDetails;
+      setFormData(prev => ({
+        ...prev,
+        firstName: details.firstName || '',
+        lastName: details.lastName || '',
+        email: details.email || '',
+        password: 'GOOGLE_AUTH_PLACEHOLDER_PASSWORD_' + Math.random().toString(36).slice(2)
+      }));
+      setIsGoogleAuth(true);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     const fetchFormations = async () => {
@@ -56,6 +74,35 @@ const Register: React.FC = () => {
     }
   };
 
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    try {
+      const response = await axios.post('/api/auth/google', { 
+        credential: credentialResponse.credential 
+      }, { withCredentials: true });
+
+      if (response.data.action === 'login') {
+        const userRole = response.data.user?.role;
+        if (userRole === 'enseignant') navigate('/teacher/dashboard');
+        else if (userRole === 'admin' || userRole === 'directeur_formation') navigate('/admin/dashboard');
+        else navigate('/dashboard');
+      } else if (response.data.action === 'register') {
+        const details = response.data.userDetails;
+        setFormData(prev => ({
+          ...prev,
+          firstName: details.firstName || '',
+          lastName: details.lastName || '',
+          email: details.email || '',
+          password: 'GOOGLE_AUTH_PLACEHOLDER_PASSWORD_' + Math.random().toString(36).slice(2)
+        }));
+        setIsGoogleAuth(true);
+        showAlert("Informations récupérées. Veuillez compléter le formulaire.", 'info');
+      }
+    } catch (error: unknown) {
+      console.error('Erreur Google Auth:', error);
+      showAlert("Échec de l'authentification avec Google.", 'error');
+    }
+  };
+
   return (
     <div className="auth-layout">
       <div className="auth-container glass-panel animate-slide-up" style={{ maxWidth: '650px', width: '100%' }}>
@@ -70,6 +117,30 @@ const Register: React.FC = () => {
           </div>
         </div>
 
+        {!isGoogleAuth && (
+          <>
+            <div style={{ marginTop: '1.5rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'center' }}>
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => {
+                  console.log('Login Failed');
+                  showAlert("L'inscription avec Google a échoué.", 'error');
+                }}
+                theme="outline"
+                size="large"
+                text="signup_with"
+                shape="rectangular"
+                useOneTap
+              />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <div style={{ flex: 1, height: '1px', backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
+              <span style={{ margin: '0 10px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>ou classiquement</span>
+              <div style={{ flex: 1, height: '1px', backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
+            </div>
+          </>
+        )}
+
         <form onSubmit={handleSubmit}>
           <div className="form-row">
             <div className="form-group">
@@ -82,7 +153,7 @@ const Register: React.FC = () => {
                   type="text"
                   className="form-input"
                   style={{ paddingLeft: '2.5rem' }}
-                  placeholder="Jean"
+                  placeholder="Prénom"
                   value={formData.firstName}
                   onChange={handleChange}
                   required
@@ -97,7 +168,7 @@ const Register: React.FC = () => {
                 name="lastName"
                 type="text"
                 className="form-input"
-                placeholder="Dupont"
+                placeholder="Nom"
                 value={formData.lastName}
                 onChange={handleChange}
                 required
@@ -115,7 +186,7 @@ const Register: React.FC = () => {
                 type="email"
                 className="form-input"
                 style={{ paddingLeft: '2.5rem' }}
-                placeholder="jean.dupont@cega.edu"
+                placeholder="prenom.nom@cega.edu"
                 value={formData.email}
                 onChange={handleChange}
                 required
@@ -167,42 +238,44 @@ const Register: React.FC = () => {
             </div>
           </div>
 
-          <div className="form-group">
-            <label className="form-label" htmlFor="password">Mot de Passe</label>
-            <div style={{ position: 'relative' }}>
-              <Lock style={{ position: 'absolute', top: '12px', left: '12px', color: '#94A3B8' }} size={20} />
-              <input
-                id="password"
-                name="password"
-                type={showPassword ? "text" : "password"}
-                className="form-input"
-                style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem' }}
-                placeholder="••••••••"
-                value={formData.password}
-                onChange={handleChange}
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  position: 'absolute',
-                  top: '12px',
-                  right: '12px',
-                  background: 'none',
-                  border: 'none',
-                  color: '#94A3B8',
-                  cursor: 'pointer',
-                  padding: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
+          {!isGoogleAuth && (
+            <div className="form-group">
+              <label className="form-label" htmlFor="password">Mot de Passe</label>
+              <div style={{ position: 'relative' }}>
+                <Lock style={{ position: 'absolute', top: '12px', left: '12px', color: '#94A3B8' }} size={20} />
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  className="form-input"
+                  style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem' }}
+                  placeholder="••••••••"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required={!isGoogleAuth}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute',
+                    top: '12px',
+                    right: '12px',
+                    background: 'none',
+                    border: 'none',
+                    color: '#94A3B8',
+                    cursor: 'pointer',
+                    padding: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           <button type="submit" className="btn btn-primary" style={{ marginTop: '1rem' }}>
             <UserPlus size={20} style={{ marginRight: '0.5rem' }} />
@@ -213,8 +286,8 @@ const Register: React.FC = () => {
         <div style={{ textAlign: 'center', marginTop: '2rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
           Vous avez déjà un compte ? <Link to="/login" className="link" translate="no">Se connecter</Link>
         </div>
-
       </div>
+      <Footer />
     </div>
   );
 };

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, ArrowLeft, Send } from 'lucide-react';
 import axios from 'axios';
+import Footer from '../components/Footer';
 
 const ForgotPassword: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -38,6 +39,7 @@ const ForgotPassword: React.FC = () => {
         </Link>
 
         <div className="auth-header">
+          <img src="/logo_cega_remove.png" alt="CEGA Logo" style={{ height: '64px', objectFit: 'contain', marginBottom: '1rem' }} />
           <h1 className="gradient-text">Mot de passe oublié</h1>
           <p>Saisissez votre email pour recevoir un lien de réinitialisation.</p>
         </div>
@@ -81,6 +83,7 @@ const ForgotPassword: React.FC = () => {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 };

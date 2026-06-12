@@ -114,8 +114,14 @@ export const getTeacherCourses = async (req: Request, res: Response): Promise<vo
       return;
     }
 
+    const { Op } = require('sequelize');
     const courses = await Course.findAll({
-      where: { department: teacher.department },
+      where: { 
+        [Op.or]: [
+          { department: teacher.department },
+          { department: 'all' }
+        ]
+      },
       order: [['id', 'ASC']]
     });
 
@@ -137,9 +143,14 @@ export const getCourseStudents = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    // Tous les étudiants du même département que le cours
+    // Tous les étudiants du même département que le cours, ou tous si le cours est 'all'
+    let whereCondition: any = { department: course.department };
+    if (course.department === 'all') {
+      whereCondition = {}; // tous les étudiants
+    }
+
     const students = await Etudiant.findAll({
-      where: { department: course.department },
+      where: whereCondition,
       attributes: ['id', 'firstName', 'lastName', 'email', 'department', 'formationType']
     });
 
@@ -192,7 +203,7 @@ export const toggleGlobalAccess = async (req: Request, res: Response): Promise<v
     }
 
     let access = await CourseAccess.findOne({
-      where: { courseId, department: course.department, etudiantId: null }
+      where: { courseId, department: course.department === 'all' ? null : course.department, etudiantId: null }
     });
 
     if (access) {
@@ -202,7 +213,7 @@ export const toggleGlobalAccess = async (req: Request, res: Response): Promise<v
     } else {
       await CourseAccess.create({
         courseId,
-        department: course.department,
+        department: course.department === 'all' ? null : course.department,
         etudiantId: null,
         isUnlocked,
         unlockedBy: teacherId
@@ -222,18 +233,31 @@ export const toggleGlobalAccess = async (req: Request, res: Response): Promise<v
     );
 
     if (isUnlocked) {
-      const studentsInDept = await Etudiant.findAll({ where: { department: course.department } });
-      const notifications = studentsInDept.map(student => ({
+      let whereCondition: any = { department: course.department };
+      if (course.department === 'all') {
+        whereCondition = {};
+      }
+      const studentsToNotify = await Etudiant.findAll({ where: whereCondition });
+      const notifications = studentsToNotify.map(student => ({
         etudiantId: student.id,
         title: 'Nouveau cours disponible',
         message: `Le cours "${course.title}" a été débloqué pour votre promotion.`,
         type: 'success'
       }));
       await Notification.bulkCreate(notifications);
-      getIO().to(`dept_${course.department}`).emit('new_notification');
+      
+      if (course.department === 'all') {
+        getIO().emit('new_notification');
+      } else {
+        getIO().to(`dept_${course.department}`).emit('new_notification');
+      }
     }
     
-    getIO().to(`dept_${course.department}`).emit('course_updated');
+    if (course.department === 'all') {
+      getIO().emit('course_updated');
+    } else {
+      getIO().to(`dept_${course.department}`).emit('course_updated');
+    }
 
     res.status(200).json({ message: 'Global access updated' });
   } catch (error) {

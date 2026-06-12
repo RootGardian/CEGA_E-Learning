@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { LogIn, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
 import { usePopup } from '../contexts/PopupContext';
+import { GoogleLogin } from '@react-oauth/google';
+import Footer from '../components/Footer';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -45,6 +47,31 @@ const Login: React.FC = () => {
     }
   };
 
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    try {
+      const response = await axios.post('/api/auth/google', { 
+        credential: credentialResponse.credential 
+      }, { withCredentials: true });
+
+      if (response.data.action === 'register') {
+        // Compte inexistant : on redirige vers l'inscription avec les infos pré-remplies
+        navigate('/register', { state: { googleDetails: response.data.userDetails } });
+      } else if (response.data.action === 'login') {
+        const userRole = response.data.user?.role;
+        if (userRole === 'enseignant') {
+          navigate('/teacher/dashboard');
+        } else if (userRole === 'admin' || userRole === 'directeur_formation') {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/dashboard');
+        }
+      }
+    } catch (error: unknown) {
+      console.error('Erreur Google Auth:', error);
+      showAlert("Échec de l'authentification avec Google.", 'error');
+    }
+  };
+
   return (
     <div className="auth-layout">
       <div className="auth-container glass-panel animate-slide-up">
@@ -52,6 +79,27 @@ const Login: React.FC = () => {
           <img src="/logo_cega.jpeg" alt="Logo CEGA" style={{ width: '96px', height: '96px', objectFit: 'contain', borderRadius: '16px', marginBottom: '1rem' }} />
           <h1 className="gradient-text">CEGA E-Learning</h1>
           <p>Bienvenue. Connectez-vous à votre espace.</p>
+        </div>
+
+        <div style={{ marginTop: '1.5rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'center' }}>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => {
+              console.log('Login Failed');
+              showAlert("La connexion avec Google a échoué.", 'error');
+            }}
+            theme="outline"
+            size="large"
+            text="signin_with"
+            shape="rectangular"
+            useOneTap
+          />
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <div style={{ flex: 1, height: '1px', backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
+          <span style={{ margin: '0 10px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>ou par email</span>
+          <div style={{ flex: 1, height: '1px', backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -120,8 +168,8 @@ const Login: React.FC = () => {
         <div style={{ textAlign: 'center', marginTop: '2rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
           Vous êtes un nouvel étudiant ? <Link to="/register" className="link">S'inscrire</Link>
         </div>
-
       </div>
+      <Footer />
     </div>
   );
 };

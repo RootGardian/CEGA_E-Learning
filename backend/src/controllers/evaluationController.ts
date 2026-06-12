@@ -8,25 +8,32 @@ import Grade from '../models/Grade';
 import Etudiant from '../models/Etudiant';
 import { getIO } from '../utils/socket';
 import { Op } from 'sequelize';
+import * as xlsx from 'xlsx';
 
 const notifyStudentsForCourse = async (courseId: number, title: string, message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info') => {
   try {
     const course = await Course.findByPk(courseId);
     if (!course) return;
 
-    const accesses = await CourseAccess.findAll({ where: { courseId, isUnlocked: true } });
-    const specificStudentIds = accesses.filter(a => a.etudiantId).map(a => a.etudiantId);
-    const globalDepartments = accesses.filter(a => a.department && !a.etudiantId).map(a => a.department);
-
     const Etudiant = require('../models/Etudiant').default;
-    const studentsToNotify = await Etudiant.findAll({
-      where: {
-        [Op.or]: [
-          { id: specificStudentIds },
-          { department: globalDepartments }
-        ]
-      }
-    });
+    let studentsToNotify;
+
+    if (course.department === 'all') {
+      studentsToNotify = await Etudiant.findAll();
+    } else {
+      const accesses = await CourseAccess.findAll({ where: { courseId, isUnlocked: true } });
+      const specificStudentIds = accesses.filter(a => a.etudiantId).map(a => a.etudiantId);
+      const globalDepartments = accesses.filter(a => a.department && !a.etudiantId).map(a => a.department);
+
+      studentsToNotify = await Etudiant.findAll({
+        where: {
+          [Op.or]: [
+            { id: specificStudentIds },
+            { department: globalDepartments }
+          ]
+        }
+      });
+    }
 
     if (studentsToNotify.length === 0) return;
 
@@ -78,8 +85,13 @@ export const getStudentEvaluations = async (req: Request, res: Response): Promis
     });
 
     const unlockedCourseIds = courses.filter(course => {
+      if (course.department === 'all') return true;
       const specificAccess = accesses.find(a => a.courseId == course.id && a.etudiantId == userId);
-      const globalAccess = accesses.find(a => a.courseId == course.id && a.department === userDepartment && a.etudiantId === null);
+      const globalAccess = accesses.find(a => 
+        a.courseId == course.id && 
+        (a.department === userDepartment || (course.department === 'all' && a.department === null)) && 
+        a.etudiantId === null
+      );
       return specificAccess ? specificAccess.isUnlocked : (globalAccess ? globalAccess.isUnlocked : false);
     }).map(c => c.id);
 
@@ -461,6 +473,107 @@ export const deleteStudentGrade = async (req: Request, res: Response): Promise<v
     res.status(200).json({ message: 'Grade deleted successfully, student can retake exam.' });
   } catch (error) {
     console.error('Error deleting student grade:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const generateExcelTemplate = (req: Request, res: Response) => {
+  try {
+    const ws_data = [
+      ['TYPE_QUESTION', 'QUESTION', 'POINTS', 'OPTION_1', 'OPTION_2', 'OPTION_3', 'OPTION_4', 'OPTION_5', 'REPONSE_CORRECTE'],
+      ['QCM', 'Quelle est la capitale de la France ?', 2, 'Londres', 'Paris', 'Berlin', 'Madrid', '', '2'],
+      ['QRM', 'Quels sont des langages Web ?', 2, 'HTML', 'Python', 'CSS', 'C++', '', '1,3'],
+      ['VRAI_FAUX', 'Le soleil tourne autour de la terre.', 1, 'Vrai', 'Faux', '', '', '', '2'],
+      ['COURTE', 'En quelle année a eu lieu la révolution française ?', 2, '', '', '', '', '', '1789'],
+    ];
+
+    const ws = xlsx.utils.aoa_to_sheet(ws_data);
+    const wb = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(wb, ws, "Questions");
+
+    const excelBuffer = xlsx.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+    res.setHeader('Content-Disposition', 'attachment; filename="Modele_Questions_CEGA.xlsx"');
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.send(excelBuffer);
+  } catch (error) {
+    console.error('Error generating template:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const uploadQuestions = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const intervenantId = (req as any).user?.id;
+    const { id } = req.params;
+    const file = req.file;
+
+    if (!file) {
+      res.status(400).json({ message: 'Aucun fichier fourni' });
+      return;
+    }
+
+    const evaluation = await Evaluation.findOne({ where: { id, intervenantId } }) as any;
+    if (!evaluation) {
+      res.status(404).json({ message: 'Evaluation not found or unauthorized' });
+      return;
+    }
+
+    const wb = xlsx.read(file.buffer, { type: 'buffer' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const data = xlsx.utils.sheet_to_json(ws);
+
+    const questions = data.map((row: any, index: number) => {
+      const type = row['TYPE_QUESTION']?.toUpperCase();
+      const question = row['QUESTION'];
+      const points = parseFloat(row['POINTS']) || 1;
+      const options = [
+        row['OPTION_1'],
+        row['OPTION_2'],
+        row['OPTION_3'],
+        row['OPTION_4'],
+        row['OPTION_5']
+      ].filter(o => o !== undefined && o !== null && o !== '');
+      const reponseCorrecte = String(row['REPONSE_CORRECTE']);
+
+      return {
+        id: index + 1,
+        type,
+        question,
+        points,
+        options,
+        reponseCorrecte
+      };
+    });
+
+    await evaluation.update({ qcmQuestions: questions, status: 'published' });
+
+    res.status(200).json({ message: 'Questions importées avec succès', questionsCount: questions.length });
+  } catch (error) {
+    console.error('Error uploading questions:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const validateGrades = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const intervenantId = (req as any).user?.id;
+    const { id } = req.params;
+
+    const evaluation = await Evaluation.findOne({ where: { id, intervenantId } }) as any;
+    if (!evaluation) {
+      res.status(404).json({ message: 'Evaluation not found or unauthorized' });
+      return;
+    }
+
+    await evaluation.update({ 
+      status: 'validated',
+      qcmQuestions: null // Nettoyage de la base de données
+    });
+
+    res.status(200).json({ message: 'Notes validées et questions supprimées avec succès' });
+  } catch (error) {
+    console.error('Error validating grades:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };

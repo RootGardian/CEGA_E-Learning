@@ -1,4 +1,5 @@
 import express from 'express';
+import dns from 'dns';
 import { createServer } from 'http';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -36,6 +37,7 @@ import { initSocket } from './utils/socket';
 import { startCommentCleanupJob } from './services/commentCleanup';
 
 dotenv.config();
+dns.setDefaultResultOrder('ipv4first');
 
 const app = express();
 const httpServer = createServer(app);

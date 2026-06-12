@@ -3,7 +3,6 @@ import axios from 'axios';
 import { useOutletContext } from 'react-router-dom';
 import { Calendar, Plus, Edit, Trash2, BookOpen, ClipboardList, X, MoreVertical, Settings } from 'lucide-react';
 import { usePopup } from '../contexts/PopupContext';
-import { qcmBank } from '../data/qcmData';
 
 
 
@@ -64,14 +63,6 @@ const TeacherEvaluations: React.FC = () => {
     targetStudentId: '',
     qcmQuestions: [] as number[]
   });
-  
-  const [qcmTypeFilters, setQcmTypeFilters] = useState<string[]>([]);
-
-  const toggleQcmFilter = (type: string) => {
-    setQcmTypeFilters(prev => 
-      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
-    );
-  };
 
   const [courseStudents, setCourseStudents] = useState<CourseStudent[]>([]);
 
@@ -84,7 +75,7 @@ const TeacherEvaluations: React.FC = () => {
   // States for QCM Modal
   const [isQcmModalOpen, setIsQcmModalOpen] = useState(false);
   const [activeQcmEvalId, setActiveQcmEvalId] = useState<number | null>(null);
-  const [qcmSelection, setQcmSelection] = useState<number[]>([]);
+  const [excelFile, setExcelFile] = useState<File | null>(null);
   const [qcmSaving, setQcmSaving] = useState(false);
   
   // Menu state
@@ -221,32 +212,57 @@ const TeacherEvaluations: React.FC = () => {
 
   const handleOpenQcmModal = (ev: Evaluation) => {
     setActiveQcmEvalId(ev.id);
-    setQcmSelection(ev.qcmQuestions || []);
+    setExcelFile(null);
     setIsQcmModalOpen(true);
   };
 
   const handleCloseQcmModal = () => {
     setIsQcmModalOpen(false);
     setActiveQcmEvalId(null);
-    setQcmSelection([]);
+    setExcelFile(null);
   };
 
-  const toggleQcmSelection = (id: number) => {
-    setQcmSelection(prev => prev.includes(id) ? prev.filter(qId => qId !== id) : [...prev, id]);
+  const handleDownloadTemplate = async () => {
+    try {
+      const response = await axios.get('/api/evaluations/excel/template', {
+        responseType: 'blob',
+        withCredentials: true
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'Modele_Questions_CEGA.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      console.error('Erreur telechargement modele:', err);
+      showAlert('Erreur lors du téléchargement du modèle.', 'error');
+    }
   };
 
   const handleQcmSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!activeQcmEvalId) return;
+    if (!activeQcmEvalId || !excelFile) {
+      showAlert('Veuillez sélectionner un fichier Excel.', 'error');
+      return;
+    }
+    
+    const formData = new FormData();
+    formData.append('file', excelFile);
+
     setQcmSaving(true);
     try {
-      await axios.put(`/api/evaluations/${activeQcmEvalId}/qcm`, { qcmQuestions: qcmSelection }, { withCredentials: true });
-      showAlert('Configuration du QCM enregistrée.', 'success');
+      const res = await axios.post(`/api/evaluations/${activeQcmEvalId}/upload-questions`, formData, { 
+        headers: { 'Content-Type': 'multipart/form-data' },
+        withCredentials: true 
+      });
+      showAlert(`${res.data.questionsCount} questions importées avec succès.`, 'success');
       fetchEvaluations();
       handleCloseQcmModal();
     } catch (err) {
-      console.error('Erreur save qcm:', err);
-      showAlert('Erreur lors de la configuration du QCM.', 'error');
+      console.error('Erreur upload excel:', err);
+      showAlert('Erreur lors de l\'importation des questions.', 'error');
     } finally {
       setQcmSaving(false);
     }
@@ -286,16 +302,16 @@ const TeacherEvaluations: React.FC = () => {
     }
   };
 
-  const handleDeleteGrades = async (id: number) => {
-    const confirmed = await showConfirm('Voulez-vous vraiment supprimer toutes les notes de cette évaluation ?');
+  const handleValidateGrades = async (id: number) => {
+    const confirmed = await showConfirm('Voulez-vous vraiment valider les notes ?');
     if (!confirmed) return;
     try {
-      await axios.delete(`/api/evaluations/${id}/grades`, { withCredentials: true });
-      showAlert('Notes supprimées avec succès.', 'success');
+      await axios.post(`/api/evaluations/${id}/validate`, {}, { withCredentials: true });
+      showAlert('Notes validées avec succès.', 'success');
       fetchEvaluations();
     } catch (err) {
-      console.error('Erreur suppression notes:', err);
-      showAlert('Erreur lors de la suppression des notes.', 'error');
+      console.error('Erreur validation notes:', err);
+      showAlert('Erreur lors de la validation.', 'error');
     }
   };
 
@@ -380,19 +396,22 @@ const TeacherEvaluations: React.FC = () => {
                         <Edit size={16} /> Modifier l'évaluation
                       </button>
                       {ev.type === "QCM (En ligne sur l'application)" && (
-                        <button 
-                          onClick={() => { setActiveMenuId(null); handleOpenQcmModal(ev); }} 
-                          style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', background: 'none', border: 'none', borderBottom: '1px solid var(--border-color)', color: 'var(--text-primary)', cursor: 'pointer', textAlign: 'left', width: '100%' }}
-                        >
-                          <Settings size={16} /> Configurer l'examen
-                        </button>
+                        <>
+                          <button 
+                            onClick={() => { setActiveMenuId(null); handleOpenQcmModal(ev); }} 
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', background: 'none', border: 'none', borderBottom: '1px solid var(--border-color)', color: 'var(--text-primary)', cursor: 'pointer', textAlign: 'left', width: '100%' }}
+                          >
+                            <Settings size={16} /> Importer Questions (Excel)
+                          </button>
+                          <button 
+                            onClick={() => { setActiveMenuId(null); handleValidateGrades(ev.id); }} 
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', background: 'none', border: 'none', borderBottom: '1px solid var(--border-color)', color: 'var(--success)', cursor: 'pointer', textAlign: 'left', width: '100%' }}
+                          >
+                            <ClipboardList size={16} /> Valider les notes
+                          </button>
+                        </>
                       )}
-                      <button 
-                        onClick={() => { setActiveMenuId(null); handleDeleteGrades(ev.id); }} 
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', background: 'none', border: 'none', borderBottom: '1px solid var(--border-color)', color: 'var(--warning)', cursor: 'pointer', textAlign: 'left', width: '100%' }}
-                      >
-                        <Trash2 size={16} /> Supprimer les notes
-                      </button>
+
                       <button 
                         onClick={() => { setActiveMenuId(null); handleDelete(ev.id); }} 
                         style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', background: 'none', border: 'none', color: 'var(--error)', cursor: 'pointer', textAlign: 'left', width: '100%' }}
@@ -691,46 +710,42 @@ const TeacherEvaluations: React.FC = () => {
             </div>
             
             <form onSubmit={handleQcmSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>1. Choisir le ou les types de QCM (Format de l'examen)</label>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {[
-                    { id: 'VRAI_FAUX', label: 'Vrai / Faux (Question Binaire)' },
-                    { id: 'QCU', label: 'Question à Choix Unique (QCU)' },
-                    { id: 'QCM', label: 'Question à Choix Multiples (QCM)' },
-                    { id: 'APPARIEMENT', label: 'Appariement (Associer des éléments)' },
-                    { id: 'ORDONNANCEMENT', label: 'Ordonnancement (Remettre dans l\'ordre)' },
-                    { id: 'TEXTE_A_TROUS', label: 'Texte à trous (Choisir les mots manquants)' }
-                  ].map(typeObj => (
-                    <label key={typeObj.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', padding: '0.75rem 1rem', backgroundColor: qcmTypeFilters.includes(typeObj.id) ? 'var(--accent-primary)' : 'var(--bg-secondary)', color: qcmTypeFilters.includes(typeObj.id) ? 'white' : 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', fontSize: '1rem', fontWeight: 500, transition: 'all 0.2s' }}>
-                      <input type="checkbox" checked={qcmTypeFilters.includes(typeObj.id)} onChange={() => toggleQcmFilter(typeObj.id)} style={{ display: 'none' }} />
-                      {typeObj.label}
-                    </label>
-                  ))}
-                </div>
+              
+              <div style={{ padding: '1rem', border: '1px solid var(--border-color)', borderRadius: '8px', backgroundColor: 'var(--bg-secondary)' }}>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>1. Télécharger le modèle</h3>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+                  Si vous n'avez pas encore préparé vos questions, téléchargez le fichier Excel modèle (Template) et remplissez-le en suivant les instructions.
+                </p>
+                <button 
+                  type="button" 
+                  onClick={handleDownloadTemplate} 
+                  className="btn" 
+                  style={{ backgroundColor: 'transparent', border: '1px solid var(--accent-primary)', color: 'var(--accent-primary)', width: '100%' }}
+                >
+                  Télécharger le Modèle Excel
+                </button>
               </div>
 
-              <div style={{ maxHeight: '400px', overflowY: 'auto', padding: '1rem', backgroundColor: 'rgba(0,0,0,0.02)', border: '1px solid var(--border-color)' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>2. Sélectionner les questions ({qcmSelection.length} sélectionnée(s))</label>
-                {qcmBank.filter(q => qcmTypeFilters.length === 0 || qcmTypeFilters.includes(q.type)).map(q => (
-                  <div key={q.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px dashed var(--border-color)' }}>
-                    <input 
-                      type="checkbox" 
-                      checked={qcmSelection.includes(q.id)} 
-                      onChange={() => toggleQcmSelection(q.id)}
-                      style={{ marginTop: '0.2rem', cursor: 'pointer' }}
-                    />
-                    <div>
-                      <div style={{ fontSize: '0.8rem', color: 'white', backgroundColor: 'var(--accent-secondary)', padding: '0.1rem 0.4rem', borderRadius: '4px', display: 'inline-block', marginBottom: '0.3rem' }}>{q.type}</div>
-                      <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-primary)' }}>{q.text}</p>
-                    </div>
-                  </div>
-                ))}
+              <div style={{ padding: '1rem', border: '1px dashed var(--accent-secondary)', borderRadius: '8px', backgroundColor: 'rgba(0,0,0,0.02)' }}>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>2. Importer le fichier rempli</h3>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+                  Sélectionnez le fichier Excel (.xlsx) contenant vos questions. L'importation remplacera toutes les questions précédentes pour cette évaluation.
+                </p>
+                <input 
+                  type="file" 
+                  accept=".xlsx, .xls, .csv" 
+                  onChange={e => {
+                    if (e.target.files && e.target.files[0]) {
+                      setExcelFile(e.target.files[0]);
+                    }
+                  }}
+                  style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px', color: 'var(--text-primary)' }}
+                />
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
                 <button type="button" onClick={handleCloseQcmModal} className="btn" style={{ backgroundColor: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>Annuler</button>
-                <button type="submit" disabled={qcmSaving} className="btn btn-primary">{qcmSaving ? 'Enregistrement...' : 'Enregistrer'}</button>
+                <button type="submit" disabled={!excelFile || qcmSaving} className="btn btn-primary">{qcmSaving ? 'Importation en cours...' : 'Importer les questions'}</button>
               </div>
             </form>
           </div>

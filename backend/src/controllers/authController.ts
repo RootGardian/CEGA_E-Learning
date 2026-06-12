@@ -12,6 +12,9 @@ import Intervenant from '../models/Intervenant';
 import User from '../models/User';
 import SystemSetting from '../models/SystemSetting';
 import Formation from '../models/Formation';
+import { OAuth2Client } from 'google-auth-library';
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const generateToken = (userId: number, role: string = 'etudiant') => {
   return jwt.sign({ id: userId, role }, process.env.JWT_SECRET as string, {
@@ -131,6 +134,93 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 export const logout = (req: Request, res: Response): void => {
   res.clearCookie('token');
   res.status(200).json({ message: 'Logged out successfully' });
+};
+
+export const googleAuth = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { credential } = req.body;
+    
+    if (!credential) {
+      res.status(400).json({ message: 'No credential provided' });
+      return;
+    }
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    
+    const payload = ticket.getPayload();
+    if (!payload) {
+      res.status(400).json({ message: 'Invalid token payload' });
+      return;
+    }
+
+    const { email, given_name, family_name, picture } = payload;
+    if (!email) {
+      res.status(400).json({ message: 'Email non trouvé dans le token Google.' });
+      return;
+    }
+
+    const lowerEmail = email.toLowerCase().trim();
+
+    let user: any = await Etudiant.findOne({ where: { email: lowerEmail } });
+    let role = 'etudiant';
+
+    if (!user) {
+      user = await Intervenant.findOne({ where: { email: lowerEmail } });
+      if (user) {
+        role = 'enseignant';
+      } else {
+        user = await User.findOne({ where: { email: lowerEmail } });
+        if (user) {
+          if (user.role === 'directeur_formation') {
+            role = 'admin';
+          } else {
+            role = user.role;
+          }
+        }
+      }
+    }
+
+    if (!user) {
+      // Utilisateur non trouvé, on retourne les infos pour l'inscription
+      res.status(200).json({ 
+        action: 'register', 
+        userDetails: { 
+          email: lowerEmail, 
+          firstName: given_name || '', 
+          lastName: family_name || '',
+          profilePicture: picture || ''
+        } 
+      });
+      return;
+    }
+
+    // Utilisateur existant
+    if (user.is_active === false) {
+      res.status(403).json({ message: "Votre compte a été bloqué. Veuillez contacter l'administration de CEGA." });
+      return;
+    }
+
+    const token = generateToken(user.id, role);
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
+
+    res.status(200).json({ 
+      action: 'login', 
+      message: 'Login successful', 
+      user: { id: user.id, email: user.email, role } 
+    });
+  } catch (error) {
+    console.error('Google Auth error:', error);
+    res.status(500).json({ message: 'Server error during Google Authentication' });
+  }
 };
 
 export const enable2FA = async (req: Request, res: Response): Promise<void> => {
