@@ -205,7 +205,7 @@ const Evaluations: React.FC = () => {
 
                       if (ev.documentLink) {
                         return (
-                          <a href={ev.documentLink} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginTop: '1rem', padding: '0.5rem 1rem', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: 'var(--accent-primary)', borderRadius: '6px', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 600 }}>
+                          <a href={ev.documentLink} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginTop: '1rem', padding: '0.5rem 1rem', backgroundColor: 'rgba(var(--accent-primary-rgb), 0.1)', color: 'var(--accent-primary)', borderRadius: '6px', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 600 }}>
                             <FileText size={16} /> Accéder aux ressources de l'examen
                           </a>
                         );

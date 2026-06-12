@@ -38,12 +38,12 @@ const PaymentCallback: React.FC = () => {
             <CheckCircle size={64} color="var(--accent-primary)" style={{ margin: '0 auto 1.5rem auto' }} />
             <h1 className="gradient-text" style={{ marginBottom: '1rem' }}>Paiement Réussi !</h1>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>
-              Votre paiement via CinetPay a été traité avec succès. Votre compte est maintenant activé.
+              Votre paiement a été traité avec succès. Votre compte a été créé et activé. Vous pouvez dès à présent vous connecter.
               <br /><br />
               <small>Transaction ID: {tx}</small>
             </p>
-            <button className="btn btn-primary" onClick={() => navigate('/dashboard')} style={{ width: '100%', justifyContent: 'center' }}>
-              Accéder au Tableau de Bord <ArrowRight size={20} style={{ marginLeft: '0.5rem' }} />
+            <button className="btn btn-primary" onClick={() => navigate('/login')} style={{ width: '100%', justifyContent: 'center' }}>
+              Se connecter <ArrowRight size={20} style={{ marginLeft: '0.5rem' }} />
             </button>
           </>
         ) : (

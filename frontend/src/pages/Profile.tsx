@@ -145,7 +145,7 @@ const Profile: React.FC = () => {
                   style={{ width: '120px', height: '120px', objectFit: 'cover', border: '2px solid var(--accent-primary)' }} 
                 />
               ) : (
-                <div style={{ width: '120px', height: '120px', backgroundColor: 'var(--accent-primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3rem', fontWeight: 'bold' }}>
+                <div translate="no" style={{ width: '120px', height: '120px', backgroundColor: 'var(--accent-primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3rem', fontWeight: 'bold' }}>
                   {formData.firstName.charAt(0)}{formData.lastName.charAt(0)}
                 </div>
               )}
@@ -181,7 +181,7 @@ const Profile: React.FC = () => {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
                 <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Statut</span>
                 {user.subscriptionStatus === 'active' ? (
-                  <span style={{ padding: '0.25rem 0.75rem', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', fontSize: '0.85rem', fontWeight: 600 }}>Actif</span>
+                  <span style={{ padding: '0.25rem 0.75rem', backgroundColor: 'rgba(var(--accent-primary-rgb), 0.1)', color: 'var(--success)', fontSize: '0.85rem', fontWeight: 600 }}>Actif</span>
                 ) : (
                   <span style={{ padding: '0.25rem 0.75rem', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'var(--error)', fontSize: '0.85rem', fontWeight: 600 }}>Expiré / Inactif</span>
                 )}
@@ -331,7 +331,7 @@ const Profile: React.FC = () => {
                           <td style={{ padding: '1rem' }}>
                             <span style={{ 
                               padding: '0.25rem 0.5rem', 
-                              backgroundColor: tx.status === 'succeeded' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', 
+                              backgroundColor: tx.status === 'succeeded' ? 'rgba(var(--accent-primary-rgb), 0.1)' : 'rgba(239, 68, 68, 0.1)', 
                               color: tx.status === 'succeeded' ? 'var(--success)' : 'var(--error)', 
                               fontSize: '0.8rem', 
                               fontWeight: 600 

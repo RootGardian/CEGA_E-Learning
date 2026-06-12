@@ -142,7 +142,7 @@ const ResetPassword: React.FC = () => {
             </button>
           </form>
         ) : (
-          <div style={{ textAlign: 'center', padding: '1.5rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '0', border: '1px solid rgba(16, 185, 129, 0.3)' }} className="animate-fade-in">
+          <div style={{ textAlign: 'center', padding: '1.5rem', background: 'rgba(var(--accent-primary-rgb), 0.1)', borderRadius: '0', border: '1px solid rgba(var(--accent-primary-rgb), 0.3)' }} className="animate-fade-in">
             <CheckCircle size={48} style={{ color: 'var(--accent-primary)', margin: '0 auto 1rem' }} />
             <h3 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Mot de passe modifié !</h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>

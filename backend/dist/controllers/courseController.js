@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.saveStudentProgress = exports.getStudentProgress = exports.getLesson = exports.getCourseDetails = exports.getCourses = void 0;
+exports.getCourseUsers = exports.getStudentResources = exports.saveStudentProgress = exports.getStudentProgress = exports.getLesson = exports.getCourseDetails = exports.getCourses = void 0;
 const Course_1 = __importDefault(require("../models/Course"));
 const Module_1 = __importDefault(require("../models/Module"));
 const Lesson_1 = __importDefault(require("../models/Lesson"));
@@ -58,7 +58,9 @@ const getCourses = async (req, res) => {
             return {
                 ...courseJson,
                 isUnlocked,
-                progress
+                progress,
+                completedLessonsCount: completedLessons,
+                totalLessonsCount: totalLessons
             };
         });
         res.status(200).json(enrichedCourses);
@@ -231,3 +233,81 @@ const saveStudentProgress = async (req, res) => {
     }
 };
 exports.saveStudentProgress = saveStudentProgress;
+const getStudentResources = async (req, res) => {
+    try {
+        const userId = req.user?.id;
+        // We need to fetch the Etudiant to get the department
+        const Etudiant = require('../models/Etudiant').default;
+        const etudiant = await Etudiant.findByPk(userId);
+        const userDepartment = etudiant?.department;
+        const accesses = await CourseAccess_1.default.findAll();
+        const courses = await Course_1.default.findAll();
+        const unlockedCourseIds = courses.filter(course => {
+            const specificAccess = accesses.find(a => a.courseId == course.id && a.etudiantId == userId);
+            const globalAccess = accesses.find(a => a.courseId == course.id && a.department === userDepartment && a.etudiantId === null);
+            return specificAccess ? specificAccess.isUnlocked : (globalAccess ? globalAccess.isUnlocked : false);
+        }).map(c => c.id);
+        const Resource = require('../models/Resource').default;
+        const resources = await Resource.findAll({
+            include: [
+                {
+                    model: Lesson_1.default,
+                    as: 'lesson',
+                    required: true,
+                    include: [
+                        {
+                            model: Module_1.default,
+                            as: 'module',
+                            required: true,
+                            where: {
+                                courseId: unlockedCourseIds
+                            },
+                            include: [
+                                {
+                                    model: Course_1.default,
+                                    as: 'course',
+                                    attributes: ['id', 'title', 'department']
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            order: [['createdAt', 'DESC']]
+        });
+        res.status(200).json(resources);
+    }
+    catch (error) {
+        console.error('Get student resources error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+exports.getStudentResources = getStudentResources;
+const getCourseUsers = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const course = await Course_1.default.findByPk(id);
+        if (!course) {
+            res.status(404).json({ message: 'Course not found' });
+            return;
+        }
+        const Etudiant = require('../models/Etudiant').default;
+        const students = await Etudiant.findAll({
+            attributes: ['id', 'firstName', 'lastName', 'department']
+        });
+        const User = require('../models/User').default;
+        const teachers = await User.findAll({
+            attributes: ['id', 'nom', 'prenom', 'role']
+        });
+        const formattedUsers = [
+            ...students.map((s) => ({ id: s.id.toString(), type: 'etudiant', name: `${s.firstName} ${s.lastName}`.trim() || 'Étudiant Anonyme' })),
+            ...teachers.map((t) => ({ id: t.id.toString(), type: t.role, name: `${t.prenom || ''} ${t.nom || ''}`.trim() || t.role }))
+        ];
+        res.status(200).json(formattedUsers);
+    }
+    catch (error) {
+        console.error('Error fetching course users:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+exports.getCourseUsers = getCourseUsers;

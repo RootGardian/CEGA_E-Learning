@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.requireRole = exports.protect = void 0;
+exports.restrictTo = exports.requireRole = exports.protect = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const protect = (req, res, next) => {
     const token = req.cookies.token;
@@ -33,3 +33,14 @@ const requireRole = (role) => {
     };
 };
 exports.requireRole = requireRole;
+const restrictTo = (...roles) => {
+    return (req, res, next) => {
+        if (req.user && roles.includes(req.user.role)) {
+            next();
+        }
+        else {
+            res.status(403).json({ message: 'Access denied: You do not have permission to perform this action' });
+        }
+    };
+};
+exports.restrictTo = restrictTo;

@@ -19,4 +19,5 @@ router.post('/reset-password/:token', authController_1.resetPassword);
 router.get('/me', authMiddleware_1.protect, authController_1.getMe);
 router.put('/me', authMiddleware_1.protect, authController_1.updateProfile);
 router.put('/password', authMiddleware_1.protect, authController_1.updatePassword);
+router.post('/track-time', authMiddleware_1.protect, authController_1.trackTime);
 exports.default = router;

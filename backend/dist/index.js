@@ -15,6 +15,10 @@ const courseRoutes_1 = __importDefault(require("./routes/courseRoutes"));
 const notificationRoutes_1 = __importDefault(require("./routes/notificationRoutes"));
 const teacherRoutes_1 = __importDefault(require("./routes/teacherRoutes"));
 const adminRoutes_1 = __importDefault(require("./routes/adminRoutes"));
+const evaluationRoutes_1 = __importDefault(require("./routes/evaluationRoutes"));
+const examRoutes_1 = __importDefault(require("./routes/examRoutes"));
+const commentRoutes_1 = __importDefault(require("./routes/commentRoutes"));
+const settingsRoutes_1 = __importDefault(require("./routes/settingsRoutes"));
 const paymentController_1 = require("./controllers/paymentController");
 // Models import to ensure they are registered with Sequelize
 require("./models/Etudiant");
@@ -28,7 +32,11 @@ require("./models/CourseAccess");
 require("./models/User");
 require("./models/SystemSetting");
 require("./models/StudentProgress");
+require("./models/Grade");
+require("./models/Resource");
+require("./models/Comment");
 const socket_1 = require("./utils/socket");
+const commentCleanup_1 = require("./services/commentCleanup");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const httpServer = (0, http_1.createServer)(app);
@@ -49,6 +57,10 @@ app.use('/api/courses', courseRoutes_1.default);
 app.use('/api/notifications', notificationRoutes_1.default);
 app.use('/api/teacher', teacherRoutes_1.default);
 app.use('/api/admin', adminRoutes_1.default);
+app.use('/api/evaluations', evaluationRoutes_1.default);
+app.use('/api/evaluations', examRoutes_1.default);
+app.use('/api/comments', commentRoutes_1.default);
+app.use('/api/settings', settingsRoutes_1.default);
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'CEGA E-Learning API is running' });
 });
@@ -58,6 +70,7 @@ app.get('/api/health', (req, res) => {
 db_1.default.sync({ alter: false })
     .then(() => {
     console.log('Database synced successfully.');
+    (0, commentCleanup_1.startCommentCleanupJob)();
     httpServer.listen(port, () => {
         console.log(`Server is running on port ${port}`);
     });

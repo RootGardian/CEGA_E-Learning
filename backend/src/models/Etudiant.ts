@@ -17,11 +17,12 @@ class Etudiant extends Model {
   declare phone: string | null;
   declare bio: string | null;
   declare profilePicture: string | null;
-  declare subscriptionStatus: 'active' | 'expired' | 'pending';
+  declare subscriptionStatus: 'active' | 'expired';
   declare accessExpirationDate: Date | null;
   declare notificationPreferences: any;
   declare is_active: boolean;
   declare studyTime: number;
+  declare formationType: 'e-learning' | 'presentielle';
 
   // timestamps!
   declare readonly createdAt: Date;
@@ -96,7 +97,7 @@ Etudiant.init(
     subscriptionStatus: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: 'pending',
+      defaultValue: 'active',
     },
     accessExpirationDate: {
       type: DataTypes.DATE,
@@ -122,6 +123,11 @@ Etudiant.init(
       allowNull: false,
       defaultValue: 0,
     },
+    formationType: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: 'e-learning',
+    },
   },
   {
     sequelize,
@@ -129,6 +135,13 @@ Etudiant.init(
     timestamps: true,
     createdAt: 'created_at',
     updatedAt: 'updated_at',
+    hooks: {
+      beforeValidate: (etudiant: Etudiant) => {
+        if (etudiant.email) {
+          etudiant.email = etudiant.email.toLowerCase().trim();
+        }
+      }
+    }
   }
 );
 

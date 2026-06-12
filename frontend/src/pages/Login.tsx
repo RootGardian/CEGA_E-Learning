@@ -111,9 +111,9 @@ const Login: React.FC = () => {
             </div>
           </div>
 
-          <button type="submit" className="btn btn-primary">
+          <button type="submit" className="btn btn-primary" translate="no">
             <LogIn size={20} style={{ marginRight: '0.5rem' }} />
-            Se Connecter
+            Se connecter
           </button>
         </form>
 

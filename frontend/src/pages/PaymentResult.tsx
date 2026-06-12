@@ -59,7 +59,7 @@ const PaymentResultContent = () => {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            {status === 'success' && <CheckCircle size={64} color="#10b981" style={{ marginBottom: '1rem' }} />}
+            {status === 'success' && <CheckCircle size={64} color="var(--accent-primary)" style={{ marginBottom: '1rem' }} />}
             {(status === 'requires_payment_method' || status === 'default') && <XCircle size={64} color="#ef4444" style={{ marginBottom: '1rem' }} />}
             {status === 'processing' && <Loader2 size={64} color="#3b82f6" style={{ marginBottom: '1rem', animation: 'spin 2s linear infinite' }} />}
             

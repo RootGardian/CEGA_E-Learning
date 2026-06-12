@@ -182,7 +182,7 @@ const AdminGrades: React.FC = () => {
                       <span style={{ 
                         fontSize: '1.1rem', 
                         fontWeight: 'bold',
-                        color: g.score !== null ? (g.score >= 10 ? '#10B981' : '#EF4444') : 'var(--text-secondary)' 
+                        color: g.score !== null ? (g.score >= 10 ? 'var(--accent-primary)' : '#EF4444') : 'var(--text-secondary)' 
                       }}>
                         {g.score !== null ? `${g.score}/20` : '-'}
                       </span>
@@ -193,7 +193,7 @@ const AdminGrades: React.FC = () => {
                     <td style={{ padding: '1rem 1.5rem' }}>
                       {g.score !== null ? (
                         g.score >= 10 ? (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.75rem', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10B981', borderRadius: '9999px', fontSize: '0.85rem', fontWeight: 600 }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.75rem', backgroundColor: 'rgba(var(--accent-primary-rgb), 0.1)', color: 'var(--accent-primary)', borderRadius: '9999px', fontSize: '0.85rem', fontWeight: 600 }}>
                             <CheckCircle size={14} /> Réussi
                           </span>
                         ) : (

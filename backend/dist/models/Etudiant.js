@@ -95,6 +95,16 @@ Etudiant.init({
         allowNull: false,
         defaultValue: true,
     },
+    studyTime: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+    },
+    formationType: {
+        type: sequelize_1.DataTypes.STRING,
+        allowNull: false,
+        defaultValue: 'e-learning',
+    },
 }, {
     sequelize: db_1.default,
     tableName: 'etudiants',

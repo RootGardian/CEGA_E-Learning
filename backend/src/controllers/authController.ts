@@ -11,6 +11,7 @@ import { welcomeEmail, resetPasswordEmail } from '../utils/emailTemplates';
 import Intervenant from '../models/Intervenant';
 import User from '../models/User';
 import SystemSetting from '../models/SystemSetting';
+import Formation from '../models/Formation';
 
 const generateToken = (userId: number, role: string = 'etudiant') => {
   return jwt.sign({ id: userId, role }, process.env.JWT_SECRET as string, {
@@ -18,43 +19,25 @@ const generateToken = (userId: number, role: string = 'etudiant') => {
   });
 };
 
-export const register = async (req: Request, res: Response): Promise<void> => {
+export const verifyEmail = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, password, firstName, lastName, department } = req.body;
-
-    const existingUser = await Etudiant.findOne({ where: { email } });
-    if (existingUser) {
-      res.status(400).json({ message: 'User already exists' });
+    const { email } = req.body;
+    if (!email) {
+      res.status(400).json({ message: 'Email requis' });
       return;
     }
 
-    const hashedPassword = await hashPassword(password);
+    const lowerEmail = email.toLowerCase().trim();
+    const user = await Etudiant.findOne({ where: { email: lowerEmail } });
 
-    const user = await Etudiant.create({
-      firstName,
-      lastName,
-      department,
-      email,
-      password: hashedPassword,
-    });
+    if (user) {
+      res.status(400).json({ message: 'Un compte avec cet email existe déjà.' });
+      return;
+    }
 
-    // Send professional welcome email
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    const welcome = welcomeEmail(firstName, `${frontendUrl}/login`);
-    await sendEmail(email, welcome.subject, welcome.text, welcome.html);
-
-    const token = generateToken(user.id);
-
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
-    });
-
-    res.status(201).json({ message: 'User registered successfully', user: { id: user.id, email: user.email } });
+    res.status(200).json({ message: 'Email disponible' });
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('Email verification error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -63,15 +46,17 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password, token: twoFactorToken } = req.body;
 
-    let user: any = await Etudiant.findOne({ where: { email } });
+    const lowerEmail = email.toLowerCase().trim();
+
+    let user: any = await Etudiant.findOne({ where: { email: lowerEmail } });
     let role = 'etudiant';
 
     if (!user) {
-      user = await Intervenant.findOne({ where: { email } });
+      user = await Intervenant.findOne({ where: { email: lowerEmail } });
       if (user) {
         role = 'enseignant';
       } else {
-        user = await User.findOne({ where: { email } });
+        user = await User.findOne({ where: { email: lowerEmail } });
         if (user) {
           if (user.role === 'directeur_formation') {
             role = 'admin';
@@ -96,6 +81,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       res.status(401).json({ message: 'Mot de passe incorrect.' });
       return;
     }
+
+
 
     if (user.is_active === false) {
       res.status(403).json({ message: "Votre compte a été bloqué. Veuillez contacter l'administration de CEGA." });
@@ -432,6 +419,19 @@ export const getPublicSettings = async (req: Request, res: Response): Promise<vo
     res.status(200).json(settingsMap);
   } catch (error) {
     console.error('Error fetching public settings:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const getPublicFormations = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const formations = await Formation.findAll({
+      attributes: ['id', 'titre', 'code_formation', 'frais_inscription'],
+      order: [['titre', 'ASC']]
+    });
+    res.status(200).json(formations);
+  } catch (error) {
+    console.error('Error fetching public formations:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };

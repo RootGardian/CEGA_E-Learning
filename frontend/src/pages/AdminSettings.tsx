@@ -10,7 +10,10 @@ const AdminSettings: React.FC = () => {
     maintenanceMode: 'false',
     formationPrice: '500',
     exportFormat: 'PDF',
-    modulePassGrade: '10'
+    modulePassGrade: '10',
+    supportPhone: '+221 77 000 00 00',
+    supportDescription: "Notre équipe est là pour vous aider. N'hésitez pas à nous contacter si vous rencontrez des problèmes ou si vous avez des questions.",
+    supportFormEnabled: 'true'
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -80,7 +83,7 @@ const AdminSettings: React.FC = () => {
       </div>
       
       {successMsg && (
-        <div style={{ padding: '1rem', marginBottom: '2rem', backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid var(--success)', color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ padding: '1rem', marginBottom: '2rem', backgroundColor: 'rgba(var(--accent-primary-rgb), 0.1)', border: '1px solid var(--success)', color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <CheckCircle size={20} /> {successMsg}
         </div>
       )}
@@ -121,6 +124,48 @@ const AdminSettings: React.FC = () => {
             </div>
           </div>
 
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+              <label className="form-label" style={{ fontWeight: 600 }}>Message d'accueil (Page Support)</label>
+              <textarea 
+                name="supportDescription"
+                className="form-input" 
+                value={settings.supportDescription}
+                onChange={handleChange as any}
+                required
+                rows={4}
+                style={{ resize: 'vertical' }}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label" style={{ fontWeight: 600 }}>Téléphone de Support</label>
+              <input 
+                type="text" 
+                name="supportPhone"
+                className="form-input" 
+                value={settings.supportPhone}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label" style={{ fontWeight: 600 }}>Options de Support</label>
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)', cursor: 'pointer' }}>
+                  <input 
+                    type="checkbox" 
+                    name="supportFormEnabled" 
+                    checked={settings.supportFormEnabled === 'true'} 
+                    onChange={e => setSettings(prev => ({ ...prev, supportFormEnabled: e.target.checked ? 'true' : 'false' }))} 
+                  />
+                  Activer le Formulaire
+                </label>
+              </div>
+            </div>
+          </div>
+
           <h2 style={{ fontSize: '1.2rem', color: 'var(--text-primary)', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Système & Affichage</h2>
           
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
@@ -157,7 +202,6 @@ const AdminSettings: React.FC = () => {
 
           <div className="form-group" style={{ marginBottom: '1.5rem' }}>
             <label className="form-label" style={{ fontWeight: 600 }}>Prix de la formation à l'inscription (en GNF/EUR)</label>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Ce montant sera utilisé pour générer dynamiquement les paiements Stripe.</p>
             <input 
               type="number" 
               name="formationPrice"

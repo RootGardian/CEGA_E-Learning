@@ -160,9 +160,9 @@ const CommentSection: React.FC<{ moduleId: number; courseId: number; currentUser
   };
 
   return (
-    <div className="glass-panel animate-fade-in" style={{ marginTop: '4rem', padding: '3rem', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.1)', backgroundColor: 'var(--bg-secondary)', fontFamily: "'Inter', 'SF Pro Display', sans-serif" }}>
+    <div className="glass-panel animate-fade-in" style={{ marginTop: '4rem', padding: '3rem', borderRadius: '12px', border: '1px solid rgba(var(--accent-primary-rgb), 0.1)', backgroundColor: 'var(--bg-secondary)', fontFamily: "'Inter', 'SF Pro Display', sans-serif" }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2.5rem' }}>
-        <div style={{ backgroundColor: 'rgba(16, 185, 129, 0.08)', padding: '0.5rem', borderRadius: '8px', color: 'var(--accent-primary)', display: 'flex' }}>
+        <div style={{ backgroundColor: 'rgba(var(--accent-primary-rgb), 0.08)', padding: '0.5rem', borderRadius: '8px', color: 'var(--accent-primary)', display: 'flex' }}>
           <MessageSquare size={20} />
         </div>
         <h3 style={{ fontSize: '1.4rem', color: 'var(--text-primary)', margin: 0, fontWeight: 600, letterSpacing: '-0.02em' }}>Espace de Discussion</h3>
@@ -190,8 +190,8 @@ const CommentSection: React.FC<{ moduleId: number; courseId: number; currentUser
             minHeight: '120px'
           }}
           onFocus={(e) => {
-            e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.4)';
-            e.currentTarget.style.boxShadow = '0 0 0 3px rgba(16, 185, 129, 0.05)';
+            e.currentTarget.style.borderColor = 'rgba(var(--accent-primary-rgb), 0.4)';
+            e.currentTarget.style.boxShadow = '0 0 0 3px rgba(var(--accent-primary-rgb), 0.05)';
           }}
           onBlur={(e) => {
             e.currentTarget.style.borderColor = 'var(--border-color)';
@@ -216,10 +216,10 @@ const CommentSection: React.FC<{ moduleId: number; courseId: number; currentUser
                   key={`${u.type}-${u.id}`}
                   onClick={() => handleSelectMention(u)}
                   style={{ padding: '1rem', cursor: 'pointer', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '0.75rem', transition: 'background-color 0.2s ease' }}
-                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.15)'}
+                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(var(--accent-primary-rgb), 0.15)'}
                   onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
-                  <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--accent-primary)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.9rem' }}>
+                  <div translate="no" style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--accent-primary)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.9rem' }}>
                     {u.name.charAt(0).toUpperCase()}
                   </div>
                   <span style={{ fontWeight: 600 }}>{u.name}</span>
@@ -267,7 +267,7 @@ const CommentSection: React.FC<{ moduleId: number; courseId: number; currentUser
         ) : (
           comments.map(comment => (
             <div key={comment.id} className="animate-fade-in" style={{ display: 'flex', gap: '1.25rem', padding: '1.5rem', backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', transition: 'box-shadow 0.2s ease' }} onMouseOver={(e) => { e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'; }} onMouseOut={(e) => { e.currentTarget.style.boxShadow = 'none'; }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: comment.authorType === 'enseignant' || comment.authorType === 'admin' || comment.authorType === 'directeur_formation' ? 'var(--accent-primary)' : 'var(--bg-secondary)', border: comment.authorType === 'etudiant' ? '1px solid var(--border-color)' : 'none', color: comment.authorType === 'etudiant' ? 'var(--text-primary)' : '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '1rem', fontWeight: 600 }}>
+              <div translate="no" style={{ width: '40px', height: '40px', borderRadius: '50%', background: comment.authorType === 'enseignant' || comment.authorType === 'admin' || comment.authorType === 'directeur_formation' ? 'var(--accent-primary)' : 'var(--bg-secondary)', border: comment.authorType === 'etudiant' ? '1px solid var(--border-color)' : 'none', color: comment.authorType === 'etudiant' ? 'var(--text-primary)' : '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '1rem', fontWeight: 600 }}>
                 {comment.authorName.charAt(0).toUpperCase()}
               </div>
               <div style={{ flex: 1 }}>

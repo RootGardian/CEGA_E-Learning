@@ -73,7 +73,7 @@ const ForgotPassword: React.FC = () => {
             </button>
           </form>
         ) : (
-          <div style={{ textAlign: 'center', padding: '1rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '0', border: '1px solid rgba(16, 185, 129, 0.3)' }} className="animate-fade-in">
+          <div style={{ textAlign: 'center', padding: '1rem', background: 'rgba(var(--accent-primary-rgb), 0.1)', borderRadius: '0', border: '1px solid rgba(var(--accent-primary-rgb), 0.3)' }} className="animate-fade-in">
             <h3 style={{ color: 'var(--accent-primary)', marginBottom: '0.5rem' }}>Email envoyé !</h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
               Si un compte existe avec cette adresse, vous recevrez un email contenant les instructions pour réinitialiser votre mot de passe.

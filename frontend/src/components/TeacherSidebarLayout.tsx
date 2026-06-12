@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
@@ -13,7 +13,8 @@ import {
   Settings,
   Calendar,
   ArrowLeft,
-  Bell
+  Bell,
+  HelpCircle
 } from 'lucide-react';
 import { getDeptName } from '../utils/departments';
 import socket from '../utils/socket';
@@ -41,6 +42,7 @@ const TeacherSidebarLayout: React.FC = () => {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const notificationRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { showAlert } = usePopup();
 
@@ -54,6 +56,16 @@ const TeacherSidebarLayout: React.FC = () => {
       console.error(err);
     }
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -165,14 +177,13 @@ const TeacherSidebarLayout: React.FC = () => {
     display: 'flex',
     alignItems: 'center',
     padding: '0.85rem 1rem',
-    borderRadius: '0',
-    backgroundColor: isActive ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
-    border: isActive ? '1px solid var(--accent-primary)' : '1px solid transparent',
-    borderLeft: isActive ? '4px solid var(--accent-primary)' : '4px solid transparent',
-    color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)',
+    borderRadius: '10px',
+    backgroundColor: isActive ? 'var(--accent-secondary)' : 'transparent',
+    border: 'none',
+    color: isActive ? '#FFFFFF' : 'var(--text-secondary)',
     textDecoration: 'none',
-    fontWeight: isActive ? 600 : 500,
-    marginBottom: '0.5rem',
+    fontWeight: 500,
+    marginBottom: '0.4rem',
     transition: 'all 0.2s ease'
   });
 
@@ -200,7 +211,7 @@ const TeacherSidebarLayout: React.FC = () => {
     if (user.notificationPreferences?.inAppAlerts === false) return null;
     
     return (
-      <div style={{ position: 'relative' }}>
+      <div ref={notificationRef} style={{ position: 'relative' }}>
         <button 
           onClick={() => {
             if ('Notification' in window && Notification.permission === 'default') {
@@ -222,7 +233,7 @@ const TeacherSidebarLayout: React.FC = () => {
         </button>
 
         {showNotifications && (
-          <div style={{ position: 'absolute', top: '100%', right: isMobile ? '-40px' : '0', width: 'min(350px, 90vw)', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', zIndex: 1000, display: 'flex', flexDirection: 'column', maxHeight: '400px' }}>
+          <div style={{ position: 'absolute', top: '100%', ...(isMobile ? { right: '0', left: 'auto' } : { left: '0', right: 'auto' }), width: 'min(350px, 90vw)', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', zIndex: 1000, display: 'flex', flexDirection: 'column', maxHeight: '400px' }}>
             <div style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ fontSize: '1rem', color: 'var(--text-primary)', margin: 0 }}>Notifications</h3>
             </div>
@@ -233,9 +244,19 @@ const TeacherSidebarLayout: React.FC = () => {
                 </div>
               ) : (
                 notifications.map(n => (
-                  <div key={n.id} onClick={() => { if(!n.isRead) handleMarkAsRead(n.id) }} style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', backgroundColor: n.isRead ? 'var(--bg-primary)' : 'rgba(16, 185, 129, 0.05)', cursor: 'pointer', transition: 'background-color 0.2s' }}>
-                    <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '0.9rem', color: 'var(--text-primary)' }}>{n.title}</h4>
-                    <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{n.message}</p>
+                  <div key={n.id} onClick={() => { if(!n.isRead) handleMarkAsRead(n.id) }} style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', backgroundColor: n.isRead ? 'var(--bg-primary)' : 'rgba(var(--accent-primary-rgb), 0.05)', cursor: 'pointer', transition: 'background-color 0.2s', display: 'flex', gap: '1rem' }}>
+                    <div style={{ flex: 1 }}>
+                      <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: n.isRead ? 500 : 600 }}>{n.title}</h4>
+                      <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{n.message}</p>
+                      {(n.createdAt || n.created_at) && (
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                          {new Date(n.createdAt || n.created_at).toLocaleDateString('fr-FR')} à {new Date(n.createdAt || n.created_at).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})}
+                        </span>
+                      )}
+                    </div>
+                    {!n.isRead && (
+                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--accent-primary)', marginTop: '0.4rem' }} />
+                    )}
                   </div>
                 ))
               )}
@@ -269,16 +290,19 @@ const TeacherSidebarLayout: React.FC = () => {
 
       {/* Sidebar Ergonomique */}
       <aside className={`sidebar ${isSidebarOpen ? 'is-open' : ''}`}>
-        <div style={{ marginBottom: '3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <img src="/logo_cega.jpeg" alt="Logo CEGA" style={{ width: '80px', height: '80px', objectFit: 'contain', borderRadius: '12px', marginBottom: '1rem' }} />
-            <h2 className="gradient-text" style={{ fontSize: '1.5rem', marginBottom: '0.2rem' }}>Espace Formateur</h2>
-            <div style={{ display: 'flex', alignItems: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.5rem' }}>
-              <Briefcase size={14} style={{ marginRight: '0.4rem' }} />
-              {getDeptName(user.department)}
+        <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%', position: 'relative' }}>
+          <div style={{ width: '100%' }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <img src="/logo1_cega.jpeg" alt="Logo CEGA" style={{ width: '36px', height: '36px', objectFit: 'contain', borderRadius: '8px', marginRight: '0.75rem' }} />
+              <h2 className="gradient-text" style={{ fontSize: '1.2rem', margin: 0 }}>CEGA</h2>
+            </div>
+            
+            <div style={{ backgroundColor: 'rgba(150, 150, 150, 0.1)', padding: '0.85rem 1rem', borderRadius: '10px', width: '100%' }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.2rem' }}>Espace</div>
+              <div style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)' }}>Formateur</div>
             </div>
           </div>
-          <button className="hidden-desktop" onClick={() => setIsSidebarOpen(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+          <button className="hidden-desktop" onClick={() => setIsSidebarOpen(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', position: 'absolute', right: '-0.5rem', top: '-0.5rem' }}>
             <X size={24} />
           </button>
         </div>
@@ -313,11 +337,16 @@ const TeacherSidebarLayout: React.FC = () => {
           </ul>
         </nav>
 
-        <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem', marginBottom: '1.5rem' }}>
+        <div style={{ marginTop: 'auto', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem', marginBottom: '1.5rem' }}>
           <ul style={{ listStyle: 'none', padding: 0 }}>
             <li>
               <NavLink to="/teacher/profile" style={navLinkStyle} onClick={() => setIsSidebarOpen(false)}>
                 <User size={20} style={{ marginRight: '0.75rem' }} /> Mon Profil
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/teacher/support" style={navLinkStyle} onClick={() => setIsSidebarOpen(false)}>
+                <HelpCircle size={20} style={{ marginRight: '0.75rem' }} /> <span translate="no">Support</span>
               </NavLink>
             </li>
             <li>
@@ -331,7 +360,9 @@ const TeacherSidebarLayout: React.FC = () => {
         <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
           <ul style={{ listStyle: 'none', padding: 0 }}>
             <li>
-              <button onClick={handleLogout} style={{ width: '100%', display: 'flex', alignItems: 'center', padding: '0.85rem 1rem', borderRadius: '0', color: 'var(--error)', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1rem', fontWeight: 500, textAlign: 'left' }}>
+              <button onClick={handleLogout} style={{ width: '100%', display: 'flex', alignItems: 'center', padding: '0.85rem 1rem', borderRadius: '10px', color: 'var(--text-primary)', backgroundColor: 'rgba(150, 150, 150, 0.1)', border: 'none', cursor: 'pointer', fontSize: '0.95rem', fontWeight: 500, textAlign: 'left', marginTop: '0.5rem', transition: 'all 0.2s ease' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(150, 150, 150, 0.2)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(150, 150, 150, 0.1)'}>
                 <LogOut size={20} style={{ marginRight: '0.75rem' }} /> Déconnexion
               </button>
             </li>
@@ -341,49 +372,24 @@ const TeacherSidebarLayout: React.FC = () => {
 
       {/* Zone de contenu pour les sous-pages */}
       <main className="main-content">
-        <header className="hidden-mobile">
-          <div className="top-header" style={{
-            backgroundColor: 'var(--bg-primary)',
-            borderBottom: '1px solid var(--border-color)',
-            padding: '0 2rem',
-            height: '70px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            position: 'sticky',
-            top: 0,
-            zIndex: 10,
-          }}>
-            <h2 style={{ fontSize: '1.25rem', color: 'var(--text-primary)', margin: 0, fontWeight: 600 }}>Espace Formateur</h2>
-            
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-              {renderNotificationBell(false)}
-              
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: '0.9rem' }}>
-                    {user.firstName} {user.lastName}
-                  </div>
-                  <div style={{ color: 'var(--accent-primary)', fontSize: '0.8rem', fontWeight: 500 }}>
-                    Enseignant • {getDeptName(user.department)}
-                  </div>
-                </div>
-                <div style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '50%',
-                  backgroundColor: 'var(--accent-primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#000',
-                  fontWeight: 'bold',
-                  fontSize: '1.1rem'
-                }}>
-                  {user.firstName.charAt(0)}{user.lastName.charAt(0)}
-                </div>
-              </div>
+        <header className="hidden-mobile" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem 0 1rem 0', borderBottom: '1px solid var(--border-color)', marginBottom: '2rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <span style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>Espace Formateur</span>
+            {renderNotificationBell(false)}
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+              <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.95rem' }}>{user.firstName} {user.lastName}</span>
+              <span style={{ fontSize: '0.8rem', color: 'var(--accent-primary)', fontWeight: 500 }}>Enseignant • {getDeptName(user.department)}</span>
             </div>
+            {user.profilePicture ? (
+              <img src={user.profilePicture} alt="Avatar" style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border-color)' }} />
+            ) : (
+              <div translate="no" style={{ width: '42px', height: '42px', borderRadius: '50%', backgroundColor: 'var(--accent-primary)', color: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', fontWeight: 'bold' }}>
+                {user.firstName.charAt(0)}{user.lastName.charAt(0)}
+              </div>
+            )}
           </div>
         </header>
         

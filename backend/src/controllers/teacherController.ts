@@ -140,7 +140,7 @@ export const getCourseStudents = async (req: Request, res: Response): Promise<vo
     // Tous les étudiants du même département que le cours
     const students = await Etudiant.findAll({
       where: { department: course.department },
-      attributes: ['id', 'firstName', 'lastName', 'email', 'department']
+      attributes: ['id', 'firstName', 'lastName', 'email', 'department', 'formationType']
     });
 
     const accesses = await CourseAccess.findAll({

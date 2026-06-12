@@ -51,6 +51,14 @@ Intervenant.init({
         allowNull: false,
         defaultValue: true,
     },
+    resetPasswordToken: {
+        type: sequelize_1.DataTypes.STRING,
+        allowNull: true,
+    },
+    resetPasswordExpires: {
+        type: sequelize_1.DataTypes.DATE,
+        allowNull: true,
+    },
 }, {
     sequelize: db_1.default,
     tableName: 'intervenants',

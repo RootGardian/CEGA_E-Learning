@@ -16,11 +16,15 @@ Notification.init({
     },
     etudiantId: {
         type: sequelize_1.DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true,
         references: {
             model: Etudiant_1.default,
             key: 'id',
         },
+    },
+    userId: {
+        type: sequelize_1.DataTypes.UUID,
+        allowNull: true,
     },
     title: {
         type: sequelize_1.DataTypes.STRING,

@@ -157,15 +157,13 @@ const AdminResources: React.FC = () => {
   });
 
   return (
-    <div className="dashboard-content animate-fade-in" style={{ padding: 'clamp(1rem, 3vw, 2rem)', maxWidth: '1200px', margin: '0 auto' }}>
-      <div className="responsive-header">
-        <div>
-          <h1 className="gradient-text" style={{ fontSize: '2rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <Video size={32} color="var(--accent-primary)" />
-            Ressources des Séances
-          </h1>
-          <p style={{ color: 'var(--text-secondary)' }}>Ajoutez des vidéos YouTube associées à des séances spécifiques.</p>
-        </div>
+    <div className="dashboard-content animate-fade-in">
+      <div style={{ marginBottom: '3rem' }}>
+        <h1 className="gradient-text" style={{ fontSize: '2rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <Video size={32} color="var(--accent-primary)" />
+          Ressources des Séances
+        </h1>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>Ajoutez des vidéos YouTube associées à des séances spécifiques.</p>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))', gap: '2rem', marginBottom: '2rem' }}>

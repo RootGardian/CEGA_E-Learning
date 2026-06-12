@@ -13,9 +13,11 @@ import adminRoutes from './routes/adminRoutes';
 import evaluationRoutes from './routes/evaluationRoutes';
 import examRoutes from './routes/examRoutes';
 import commentRoutes from './routes/commentRoutes';
+import settingsRoutes from './routes/settingsRoutes';
 import { stripeWebhook } from './controllers/paymentController';
 
 // Models import to ensure they are registered with Sequelize
+import './models/Formation';
 import './models/Etudiant';
 import './models/Course';
 import './models/Module';
@@ -62,6 +64,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/evaluations', evaluationRoutes);
 app.use('/api/evaluations', examRoutes);
 app.use('/api/comments', commentRoutes);
+app.use('/api/settings', settingsRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'CEGA E-Learning API is running' });

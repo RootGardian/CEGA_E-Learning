@@ -344,7 +344,7 @@ const CourseViewer: React.FC = () => {
                     display: 'flex',
                     alignItems: 'center',
                     padding: '1rem',
-                    backgroundColor: activeModuleId === mod.id && !activeLessonId ? 'rgba(16, 185, 129, 0.05)' : 'var(--bg-secondary)',
+                    backgroundColor: activeModuleId === mod.id && !activeLessonId ? 'rgba(var(--accent-primary-rgb), 0.05)' : 'var(--bg-secondary)',
                     border: '1px solid',
                     borderColor: activeModuleId === mod.id && !activeLessonId ? 'var(--accent-primary)' : 'var(--border-color)',
                     borderRadius: '8px',
@@ -422,8 +422,8 @@ const CourseViewer: React.FC = () => {
                       </button>
 
                     <div style={{
-                      backgroundColor: 'rgba(16, 185, 129, 0.05)',
-                      border: '1px solid rgba(16, 185, 129, 0.2)',
+                      backgroundColor: 'rgba(var(--accent-primary-rgb), 0.05)',
+                      border: '1px solid rgba(var(--accent-primary-rgb), 0.2)',
                       borderRadius: '16px',
                       padding: '2rem',
                       marginBottom: '3rem',
@@ -485,7 +485,7 @@ const CourseViewer: React.FC = () => {
                                 width: '40px',
                                 height: '40px',
                                 borderRadius: '50%',
-                                backgroundColor: unlocked ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255, 255, 255, 0.05)',
+                                backgroundColor: unlocked ? 'rgba(var(--accent-primary-rgb), 0.1)' : 'rgba(255, 255, 255, 0.05)',
                                 color: unlocked ? 'var(--accent-primary)' : 'var(--text-secondary)',
                                 display: 'flex',
                                 alignItems: 'center',
@@ -516,14 +516,14 @@ const CourseViewer: React.FC = () => {
                           alignItems: 'center',
                           justifyContent: 'space-between',
                           padding: '1.5rem',
-                          border: '1px solid rgba(16, 185, 129, 0.3)',
+                          border: '1px solid rgba(var(--accent-primary-rgb), 0.3)',
                           borderRadius: '12px',
                           cursor: 'pointer',
                           textAlign: 'left',
                           transition: 'all 0.2s ease',
                           width: '100%',
                           marginTop: '1rem',
-                          background: 'rgba(16, 185, 129, 0.05)'
+                          background: 'rgba(var(--accent-primary-rgb), 0.05)'
                         }}
                         onMouseOver={(e) => {
                           e.currentTarget.style.borderColor = 'var(--accent-primary)';
@@ -531,7 +531,7 @@ const CourseViewer: React.FC = () => {
                           e.currentTarget.style.boxShadow = '0 10px 25px -5px rgba(0, 0, 0, 0.3)';
                         }}
                         onMouseOut={(e) => {
-                          e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                          e.currentTarget.style.borderColor = 'rgba(var(--accent-primary-rgb), 0.3)';
                           e.currentTarget.style.transform = 'translateY(0)';
                           e.currentTarget.style.boxShadow = 'none';
                         }}
@@ -541,7 +541,7 @@ const CourseViewer: React.FC = () => {
                             width: '40px',
                             height: '40px',
                             borderRadius: '50%',
-                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            backgroundColor: 'rgba(var(--accent-primary-rgb), 0.1)',
                             color: 'var(--accent-primary)',
                             display: 'flex',
                             alignItems: 'center',
@@ -576,8 +576,8 @@ const CourseViewer: React.FC = () => {
                   </button>
 
                   <div style={{
-                    backgroundColor: 'rgba(16, 185, 129, 0.05)',
-                    border: '1px solid rgba(16, 185, 129, 0.2)',
+                    backgroundColor: 'rgba(var(--accent-primary-rgb), 0.05)',
+                    border: '1px solid rgba(var(--accent-primary-rgb), 0.2)',
                     borderRadius: '16px',
                     padding: '2rem',
                     marginBottom: '3rem',
@@ -624,8 +624,8 @@ const CourseViewer: React.FC = () => {
                                 ></iframe>
                               </div>
                             ) : (
-                              <div style={{ height: '160px', backgroundColor: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <BookOpen size={48} color="rgba(16, 185, 129, 0.5)" />
+                              <div style={{ height: '160px', backgroundColor: 'rgba(var(--accent-primary-rgb), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <BookOpen size={48} color="rgba(var(--accent-primary-rgb), 0.5)" />
                               </div>
                             )}
                             <div style={{ padding: '1rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -652,8 +652,8 @@ const CourseViewer: React.FC = () => {
             <div className="course-overview animate-fade-in" style={{ padding: 'clamp(1rem, 2vw, 2rem)' }}>
               {/* Hero Section */}
               <div style={{
-                backgroundColor: 'rgba(16, 185, 129, 0.05)',
-                border: '1px solid rgba(16, 185, 129, 0.2)',
+                backgroundColor: 'rgba(var(--accent-primary-rgb), 0.05)',
+                border: '1px solid rgba(var(--accent-primary-rgb), 0.2)',
                 borderRadius: '16px',
                 padding: 'clamp(2rem, 4vw, 3rem)',
                 marginBottom: '3rem',
@@ -704,7 +704,7 @@ const CourseViewer: React.FC = () => {
                       title={!unlocked ? "Terminez le module précédent pour débloquer" : ""}
                     >
                       <div style={{
-                        background: 'rgba(16, 185, 129, 0.1)',
+                        background: 'rgba(var(--accent-primary-rgb), 0.1)',
                         color: 'var(--accent-primary)',
                         width: '48px',
                         height: '48px',
@@ -745,7 +745,7 @@ const CourseViewer: React.FC = () => {
                               width: '100%'
                             }}
                             onMouseOver={(e) => {
-                              e.currentTarget.style.background = 'rgba(16, 185, 129, 0.05)';
+                              e.currentTarget.style.background = 'rgba(var(--accent-primary-rgb), 0.05)';
                               e.currentTarget.style.color = 'var(--text-primary)';
                             }}
                             onMouseOut={(e) => {

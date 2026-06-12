@@ -104,8 +104,8 @@ const Resources: React.FC = () => {
               fontWeight: 600, 
               color: 'var(--accent-primary)', 
               padding: '0.2rem 0.6rem', 
-              backgroundColor: 'rgba(16, 185, 129, 0.1)', 
-              border: '1px solid rgba(16, 185, 129, 0.3)', 
+              backgroundColor: 'rgba(var(--accent-primary-rgb), 0.1)', 
+              border: '1px solid rgba(var(--accent-primary-rgb), 0.3)', 
               borderRadius: '4px',
               marginBottom: '0.5rem'
             }}>
@@ -151,7 +151,7 @@ const Resources: React.FC = () => {
                 padding: '0.5rem 1rem',
                 border: activeCategory === cat ? '1px solid var(--accent-primary)' : '1px solid var(--border-color)',
                 borderRadius: '6px',
-                backgroundColor: activeCategory === cat ? 'rgba(16, 185, 129, 0.1)' : 'var(--bg-secondary)',
+                backgroundColor: activeCategory === cat ? 'rgba(var(--accent-primary-rgb), 0.1)' : 'var(--bg-secondary)',
                 color: activeCategory === cat ? 'var(--accent-primary)' : 'var(--text-secondary)',
                 cursor: 'pointer',
                 fontSize: '0.85rem',

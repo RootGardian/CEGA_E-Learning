@@ -1,8 +1,11 @@
 import express from 'express';
-import { createPaymentIntent, stripeWebhook, getTransactions, initCinetPayPayment, cinetpayWebhook } from '../controllers/paymentController';
+import { createPaymentIntent, stripeWebhook, getTransactions, initCinetPayPayment, cinetpayWebhook, getPrice } from '../controllers/paymentController';
 import { protect } from '../middlewares/authMiddleware';
 
 const router = express.Router();
+
+// Prix dynamique pour l'étudiant
+router.get('/price', protect, getPrice);
 
 // Endpoint pour créer une intention de paiement (Stripe)
 router.post('/create-intent', createPaymentIntent);

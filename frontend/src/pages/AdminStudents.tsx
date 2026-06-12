@@ -71,6 +71,17 @@ const AdminStudents: React.FC = () => {
     }
   };
 
+  const handleToggleFormation = async (id: number, currentType: string) => {
+    try {
+      const newType = currentType === 'presentielle' ? 'e-learning' : 'presentielle';
+      await axios.patch(`/api/admin/students/${id}/formation`, { formationType: newType }, { withCredentials: true });
+      setActiveDropdown(null);
+      fetchStudents();
+    } catch (err) {
+      showAlert('Erreur lors de la mise à jour du type de formation', 'error');
+    }
+  };
+
   const handleDeleteStudent = async (id: number) => {
     const confirmed = await showConfirm("Êtes-vous sûr de vouloir supprimer cet étudiant ? Cette action est irréversible.");
     if (confirmed) {
@@ -110,7 +121,7 @@ const AdminStudents: React.FC = () => {
       return <span style={{ padding: '0.2rem 0.6rem', borderRadius: '4px', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'var(--error)', fontSize: '0.8rem', fontWeight: 600 }}>Bloqué</span>;
     }
     switch(student.subscriptionStatus) {
-      case 'active': return <span style={{ padding: '0.2rem 0.6rem', borderRadius: '4px', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', fontSize: '0.8rem', fontWeight: 600 }}>Actif</span>;
+      case 'active': return <span style={{ padding: '0.2rem 0.6rem', borderRadius: '4px', backgroundColor: 'rgba(var(--accent-primary-rgb), 0.1)', color: 'var(--success)', fontSize: '0.8rem', fontWeight: 600 }}>Actif</span>;
       case 'pending': return <span style={{ padding: '0.2rem 0.6rem', borderRadius: '4px', backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#D97706', fontSize: '0.8rem', fontWeight: 600 }}>En attente</span>;
       case 'expired': return <span style={{ padding: '0.2rem 0.6rem', borderRadius: '4px', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'var(--error)', fontSize: '0.8rem', fontWeight: 600 }}>Expiré</span>;
       default: return <span style={{ padding: '0.2rem 0.6rem', borderRadius: '4px', backgroundColor: 'rgba(148, 163, 184, 0.1)', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 600 }}>{student.subscriptionStatus}</span>;
@@ -178,6 +189,7 @@ const AdminStudents: React.FC = () => {
                 <th style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.9rem' }}>Nom / Prénom</th>
                 <th style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.9rem' }}>Email</th>
                 <th style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.9rem' }}>Département</th>
+                <th style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.9rem' }}>Type</th>
                 <th style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.9rem' }}>Statut d'Accès</th>
                 <th style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.9rem' }}>Expiration</th>
                 <th style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.9rem', textAlign: 'right' }}>Actions</th>
@@ -193,7 +205,7 @@ const AdminStudents: React.FC = () => {
                   <tr key={student.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
                     <td style={{ padding: '1rem', color: 'var(--text-primary)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <div style={{ width: '32px', height: '32px', borderRadius: '4px', backgroundColor: 'var(--accent-secondary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.8rem' }}>
+                        <div translate="no" style={{ width: '32px', height: '32px', borderRadius: '4px', backgroundColor: 'var(--accent-secondary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.8rem' }}>
                           {student.firstName.charAt(0)}{student.lastName.charAt(0)}
                         </div>
                         <span style={{ fontWeight: 500 }}>{student.firstName} {student.lastName}</span>
@@ -201,6 +213,11 @@ const AdminStudents: React.FC = () => {
                     </td>
                     <td style={{ padding: '1rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{student.email}</td>
                     <td style={{ padding: '1rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{student.department}</td>
+                    <td style={{ padding: '1rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                      <span style={{ padding: '0.2rem 0.5rem', borderRadius: '4px', backgroundColor: student.formationType === 'presentielle' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(139, 92, 246, 0.1)', color: student.formationType === 'presentielle' ? '#3B82F6' : '#8B5CF6', fontSize: '0.8rem', fontWeight: 600 }}>
+                        {student.formationType === 'presentielle' ? 'Présentiel' : 'E-Learning'}
+                      </span>
+                    </td>
                     <td style={{ padding: '1rem' }}>{getStatusBadge(student)}</td>
                     <td style={{ padding: '1rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                       {student.accessExpirationDate ? new Date(student.accessExpirationDate).toLocaleDateString('fr-FR') : '-'}
@@ -349,6 +366,14 @@ const AdminStudents: React.FC = () => {
                   onClick={() => handleToggleBlock(activeStudent.id, activeStudent.is_active)}
                 >
                   <XCircle size={18} /> {activeStudent.is_active === false ? "Débloquer l'accès" : "Bloquer l'accès"}
+                </button>
+
+                <button 
+                  className="dropdown-item"
+                  style={{ padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-primary)' }}
+                  onClick={() => handleToggleFormation(activeStudent.id, activeStudent.formationType)}
+                >
+                  <FileText size={18} /> Passer en {activeStudent.formationType === 'presentielle' ? 'E-Learning' : 'Présentiel'}
                 </button>
 
                 <button 

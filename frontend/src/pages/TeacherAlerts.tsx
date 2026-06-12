@@ -85,15 +85,13 @@ const TeacherAlerts: React.FC = () => {
   });
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
-        <div>
-          <h1 className="gradient-text" style={{ fontSize: '2rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <ShieldAlert size={32} color="#ef4444" />
-            Alertes de Fraudes
-          </h1>
-          <p style={{ color: 'var(--text-secondary)' }}>Surveillez et gérez les incidents de triche détectés lors des examens.</p>
-        </div>
+    <div className="dashboard-content animate-fade-in">
+      <div style={{ marginBottom: '3rem' }}>
+        <h1 className="gradient-text" style={{ fontSize: '2rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <ShieldAlert size={32} color="#ef4444" />
+          Alertes de Fraudes
+        </h1>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>Surveillez et gérez les incidents de triche détectés lors des examens.</p>
       </div>
 
       <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '2rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -119,7 +117,7 @@ const TeacherAlerts: React.FC = () => {
         </div>
       ) : filteredAlerts.length === 0 ? (
         <div className="glass-panel" style={{ padding: '4rem 2rem', textAlign: 'center', border: '1px dashed var(--border-color)' }}>
-          <CheckCircle size={48} color="#10b981" style={{ margin: '0 auto 1rem auto', opacity: 0.5 }} />
+          <CheckCircle size={48} color="var(--accent-primary)" style={{ margin: '0 auto 1rem auto', opacity: 0.5 }} />
           <h3 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Aucune fraude détectée</h3>
           <p style={{ color: 'var(--text-secondary)' }}>Tout est en ordre pour le moment.</p>
         </div>
@@ -164,9 +162,9 @@ const TeacherAlerts: React.FC = () => {
                 <button 
                   onClick={() => handleAuthorizeRetake(alert.evaluationId, alert.etudiantId, `${alert.etudiant?.firstName} ${alert.etudiant?.lastName}`)}
                   className="btn"
-                  style={{ width: '100%', backgroundColor: 'transparent', border: '1px solid #10b981', color: '#10b981', fontWeight: 600, padding: '0.75rem' }}
-                  onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#10b981'; e.currentTarget.style.color = 'white'; }}
-                  onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#10b981'; }}
+                  style={{ width: '100%', backgroundColor: 'transparent', border: '1px solid var(--accent-primary)', color: 'var(--accent-primary)', fontWeight: 600, padding: '0.75rem' }}
+                  onMouseOver={(e) => { e.currentTarget.style.backgroundColor = 'var(--accent-primary)'; e.currentTarget.style.color = 'white'; }}
+                  onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--accent-primary)'; }}
                 >
                   Autoriser à recommencer
                 </button>

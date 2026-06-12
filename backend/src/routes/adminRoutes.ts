@@ -24,7 +24,8 @@ import {
   getResources,
   addResource,
   deleteResource,
-  getCourseStructure
+  getCourseStructure,
+  updateStudentFormation
 } from '../controllers/adminController';
 
 const router = Router();
@@ -42,6 +43,7 @@ router.post('/students', createStudent);
 router.put('/students/:id', updateStudent);
 router.patch('/students/:id/status', updateStudentStatus);
 router.patch('/students/:id/block', toggleStudentBlock);
+router.patch('/students/:id/formation', updateStudentFormation);
 router.delete('/students/:id', deleteStudent);
 router.get('/enrollments', getEnrollments);
 

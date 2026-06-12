@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.toggleFormateurBlock = exports.toggleStudentBlock = exports.unassignCourseFromFormateur = exports.assignCourseToFormateur = exports.getFormateurCourses = exports.getCourses = exports.deleteFormateur = exports.updateFormateur = exports.createFormateur = exports.getFormateurs = exports.getDashboardStats = exports.deleteStudent = exports.updateStudent = exports.updateStudentStatus = exports.createStudent = exports.getEnrollments = exports.getStudents = exports.updateSystemSettings = exports.getSystemSettings = void 0;
+exports.getCourseStructure = exports.deleteResource = exports.addResource = exports.getResources = exports.getAllGrades = exports.toggleFormateurBlock = exports.toggleStudentBlock = exports.unassignCourseFromFormateur = exports.assignCourseToFormateur = exports.getFormateurCourses = exports.getCourses = exports.deleteFormateur = exports.updateFormateur = exports.createFormateur = exports.getFormateurs = exports.getDashboardStats = exports.deleteStudent = exports.updateStudent = exports.updateStudentFormation = exports.updateStudentStatus = exports.createStudent = exports.getEnrollments = exports.getStudents = exports.updateSystemSettings = exports.getSystemSettings = void 0;
 const stripe_1 = __importDefault(require("stripe"));
 const Etudiant_1 = __importDefault(require("../models/Etudiant"));
 const Transaction_1 = __importDefault(require("../models/Transaction"));
@@ -11,6 +11,9 @@ const SystemSetting_1 = __importDefault(require("../models/SystemSetting"));
 const Intervenant_1 = __importDefault(require("../models/Intervenant"));
 const Course_1 = __importDefault(require("../models/Course"));
 const CourseAccess_1 = __importDefault(require("../models/CourseAccess"));
+const Module_1 = __importDefault(require("../models/Module"));
+const Lesson_1 = __importDefault(require("../models/Lesson"));
+const Resource_1 = __importDefault(require("../models/Resource"));
 const auth_1 = require("../utils/auth");
 const socket_1 = require("../utils/socket");
 const stripe = new stripe_1.default(process.env.STRIPE_SECRET_KEY, {
@@ -35,7 +38,13 @@ const getSystemSettings = async (req, res) => {
         if (!settingsMap['siteName'])
             settingsMap['siteName'] = 'CEGA E-Learning';
         if (!settingsMap['supportEmail'])
-            settingsMap['supportEmail'] = 'support@cega.edu';
+            settingsMap['supportEmail'] = 'support@cega.sn';
+        if (!settingsMap['supportPhone'])
+            settingsMap['supportPhone'] = '+221 77 000 00 00';
+        if (!settingsMap['supportDescription'])
+            settingsMap['supportDescription'] = "Notre équipe est là pour vous aider. N'hésitez pas à nous contacter si vous rencontrez des problèmes ou si vous avez des questions.";
+        if (!settingsMap['supportFormEnabled'])
+            settingsMap['supportFormEnabled'] = 'true';
         if (!settingsMap['maintenanceMode'])
             settingsMap['maintenanceMode'] = 'false';
         res.status(200).json(settingsMap);
@@ -78,7 +87,9 @@ const updateSystemSettings = async (req, res) => {
 exports.updateSystemSettings = updateSystemSettings;
 const getStudents = async (req, res) => {
     try {
+        const { Op } = require('sequelize');
         const students = await Etudiant_1.default.findAll({
+            where: { subscriptionStatus: { [Op.ne]: 'pending' } },
             attributes: { exclude: ['password', 'twoFactorSecret'] },
             order: [['created_at', 'DESC']]
         });
@@ -120,7 +131,7 @@ const createStudent = async (req, res) => {
             email,
             password: hashedPassword,
             department,
-            subscriptionStatus: 'pending'
+            subscriptionStatus: 'active'
         });
         res.status(201).json({ message: 'Étudiant créé avec succès', student: newStudent });
     }
@@ -158,6 +169,25 @@ const updateStudentStatus = async (req, res) => {
     }
 };
 exports.updateStudentStatus = updateStudentStatus;
+const updateStudentFormation = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { formationType } = req.body;
+        const student = await Etudiant_1.default.findByPk(parseInt(id, 10));
+        if (!student) {
+            res.status(404).json({ message: 'Étudiant introuvable.' });
+            return;
+        }
+        student.formationType = formationType;
+        await student.save();
+        res.status(200).json({ message: 'Type de formation mis à jour avec succès', student });
+    }
+    catch (error) {
+        console.error('Error updating student formation:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+exports.updateStudentFormation = updateStudentFormation;
 const updateStudent = async (req, res) => {
     try {
         const { id } = req.params;
@@ -438,3 +468,127 @@ const toggleFormateurBlock = async (req, res) => {
     }
 };
 exports.toggleFormateurBlock = toggleFormateurBlock;
+// ==========================================
+// GRADES (Toutes les notes pour l'admin)
+// ==========================================
+const getAllGrades = async (req, res) => {
+    try {
+        const Grade = require('../models/Grade').default;
+        const Etudiant = require('../models/Etudiant').default;
+        const Evaluation = require('../models/Evaluation').default;
+        const grades = await Grade.findAll({
+            include: [
+                { model: Etudiant, as: 'etudiant', attributes: ['id', 'firstName', 'lastName', 'email', 'department'] },
+                { model: Evaluation, as: 'evaluation', attributes: ['id', 'title'] }
+            ],
+            order: [['createdAt', 'DESC']]
+        });
+        res.status(200).json(grades);
+    }
+    catch (error) {
+        console.error('Error fetching all grades:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+exports.getAllGrades = getAllGrades;
+// ==========================================
+// RESOURCES
+// ==========================================
+const getResources = async (req, res) => {
+    try {
+        const resources = await Resource_1.default.findAll({
+            include: [
+                {
+                    model: Lesson_1.default,
+                    as: 'lesson',
+                    include: [
+                        {
+                            model: Module_1.default,
+                            as: 'module',
+                            include: [
+                                {
+                                    model: Course_1.default,
+                                    as: 'course',
+                                    attributes: ['id', 'title', 'department']
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            order: [['createdAt', 'DESC']]
+        });
+        res.status(200).json(resources);
+    }
+    catch (error) {
+        console.error('Error fetching resources:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+exports.getResources = getResources;
+const addResource = async (req, res) => {
+    try {
+        const { title, url, lessonId } = req.body;
+        if (!title || !url || !lessonId) {
+            res.status(400).json({ message: 'Titre, URL et séance (lesson) sont requis.' });
+            return;
+        }
+        const resource = await Resource_1.default.create({ title, url, lessonId });
+        res.status(201).json({ message: 'Ressource ajoutée avec succès.', resource });
+    }
+    catch (error) {
+        console.error('Error adding resource:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+exports.addResource = addResource;
+const deleteResource = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const resource = await Resource_1.default.findByPk(parseInt(id, 10));
+        if (!resource) {
+            res.status(404).json({ message: 'Ressource introuvable.' });
+            return;
+        }
+        await resource.destroy();
+        res.status(200).json({ message: 'Ressource supprimée avec succès.' });
+    }
+    catch (error) {
+        console.error('Error deleting resource:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+exports.deleteResource = deleteResource;
+const getCourseStructure = async (req, res) => {
+    try {
+        const { id } = req.params; // Course ID
+        const course = await Course_1.default.findByPk(parseInt(id, 10), {
+            include: [
+                {
+                    model: Module_1.default,
+                    as: 'modules',
+                    include: [
+                        {
+                            model: Lesson_1.default,
+                            as: 'lessons'
+                        }
+                    ]
+                }
+            ],
+            order: [
+                [{ model: Module_1.default, as: 'modules' }, 'order', 'ASC'],
+                [{ model: Module_1.default, as: 'modules' }, { model: Lesson_1.default, as: 'lessons' }, 'order', 'ASC']
+            ]
+        });
+        if (!course) {
+            res.status(404).json({ message: 'Cours introuvable.' });
+            return;
+        }
+        res.status(200).json(course);
+    }
+    catch (error) {
+        console.error('Error fetching course structure:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+exports.getCourseStructure = getCourseStructure;

@@ -6,14 +6,20 @@
   --bg-card: #FFFFFF;
   --text-primary: #0B0E14;
   --text-secondary: #475569;
-  --accent-primary: #205D4D; /* B2B Green */
-  --accent-secondary: #164035; /* Darker B2B Green */
-  --accent-hover: #1A4D3F;
+  
+  /* Couleurs de la charte graphique CEGA */
+  --brand-green: #1A4C3E;
+  --brand-green-rgb: 26, 76, 62;
+
+  --accent-primary: var(--brand-green);
+  --accent-primary-rgb: var(--brand-green-rgb);
+  --accent-secondary: #12372D;
+  --accent-hover: #11362B; /* Darker green for hover */
   --border-color: rgba(0, 0, 0, 0.1);
   --error: #EF4444;
   
   /* Layout variables */
-  --sidebar-width: 280px;
+  --sidebar-width: 260px;
   --topbar-height: 60px;
 }
 
@@ -23,9 +29,15 @@
   --bg-card: #131821;
   --text-primary: #F8FAFC;
   --text-secondary: #94A3B8;
-  --accent-primary: #205D4D;
-  --accent-secondary: #2C7B66;
-  --accent-hover: #266A58;
+  
+  /* En mode sombre, le vert foncé de base est illisible. 
+     On utilise une version éclaircie et lumineuse du vert de la charte 
+     graphique pour garantir une excellente visibilité. */
+  --accent-primary: #28B08A; 
+  --accent-primary-rgb: 40, 176, 138;
+  --accent-secondary: #1F896B; 
+  --accent-hover: #34D3A3; 
+  
   --border-color: rgba(255, 255, 255, 0.1);
   --error: #EF4444;
 }
@@ -61,7 +73,7 @@ h1, h2, h3, h4, h5, h6 {
 .glass-panel {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-radius: 0;
+  border-radius: 8px;
 }
 
 .gradient-text {
@@ -89,7 +101,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Layouts */
 .auth-layout {
-  min-height: 100dvh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   padding: 1rem; /* Reduced for mobile */
@@ -164,7 +176,7 @@ h1, h2, h3, h4, h5, h6 {
   padding: 0.75rem 1rem;
   background: rgba(0, 0, 0, 0.03);
   border: 1px solid var(--border-color);
-  border-radius: 0;
+  border-radius: 8px;
   color: var(--text-primary);
   font-size: 1rem; /* Important for iOS to avoid zoom on focus */
   transition: all 0.2s ease;
@@ -190,7 +202,7 @@ h1, h2, h3, h4, h5, h6 {
   font-family: 'Outfit', sans-serif;
   font-size: 1rem;
   font-weight: 600;
-  border-radius: 0;
+  border-radius: 8px;
   border: 1px solid transparent;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -257,7 +269,7 @@ h1, h2, h3, h4, h5, h6 {
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
   border-left: 4px solid var(--accent-secondary);
-  border-radius: 0;
+  border-radius: 8px;
   font-size: 0.85rem;
   color: var(--text-secondary);
 }
@@ -340,11 +352,11 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .dropdown-item.success {
-  color: #10B981; /* Tailwind Emerald-500 */
+  color: var(--accent-primary); /* Tailwind Emerald-500 */
 }
 
 .dropdown-item.success:hover {
-  background-color: rgba(16, 185, 129, 0.1);
+  background-color: rgba(var(--accent-primary-rgb), 0.1);
 }
 
 .dropdown-item.warning {

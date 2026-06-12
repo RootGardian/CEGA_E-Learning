@@ -318,13 +318,17 @@ const TeacherEvaluations: React.FC = () => {
 
   return (
     <div className="dashboard-content animate-fade-in">
-      <div className="responsive-header">
+      <div style={{ marginBottom: '3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: 'clamp(1.8rem, 5vw, 2rem)', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Planification des Évaluations</h1>
-          <p style={{ color: 'var(--text-secondary)' }}>Programmez les examens et QCM pour vos étudiants.</p>
+          <h1 style={{ fontSize: '2rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+            Planification des Évaluations
+          </h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>
+            Programmez les examens et QCM pour vos étudiants.
+          </p>
         </div>
-        <button className="btn btn-primary" onClick={() => handleOpenModal()} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Plus size={18} /> Nouvelle Évaluation
+        <button className="btn btn-primary" onClick={() => handleOpenModal()} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', fontSize: '1rem' }}>
+          <Plus size={20} /> Nouvelle Évaluation
         </button>
       </div>
 

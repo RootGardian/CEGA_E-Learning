@@ -5,8 +5,10 @@ import dotenv from 'dotenv';
 import Etudiant from '../models/Etudiant';
 import Transaction from '../models/Transaction';
 import SystemSetting from '../models/SystemSetting';
+import Formation from '../models/Formation';
 import { sendEmail } from '../utils/email';
-import { paymentConfirmationEmail } from '../utils/emailTemplates';
+import { paymentConfirmationEmail, welcomeEmail } from '../utils/emailTemplates';
+import { hashPassword } from '../utils/auth';
 
 dotenv.config();
 
@@ -14,13 +16,88 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: '2023-10-16' as any,
 });
 
+const processRegistrationData = async (transaction: any): Promise<any> => {
+  if (transaction.registrationData && !transaction.etudiantId) {
+    const regData = transaction.registrationData;
+    const lowerEmail = regData.email.toLowerCase().trim();
+    
+    let etudiant = await Etudiant.findOne({ where: { email: lowerEmail } });
+    
+    if (!etudiant) {
+      const hashedPassword = await hashPassword(regData.password);
+      etudiant = await Etudiant.create({
+        firstName: regData.firstName,
+        lastName: regData.lastName,
+        department: regData.department,
+        email: lowerEmail,
+        password: hashedPassword,
+        subscriptionStatus: 'active',
+        formationType: regData.formationType || 'e-learning'
+      });
+      
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+      const welcome = welcomeEmail(regData.firstName, `${frontendUrl}/login`);
+      await sendEmail(lowerEmail, welcome.subject, welcome.text, welcome.html);
+    }
+
+    transaction.etudiantId = etudiant.id;
+    await transaction.save();
+    return etudiant;
+  }
+  
+  if (transaction.etudiantId) {
+    return await Etudiant.findByPk(transaction.etudiantId);
+  }
+  
+  return null;
+};
+
+export const getPrice = async (req: Request, res: Response): Promise<void> => {
+  try {
+    let amount = 500;
+    const userId = (req as any).user?.id;
+
+    if (userId) {
+      const etudiant = await Etudiant.findByPk(userId);
+      if (etudiant && etudiant.department) {
+        const formation = await Formation.findOne({ where: { code_formation: etudiant.department } });
+        if (formation && formation.frais_inscription) {
+          amount = formation.frais_inscription;
+        }
+      }
+    }
+
+    if (amount === 500) {
+      const setting = await SystemSetting.findOne({ where: { key: 'formationPrice' } });
+      amount = setting && setting.value ? parseInt(setting.value, 10) : 500;
+    }
+
+    res.status(200).json({ price: amount });
+  } catch (error) {
+    console.error('Erreur getPrice:', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+};
+
 export const createPaymentIntent = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { currency = 'gnf', description, email } = req.body;
+    const { currency = 'gnf', description, registrationData } = req.body;
 
-    // Fetch the dynamic price from settings instead of trusting the client
-    const setting = await SystemSetting.findOne({ where: { key: 'formationPrice' } });
-    const formationPrice = setting && setting.value ? parseInt(setting.value, 10) : 500; // Default 500
+    let formationPrice = 500; // default
+    let etudiantEmail = registrationData?.email || '';
+
+    if (registrationData && registrationData.department) {
+      const formation = await Formation.findOne({ where: { code_formation: registrationData.department } });
+      if (formation && formation.frais_inscription) {
+        formationPrice = formation.frais_inscription;
+      }
+    }
+
+    if (formationPrice === 500) {
+      // Fallback au system setting au cas où
+      const setting = await SystemSetting.findOne({ where: { key: 'formationPrice' } });
+      formationPrice = setting && setting.value ? parseInt(setting.value, 10) : 500;
+    }
     
     // Si c'est GNF, Stripe s'attend à des entiers sans centimes (0 décimales)
     // Si c'est EUR/USD, Stripe s'attend à des centimes, il faudrait multiplier par 100.
@@ -37,11 +114,23 @@ export const createPaymentIntent = async (req: Request, res: Response): Promise<
       amount: Math.round(amount), // Pour GNF (sans décimale), c'est l'entier.
       currency,
       description: description || 'Frais de scolarité CEGA',
-      receipt_email: email, // Optional
+      receipt_email: etudiantEmail, // Optional
       metadata: {
-        etudiantEmail: email, // Pour retrouver l'étudiant dans le webhook
+        etudiantEmail: etudiantEmail, // Pour retrouver l'étudiant dans le webhook
       },
       // automatic_payment_methods: { enabled: true },
+    });
+
+    // Create a pending transaction
+    await Transaction.create({
+      etudiantId: null,
+      amount,
+      currency,
+      status: 'pending',
+      paymentMethod: 'stripe',
+      stripePaymentIntentId: paymentIntent.id,
+      description: description || 'Frais de scolarité CEGA',
+      registrationData: registrationData
     });
 
     res.status(200).json({
@@ -79,13 +168,19 @@ export const stripeWebhook = async (req: Request, res: Response): Promise<void> 
     case 'payment_intent.succeeded': {
       const paymentIntent = event.data.object as any;
       console.log('PaymentIntent was successful!');
+
+      // Find the pending transaction
+      const transaction = await Transaction.findOne({ where: { stripePaymentIntentId: paymentIntent.id } });
       
-      const email = paymentIntent.metadata.etudiantEmail;
-      
-      if (email) {
-        const etudiant = await Etudiant.findOne({ where: { email } });
+      if (transaction) {
+        transaction.status = 'succeeded';
+        
+        let etudiant = await processRegistrationData(transaction);
+        if (!etudiant && transaction.etudiantId) {
+          etudiant = await Etudiant.findByPk(transaction.etudiantId);
+        }
+
         if (etudiant) {
-          // Update Subscription Status (add 1 year)
           etudiant.subscriptionStatus = 'active';
           const newExpDate = etudiant.accessExpirationDate && etudiant.accessExpirationDate > new Date() 
             ? new Date(etudiant.accessExpirationDate.getTime()) 
@@ -94,28 +189,21 @@ export const stripeWebhook = async (req: Request, res: Response): Promise<void> 
           etudiant.accessExpirationDate = newExpDate;
           await etudiant.save();
 
-          // Create Transaction
-          await Transaction.create({
-            etudiantId: etudiant.id,
-            amount: paymentIntent.amount,
-            currency: paymentIntent.currency,
-            status: 'succeeded',
-            stripePaymentIntentId: paymentIntent.id,
-            description: paymentIntent.description,
-          });
-
           // Send professional payment confirmation email
           const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
           const confirmEmail = paymentConfirmationEmail(
             etudiant.firstName,
-            paymentIntent.amount,
-            paymentIntent.currency?.toUpperCase() || 'GNF',
+            transaction.amount,
+            transaction.currency?.toUpperCase() || 'GNF',
             paymentIntent.id,
             `${frontendUrl}/dashboard`
           );
-          await sendEmail(email, confirmEmail.subject, confirmEmail.text, confirmEmail.html);
+          await sendEmail(etudiant.email, confirmEmail.subject, confirmEmail.text, confirmEmail.html);
 
-          console.log(`Paiement réussi pour l'étudiant avec l'email: ${email}`);
+          console.log(`Paiement réussi pour l'étudiant: ${etudiant.email}`);
+        } else {
+          // Si l'étudiant n'est pas trouvé (paiement sans inscription ni email metadata valide)
+          await transaction.save();
         }
       }
       break;
@@ -123,19 +211,10 @@ export const stripeWebhook = async (req: Request, res: Response): Promise<void> 
     case 'payment_intent.payment_failed': {
       const paymentIntent = event.data.object as any;
       console.log('Payment failed!');
-      const email = paymentIntent.metadata.etudiantEmail;
-      if (email) {
-        const etudiant = await Etudiant.findOne({ where: { email } });
-        if (etudiant) {
-          await Transaction.create({
-            etudiantId: etudiant.id,
-            amount: paymentIntent.amount,
-            currency: paymentIntent.currency,
-            status: 'failed',
-            stripePaymentIntentId: paymentIntent.id,
-            description: paymentIntent.description,
-          });
-        }
+      const transaction = await Transaction.findOne({ where: { stripePaymentIntentId: paymentIntent.id } });
+      if (transaction) {
+        transaction.status = 'failed';
+        await transaction.save();
       }
       break;
     }
@@ -201,11 +280,26 @@ const getCinetPayToken = async (): Promise<string | null> => {
 
 export const initCinetPayPayment = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { currency = 'XOF', email, firstName = 'Etudiant', lastName = 'CEGA', phone = '' } = req.body;
+    const { currency = 'XOF', registrationData } = req.body;
     
-    // Fetch price
-    const setting = await SystemSetting.findOne({ where: { key: 'formationPrice' } });
-    const amount = setting && setting.value ? parseInt(setting.value, 10) : 500;
+    // Trouver l'étudiant et récupérer son prix de formation
+    let amount = 500; // default
+    let firstName = registrationData?.firstName || 'Etudiant';
+    let lastName = registrationData?.lastName || 'CEGA';
+    let email = registrationData?.email || '';
+
+    if (registrationData && registrationData.department) {
+      const formation = await Formation.findOne({ where: { code_formation: registrationData.department } });
+      if (formation && formation.frais_inscription) {
+        amount = formation.frais_inscription;
+      }
+    }
+
+    // Si pas de prix de formation trouvé, fallback setting
+    if (amount === 500) {
+      const setting = await SystemSetting.findOne({ where: { key: 'formationPrice' } });
+      amount = setting && setting.value ? parseInt(setting.value, 10) : 500;
+    }
 
     const token = await getCinetPayToken();
     if (!token) {
@@ -216,32 +310,19 @@ export const initCinetPayPayment = async (req: Request, res: Response): Promise<
     const transactionId = crypto.randomBytes(16).toString('hex');
     const merchant_transaction_id = `CEGA_${Date.now()}`;
 
-    // Trouver l'étudiant
-    let etudiantId: number | null = null;
-    if (email) {
-      const etudiant = await Etudiant.findOne({ where: { email } });
-      if (etudiant) {
-        etudiantId = etudiant.id;
-      }
-    }
-
     // Créer la transaction locale (pending)
     // On doit avoir l'étudiant. S'il n'est pas trouvé, on bloque ou on utilise un ID factice.
     // L'idéal est que req.user soit défini via le middleware protect, mais la route pourrait être publique.
     // Utilisons l'ID de l'étudiant s'il existe.
-    if (!etudiantId) {
-      res.status(400).json({ message: 'Étudiant introuvable pour cet email.' });
-      return;
-    }
-
     await Transaction.create({
-      etudiantId: etudiantId,
+      etudiantId: null,
       amount: amount,
       currency: currency,
       status: 'pending',
       paymentMethod: 'cinetpay',
       cinetpayTransactionId: merchant_transaction_id,
       description: 'Frais de scolarité CEGA E-Learning',
+      registrationData
     });
 
     const notifyUrl = `${process.env.API_URL || 'http://localhost:5000'}/api/payments/cinetpay/webhook`;
@@ -264,7 +345,7 @@ export const initCinetPayPayment = async (req: Request, res: Response): Promise<
         client_email: email,
         client_first_name: firstName,
         client_last_name: lastName,
-        client_phone_number: phone,
+        client_phone_number: '',
         success_url: `${frontendUrl}/payment/callback?status=success&tx=${merchant_transaction_id}`,
         failed_url: `${frontendUrl}/payment/callback?status=failed&tx=${merchant_transaction_id}`,
         notify_url: notifyUrl,
@@ -327,7 +408,11 @@ export const cinetpayWebhook = async (req: Request, res: Response): Promise<void
         await transaction.save();
 
         if (finalStatus === 'succeeded') {
-          const etudiant = await Etudiant.findByPk(transaction.etudiantId);
+          let etudiant = await processRegistrationData(transaction);
+          if (!etudiant && transaction.etudiantId) {
+            etudiant = await Etudiant.findByPk(transaction.etudiantId);
+          }
+
           if (etudiant) {
             etudiant.subscriptionStatus = 'active';
             const newExpDate = etudiant.accessExpirationDate && etudiant.accessExpirationDate > new Date() 
@@ -348,7 +433,7 @@ export const cinetpayWebhook = async (req: Request, res: Response): Promise<void
             );
             await sendEmail(etudiant.email, confirmEmail.subject, confirmEmail.text, confirmEmail.html);
 
-            console.log(`CinetPay Paiement réussi pour l'étudiant ID: ${etudiant.id}`);
+            console.log(`CinetPay Paiement réussi pour l'étudiant: ${etudiant.email}`);
           }
         }
       }

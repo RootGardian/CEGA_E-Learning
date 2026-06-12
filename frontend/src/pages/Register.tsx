@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { UserPlus, Mail, Lock, User, Briefcase, Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
@@ -10,11 +10,28 @@ const Register: React.FC = () => {
     lastName: '',
     email: '',
     password: '',
-    department: 'mining'
+    department: 'mining',
+    formationType: 'e-learning'
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [formations, setFormations] = useState<any[]>([]);
   const navigate = useNavigate();
   const { showAlert } = usePopup();
+
+  useEffect(() => {
+    const fetchFormations = async () => {
+      try {
+        const res = await axios.get('/api/auth/public/formations');
+        setFormations(res.data);
+        if (res.data.length > 0) {
+          setFormData(prev => ({ ...prev, department: res.data[0].code_formation }));
+        }
+      } catch (err) {
+        console.error("Erreur lors de la récupération des formations", err);
+      }
+    };
+    fetchFormations();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -23,30 +40,34 @@ const Register: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await axios.post('/api/auth/register', formData, {
-        withCredentials: true
-      });
+      const lowerEmail = formData.email.toLowerCase().trim();
+      const submissionData = { ...formData, email: lowerEmail };
+
+      await axios.post('/api/auth/verify-email', { email: lowerEmail });
       
-      if (response.status === 201) {
-        // Rediriger vers la page de paiement après succès
-        navigate('/payment-gateway');
-      }
+      // Navigate to payment and pass registration data in state
+      navigate('/payment-gateway', { state: { registrationData: submissionData } });
     } catch (error: unknown) {
       if (axios.isAxiosError(error) && error.response) {
-        showAlert("Erreur d'inscription : " + error.response.data.message, 'error');
+        showAlert(error.response.data.message, 'error');
       } else {
-        showAlert("Erreur d'inscription : Serveur indisponible", 'error');
+        showAlert("Erreur : Serveur indisponible", 'error');
       }
     }
   };
 
   return (
     <div className="auth-layout">
-      <div className="auth-container glass-panel animate-slide-up">
+      <div className="auth-container glass-panel animate-slide-up" style={{ maxWidth: '650px', width: '100%' }}>
         <div className="auth-header">
           <img src="/logo_cega.jpeg" alt="Logo CEGA" style={{ width: '96px', height: '96px', objectFit: 'contain', borderRadius: '16px', marginBottom: '1rem' }} />
           <h1 className="gradient-text">Rejoignez le CEGA</h1>
           <p>Créez votre compte étudiant.</p>
+          <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: 'rgba(var(--accent-primary-rgb), 0.05)', border: '1px solid var(--accent-primary)', borderRadius: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+            <strong>Bienvenue !</strong> À la CEGA, nous proposons deux formats d'apprentissage : 
+            une <strong>formation en présentiel</strong> dans nos locaux, et une <strong>formation 100% en ligne (E-learning)</strong>. 
+            Veuillez choisir l'option qui vous convient ci-dessous.
+          </div>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -115,9 +136,33 @@ const Register: React.FC = () => {
                 onChange={handleChange}
                 required
               >
-                <option value="mining" style={{ color: '#000' }}>Ingénierie Minière</option>
-                <option value="geosciences" style={{ color: '#000' }}>Géosciences</option>
-                <option value="topography" style={{ color: '#000' }}>Topographie</option>
+                {formations.length === 0 ? (
+                  <option value="mining" style={{ color: '#000' }}>Chargement...</option>
+                ) : (
+                  formations.map(f => (
+                    <option key={f.id} value={f.code_formation} style={{ color: '#000' }}>
+                      {f.titre}
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="formationType">Type de Formation</label>
+            <div style={{ position: 'relative' }}>
+              <select
+                id="formationType"
+                name="formationType"
+                className="form-input"
+                style={{ appearance: 'none', backgroundColor: 'rgba(255,255,255,0.03)' }}
+                value={formData.formationType}
+                onChange={handleChange}
+                required
+              >
+                <option value="e-learning" style={{ color: '#000' }}>Formation 100% en ligne (E-learning)</option>
+                <option value="presentielle" style={{ color: '#000' }}>Formation en présentiel</option>
               </select>
             </div>
           </div>
@@ -166,7 +211,7 @@ const Register: React.FC = () => {
         </form>
 
         <div style={{ textAlign: 'center', marginTop: '2rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-          Vous avez déjà un compte ? <Link to="/login" className="link">Se connecter</Link>
+          Vous avez déjà un compte ? <Link to="/login" className="link" translate="no">Se connecter</Link>
         </div>
 
       </div>

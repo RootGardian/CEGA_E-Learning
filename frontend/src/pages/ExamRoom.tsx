@@ -592,7 +592,7 @@ const ExamRoom: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'center', opacity: typingComplete ? 1 : 0, transition: 'opacity 0.5s ease', pointerEvents: typingComplete ? 'auto' : 'none' }}>
             <button
               onClick={startExam}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', width: '100%', padding: 'clamp(1rem, 3vw, 1.2rem) clamp(1rem, 3vw, 3rem)', backgroundColor: 'var(--accent-primary)', color: 'white', border: 'none', borderRadius: '8px', fontSize: 'clamp(1rem, 3vw, 1.2rem)', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 20px rgba(16, 185, 129, 0.4)', transition: 'transform 0.2s' }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', width: '100%', padding: 'clamp(1rem, 3vw, 1.2rem) clamp(1rem, 3vw, 3rem)', backgroundColor: 'var(--accent-primary)', color: 'white', border: 'none', borderRadius: '8px', fontSize: 'clamp(1rem, 3vw, 1.2rem)', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 20px rgba(var(--accent-primary-rgb), 0.4)', transition: 'transform 0.2s' }}
               onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
               onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
             >
@@ -646,7 +646,7 @@ const ExamRoom: React.FC = () => {
           )}
 
           {timeLeft !== null && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: timeLeft < 300 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)', color: timeLeft < 300 ? '#ef4444' : '#10b981', padding: '0.6rem 1.2rem', borderRadius: '20px', fontWeight: 'bold', fontSize: '1.1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: timeLeft < 300 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(var(--accent-primary-rgb), 0.1)', color: timeLeft < 300 ? '#ef4444' : 'var(--accent-primary)', padding: '0.6rem 1.2rem', borderRadius: '20px', fontWeight: 'bold', fontSize: '1.1rem' }}>
               <Clock size={20} />
               {formatTime(timeLeft)}
             </div>
@@ -748,7 +748,7 @@ const ExamRoom: React.FC = () => {
               {q.type === 'QCM' && q.content.options?.map(opt => {
                 const isChecked = (answers[q.id] as string[])?.includes(opt.id) || false;
                 return (
-                  <label key={opt.id} style={{ display: 'block', padding: '1.2rem', border: '1px solid var(--border-color)', borderRadius: '8px', marginBottom: '0.75rem', cursor: 'pointer', backgroundColor: isChecked ? 'rgba(16, 185, 129, 0.1)' : 'var(--bg-primary)', borderColor: isChecked ? 'var(--accent-primary)' : 'var(--border-color)', transition: 'all 0.2s' }}>
+                  <label key={opt.id} style={{ display: 'block', padding: '1.2rem', border: '1px solid var(--border-color)', borderRadius: '8px', marginBottom: '0.75rem', cursor: 'pointer', backgroundColor: isChecked ? 'rgba(var(--accent-primary-rgb), 0.1)' : 'var(--bg-primary)', borderColor: isChecked ? 'var(--accent-primary)' : 'var(--border-color)', transition: 'all 0.2s' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                       <input
                         type="checkbox"
@@ -832,7 +832,7 @@ const ExamRoom: React.FC = () => {
               <button
                 onClick={() => handleSubmit()}
                 disabled={submitting || !isAnswered}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1.2rem 3rem', backgroundColor: 'var(--accent-primary)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '1.2rem', fontWeight: 'bold', cursor: (submitting || !isAnswered) ? 'not-allowed' : 'pointer', opacity: (submitting || !isAnswered) ? 0.5 : 1, boxShadow: (!submitting && isAnswered) ? '0 4px 15px rgba(16, 185, 129, 0.4)' : 'none', transition: 'all 0.2s' }}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1.2rem 3rem', backgroundColor: 'var(--accent-primary)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '1.2rem', fontWeight: 'bold', cursor: (submitting || !isAnswered) ? 'not-allowed' : 'pointer', opacity: (submitting || !isAnswered) ? 0.5 : 1, boxShadow: (!submitting && isAnswered) ? '0 4px 15px rgba(var(--accent-primary-rgb), 0.4)' : 'none', transition: 'all 0.2s' }}
               >
                 <CheckCircle size={24} />
                 {submitting ? 'Envoi en cours...' : 'Soumettre ma copie'}

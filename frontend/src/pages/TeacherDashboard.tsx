@@ -33,7 +33,7 @@ const TeacherDashboard: React.FC = () => {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '2rem', marginBottom: '3rem' }}>
         <div className="glass-panel" style={{ padding: '2rem', display: 'flex', alignItems: 'flex-start', gap: '1.5rem', borderLeft: '4px solid var(--accent-primary)' }}>
-          <div style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: '1rem', borderRadius: '0' }}>
+          <div style={{ backgroundColor: 'rgba(var(--accent-primary-rgb), 0.1)', padding: '1rem', borderRadius: '0' }}>
             <BookOpen size={32} color="var(--accent-primary)" />
           </div>
           <div>

@@ -106,7 +106,7 @@ const MyCourses: React.FC = () => {
             <div className="glass-panel animate-fade-in" style={{ position: 'absolute', top: '100%', right: 0, marginTop: '0.5rem', minWidth: '220px', zIndex: 10, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               <button 
                 onClick={() => { setFilterDept('all'); setShowFilterMenu(false); }} 
-                style={{ padding: '0.75rem 1rem', background: filterDept === 'all' ? 'rgba(16, 185, 129, 0.1)' : 'none', border: 'none', borderBottom: '1px solid var(--border-color)', color: filterDept === 'all' ? 'var(--accent-primary)' : 'var(--text-primary)', cursor: 'pointer', textAlign: 'left', width: '100%', fontWeight: filterDept === 'all' ? 600 : 400 }}
+                style={{ padding: '0.75rem 1rem', background: filterDept === 'all' ? 'rgba(var(--accent-primary-rgb), 0.1)' : 'none', border: 'none', borderBottom: '1px solid var(--border-color)', color: filterDept === 'all' ? 'var(--accent-primary)' : 'var(--text-primary)', cursor: 'pointer', textAlign: 'left', width: '100%', fontWeight: filterDept === 'all' ? 600 : 400 }}
               >
                 Tous les départements
               </button>
@@ -114,7 +114,7 @@ const MyCourses: React.FC = () => {
                 <button 
                   key={dept}
                   onClick={() => { setFilterDept(dept); setShowFilterMenu(false); }} 
-                  style={{ padding: '0.75rem 1rem', background: filterDept === dept ? 'rgba(16, 185, 129, 0.1)' : 'none', border: 'none', borderBottom: idx === availableDepts.length - 1 ? 'none' : '1px solid var(--border-color)', color: filterDept === dept ? 'var(--accent-primary)' : 'var(--text-primary)', cursor: 'pointer', textAlign: 'left', width: '100%', fontWeight: filterDept === dept ? 600 : 400 }}
+                  style={{ padding: '0.75rem 1rem', background: filterDept === dept ? 'rgba(var(--accent-primary-rgb), 0.1)' : 'none', border: 'none', borderBottom: idx === availableDepts.length - 1 ? 'none' : '1px solid var(--border-color)', color: filterDept === dept ? 'var(--accent-primary)' : 'var(--text-primary)', cursor: 'pointer', textAlign: 'left', width: '100%', fontWeight: filterDept === dept ? 600 : 400 }}
                 >
                   {getDeptName(dept)}
                 </button>
@@ -136,10 +136,10 @@ const MyCourses: React.FC = () => {
             >
               <div style={{ padding: '1.5rem', flex: 1 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                  <div style={{ padding: '0.75rem', backgroundColor: 'transparent', border: '1px solid var(--border-color)', color: 'var(--accent-primary)', borderRadius: '0' }}>
+                  <div style={{ padding: '0.75rem', backgroundColor: 'transparent', border: '1px solid var(--border-color)', color: 'var(--accent-primary)', borderRadius: '8px' }}>
                     <BookOpen size={24} />
                   </div>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', padding: '0.25rem 0.5rem', border: '1px solid var(--border-color)', borderRadius: '0' }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', padding: '0.25rem 0.5rem', border: '1px solid var(--border-color)', borderRadius: '6px' }}>
                     {getDeptName(course.department)}
                   </span>
                 </div>
@@ -159,8 +159,8 @@ const MyCourses: React.FC = () => {
                 
                 {/* Progress bar (mock) */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '1rem' }}>
-                  <div style={{ flex: 1, height: '6px', backgroundColor: 'var(--border-color)', borderRadius: '0', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: '0%', backgroundColor: 'var(--accent-primary)', borderRadius: '0' }} />
+                  <div style={{ flex: 1, height: '6px', backgroundColor: 'var(--border-color)', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: '0%', backgroundColor: 'var(--accent-primary)', borderRadius: '4px' }} />
                   </div>
                   <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>0%</span>
                 </div>

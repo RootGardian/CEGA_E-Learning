@@ -12,6 +12,7 @@ class Transaction extends Model {
   declare stripePaymentIntentId: string | null;
   declare cinetpayTransactionId: string | null;
   declare description: string | null;
+  declare registrationData: any | null;
 
   // timestamps!
   declare readonly createdAt: Date;
@@ -27,7 +28,7 @@ Transaction.init(
     },
     etudiantId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: Etudiant,
         key: 'id',
@@ -62,6 +63,10 @@ Transaction.init(
     },
     description: {
       type: DataTypes.STRING,
+      allowNull: true,
+    },
+    registrationData: {
+      type: DataTypes.JSON,
       allowNull: true,
     },
   },

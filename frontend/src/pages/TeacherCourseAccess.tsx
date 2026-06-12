@@ -114,7 +114,7 @@ const TeacherCourseAccess: React.FC = () => {
                   padding: '1.25rem',
                   borderRadius: '8px',
                   border: `1px solid ${selectedCourse?.id === course.id ? 'var(--accent-primary)' : 'var(--border-color)'}`,
-                  backgroundColor: selectedCourse?.id === course.id ? 'rgba(16, 185, 129, 0.05)' : 'var(--bg-secondary)',
+                  backgroundColor: selectedCourse?.id === course.id ? 'rgba(var(--accent-primary-rgb), 0.05)' : 'var(--bg-secondary)',
                   cursor: 'pointer',
                   display: 'flex',
                   justifyContent: 'space-between',
@@ -124,7 +124,7 @@ const TeacherCourseAccess: React.FC = () => {
               >
                 <div style={{ flex: 1, minWidth: 0, paddingRight: '0.5rem' }}>
                   <h3 style={{ fontSize: '0.95rem', color: 'var(--text-primary)', margin: '0 0 0.5rem 0', lineHeight: 1.4, wordBreak: 'break-word' }}>{course.title}</h3>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', fontWeight: 600, padding: '0.2rem 0.6rem', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderRadius: '12px', display: 'inline-block' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', fontWeight: 600, padding: '0.2rem 0.6rem', backgroundColor: 'rgba(var(--accent-primary-rgb), 0.1)', borderRadius: '12px', display: 'inline-block' }}>
                     Actif
                   </span>
                 </div>
@@ -212,12 +212,27 @@ const TeacherCourseAccess: React.FC = () => {
                         s.email?.toLowerCase().includes(studentSearch.toLowerCase())
                       ).map(student => (
                         <tr key={student.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                          <td style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: 500 }}>{student.firstName} {student.lastName}</td>
+                          <td style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: 500 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              {student.firstName} {student.lastName}
+                              <span style={{ 
+                                padding: '0.15rem 0.4rem', 
+                                borderRadius: '4px', 
+                                backgroundColor: student.formationType === 'presentielle' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(139, 92, 246, 0.1)', 
+                                color: student.formationType === 'presentielle' ? '#3B82F6' : '#8B5CF6', 
+                                fontSize: '0.7rem', 
+                                fontWeight: 600,
+                                whiteSpace: 'nowrap'
+                              }}>
+                                {student.formationType === 'presentielle' ? 'Présentiel' : 'En ligne'}
+                              </span>
+                            </div>
+                          </td>
                           <td style={{ padding: '1rem', color: 'var(--text-secondary)' }}>{student.email}</td>
                           <td style={{ padding: '1rem' }}>
                             <span style={{
                               padding: '0.25rem 0.75rem',
-                              backgroundColor: student.isUnlocked ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                              backgroundColor: student.isUnlocked ? 'rgba(var(--accent-primary-rgb), 0.1)' : 'rgba(239, 68, 68, 0.1)',
                               color: student.isUnlocked ? 'var(--success)' : 'var(--error)',
                               fontSize: '0.85rem',
                               fontWeight: 600

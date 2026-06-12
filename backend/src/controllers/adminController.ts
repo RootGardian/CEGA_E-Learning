@@ -30,7 +30,10 @@ export const getSystemSettings = async (req: Request, res: Response): Promise<vo
     if (!settingsMap['modulePassGrade']) settingsMap['modulePassGrade'] = '10';
     if (!settingsMap['theme']) settingsMap['theme'] = 'dark';
     if (!settingsMap['siteName']) settingsMap['siteName'] = 'CEGA E-Learning';
-    if (!settingsMap['supportEmail']) settingsMap['supportEmail'] = 'support@cega.edu';
+    if (!settingsMap['supportEmail']) settingsMap['supportEmail'] = 'support@cega.sn';
+    if (!settingsMap['supportPhone']) settingsMap['supportPhone'] = '+221 77 000 00 00';
+    if (!settingsMap['supportDescription']) settingsMap['supportDescription'] = "Notre équipe est là pour vous aider. N'hésitez pas à nous contacter si vous rencontrez des problèmes ou si vous avez des questions.";
+    if (!settingsMap['supportFormEnabled']) settingsMap['supportFormEnabled'] = 'true';
     if (!settingsMap['maintenanceMode']) settingsMap['maintenanceMode'] = 'false';
 
     res.status(200).json(settingsMap);
@@ -73,6 +76,7 @@ export const updateSystemSettings = async (req: Request, res: Response): Promise
 
 export const getStudents = async (req: Request, res: Response): Promise<void> => {
   try {
+    const { Op } = require('sequelize');
     const students = await Etudiant.findAll({
       attributes: { exclude: ['password', 'twoFactorSecret'] },
       order: [['created_at', 'DESC']]
@@ -102,7 +106,8 @@ export const createStudent = async (req: Request, res: Response): Promise<void> 
   try {
     const { firstName, lastName, email, password, department } = req.body;
     
-    const existing = await Etudiant.findOne({ where: { email } });
+    const lowerEmail = email.toLowerCase().trim();
+    const existing = await Etudiant.findOne({ where: { email: lowerEmail } });
     if (existing) {
       res.status(400).json({ message: 'Cet email est déjà utilisé.' });
       return;
@@ -112,10 +117,10 @@ export const createStudent = async (req: Request, res: Response): Promise<void> 
     const newStudent = await Etudiant.create({
       firstName,
       lastName,
-      email,
+      email: lowerEmail,
       password: hashedPassword,
       department,
-      subscriptionStatus: 'pending'
+      subscriptionStatus: 'active'
     });
 
     res.status(201).json({ message: 'Étudiant créé avec succès', student: newStudent });
@@ -150,6 +155,26 @@ export const updateStudentStatus = async (req: Request, res: Response): Promise<
     res.status(200).json({ message: 'Statut mis à jour avec succès', student });
   } catch (error) {
     console.error('Error updating student status:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const updateStudentFormation = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { formationType } = req.body;
+    
+    const student = await Etudiant.findByPk(parseInt(id as string, 10));
+    if (!student) {
+      res.status(404).json({ message: 'Étudiant introuvable.' });
+      return;
+    }
+
+    student.formationType = formationType;
+    await student.save();
+    res.status(200).json({ message: 'Type de formation mis à jour avec succès', student });
+  } catch (error) {
+    console.error('Error updating student formation:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };

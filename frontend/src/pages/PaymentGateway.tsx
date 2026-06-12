@@ -6,31 +6,46 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { StripePaymentForm } from '../components/StripePaymentForm';
 import { usePopup } from '../contexts/PopupContext';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 // Initialize Stripe outside component to avoid recreating the Stripe object on every render
 const stripePromise = loadStripe('pk_test_51TKdreHTTgYbk5AbmdIxHtghkUsUDjUoU2YDiPmV3G80IA0fFBBLvA1eXK1thbthuLl0PiHrCuAU6RVb7EIPJHn3002GBq5FOq');
 
 const PaymentGateway: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const registrationData = location.state?.registrationData;
+
   const [selectedMethod, setSelectedMethod] = useState<'stripe' | 'cinetpay' | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [formationPrice, setFormationPrice] = useState<number>(150000);
+  const [formationPrice, setFormationPrice] = useState<number | null>(null);
 
   const { showAlert } = usePopup();
 
   React.useEffect(() => {
-    const fetchSettings = async () => {
+    if (!registrationData) {
+      navigate('/register');
+      return;
+    }
+
+    const fetchPrice = async () => {
       try {
-        const res = await axios.get('/api/auth/public/settings');
-        if (res.data.formationPrice) {
-          setFormationPrice(parseInt(res.data.formationPrice, 10));
+        const res = await axios.get('/api/auth/public/formations');
+        const formations = res.data;
+        const selectedFormation = formations.find((f: any) => f.code_formation === registrationData.department);
+        if (selectedFormation && selectedFormation.frais_inscription) {
+          setFormationPrice(parseInt(selectedFormation.frais_inscription, 10));
+        } else {
+          setFormationPrice(500); // Default
         }
       } catch (err) {
-        console.error("Failed to fetch public settings", err);
+        console.error("Failed to fetch public formations for price", err);
+        setFormationPrice(500);
       }
     };
-    fetchSettings();
-  }, []);
+    fetchPrice();
+  }, [registrationData, navigate]);
 
   const handlePaymentInit = async () => {
     if (!selectedMethod) return;
@@ -38,14 +53,10 @@ const PaymentGateway: React.FC = () => {
     setIsLoading(true);
     if (selectedMethod === 'stripe') {
       try {
-        // En conditions réelles, on récupère l'email de l'utilisateur connecté ou des props
         const response = await axios.post('/api/payments/create-intent', {
-          amount: formationPrice,
           currency: 'gnf',
           description: 'Frais de scolarité CEGA E-Learning',
-          email: 'etudiant@cega.edu', // A remplacer par l'email réel
-        }, {
-          withCredentials: true
+          registrationData,
         });
         
         setClientSecret(response.data.clientSecret);
@@ -58,15 +69,9 @@ const PaymentGateway: React.FC = () => {
     } else {
       try {
         const response = await axios.post('/api/payments/cinetpay/init', {
-          amount: formationPrice,
           currency: 'XOF', // CinetPay sandbox usually works better with XOF/XAF for OM
           description: 'Frais de scolarité CEGA E-Learning',
-          email: 'etudiant@cega.edu', // A remplacer par l'email réel
-          firstName: 'Etudiant',
-          lastName: 'CEGA',
-          phone: '+22500000000' // Numéro factice, CinetPay doc: pour direct_pay non requis, mais bon à avoir
-        }, {
-          withCredentials: true
+          registrationData,
         });
 
         if (response.data && response.data.payment_url) {
@@ -95,8 +100,10 @@ const PaymentGateway: React.FC = () => {
           <div style={{ marginBottom: '2rem' }}>
             <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '0', border: '1px solid var(--border-color)', marginBottom: '1.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Frais de scolarité (1ère tranche)</span>
-                <span style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--text-primary)' }}>{formationPrice.toLocaleString('fr-FR')} GNF</span>
+                <span style={{ color: 'var(--text-secondary)' }}>Frais d'inscription</span>
+                <span style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--text-primary)' }}>
+                  {formationPrice !== null ? `${formationPrice.toLocaleString('fr-FR')} GNF` : 'Chargement...'}
+                </span>
               </div>
             </div>
 
@@ -109,7 +116,7 @@ const PaymentGateway: React.FC = () => {
                   padding: '1.25rem',
                   borderRadius: '0',
                   border: `2px solid ${selectedMethod === 'cinetpay' ? 'var(--accent-primary)' : 'var(--border-color)'}`,
-                  background: selectedMethod === 'cinetpay' ? 'rgba(16, 185, 129, 0.05)' : 'rgba(255,255,255,0.02)',
+                  background: selectedMethod === 'cinetpay' ? 'rgba(var(--accent-primary-rgb), 0.05)' : 'rgba(255,255,255,0.02)',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                   position: 'relative'
@@ -129,7 +136,7 @@ const PaymentGateway: React.FC = () => {
                   padding: '1.25rem',
                   borderRadius: '0',
                   border: `2px solid ${selectedMethod === 'stripe' ? 'var(--accent-primary)' : 'var(--border-color)'}`,
-                  background: selectedMethod === 'stripe' ? 'rgba(16, 185, 129, 0.05)' : 'rgba(255,255,255,0.02)',
+                  background: selectedMethod === 'stripe' ? 'rgba(var(--accent-primary-rgb), 0.05)' : 'rgba(255,255,255,0.02)',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                   position: 'relative'

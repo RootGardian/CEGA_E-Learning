@@ -29,6 +29,7 @@ import AdminGrades from './pages/AdminGrades';
 import AdminEnrollments from './pages/AdminEnrollments';
 import AdminFormateurs from './pages/AdminFormateurs';
 import AdminResources from './pages/AdminResources';
+import Support from './pages/Support';
 import PwaInstallPrompt from './components/PwaInstallPrompt';
 import { PopupProvider } from './contexts/PopupContext';
 
@@ -48,7 +49,7 @@ function App() {
       <PwaInstallPrompt />
       <Router>
       <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<Navigate to="/register" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route element={<SidebarLayout />}>
@@ -56,6 +57,7 @@ function App() {
           <Route path="/my-courses" element={<MyCourses />} />
           <Route path="/evaluations" element={<Evaluations />} />
           <Route path="/resources" element={<Resources />} />
+          <Route path="/support" element={<Support />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
@@ -66,6 +68,7 @@ function App() {
           <Route path="/teacher/access" element={<TeacherCourseAccess />} />
           <Route path="/teacher/evaluations" element={<TeacherEvaluations />} />
           <Route path="/teacher/alerts" element={<TeacherAlerts />} />
+          <Route path="/teacher/support" element={<Support />} />
           <Route path="/teacher/profile" element={<Profile />} />
           <Route path="/teacher/settings" element={<Settings />} />
         </Route>
@@ -77,6 +80,7 @@ function App() {
           <Route path="/admin/settings" element={<AdminSettings />} />
           <Route path="/admin/enrollments" element={<AdminEnrollments />} />
           <Route path="/admin/resources" element={<AdminResources />} />
+          <Route path="/admin/support" element={<Support />} />
         </Route>
         <Route path="/course/:courseId" element={<CourseViewer />} />
         <Route path="/payment-gateway" element={<PaymentGateway />} />
@@ -85,7 +89,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         {/* Fallback */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/register" replace />} />
       </Routes>
     </Router>
     </PopupProvider>
