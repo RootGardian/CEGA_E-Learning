@@ -10,6 +10,7 @@ const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [requirePayment, setRequirePayment] = useState(false);
   const navigate = useNavigate();
   const { showAlert } = usePopup();
 
@@ -25,13 +26,17 @@ const Login: React.FC = () => {
       });
       
       if (response.status === 200) {
-        const userRole = response.data.user?.role;
-        if (userRole === 'enseignant') {
-          navigate('/teacher/dashboard');
-        } else if (userRole === 'admin' || userRole === 'directeur_formation') {
-          navigate('/admin/dashboard');
+        if (response.data.action === 'require_payment') {
+          setRequirePayment(true);
         } else {
-          navigate('/dashboard'); // Rediriger vers le tableau de bord en cas de succès
+          const userRole = response.data.user?.role;
+          if (userRole === 'enseignant') {
+            navigate('/teacher/dashboard');
+          } else if (userRole === 'admin' || userRole === 'directeur_formation') {
+            navigate('/admin/dashboard');
+          } else {
+            navigate('/dashboard'); // Rediriger vers le tableau de bord en cas de succès
+          }
         }
       }
     } catch (error: unknown) {
@@ -56,6 +61,8 @@ const Login: React.FC = () => {
       if (response.data.action === 'register') {
         // Compte inexistant : on redirige vers l'inscription avec les infos pré-remplies
         navigate('/register', { state: { googleDetails: response.data.userDetails } });
+      } else if (response.data.action === 'require_payment') {
+        setRequirePayment(true);
       } else if (response.data.action === 'login') {
         const userRole = response.data.user?.role;
         if (userRole === 'enseignant') {
@@ -81,23 +88,44 @@ const Login: React.FC = () => {
           <p>Bienvenue. Connectez-vous à votre espace.</p>
         </div>
 
-        <div style={{ marginTop: '1.5rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'center' }}>
-          <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={() => {
-              console.log('Login Failed');
-              showAlert("La connexion avec Google a échoué.", 'error');
-            }}
-            theme="outline"
-            size="large"
-            text="signin_with"
-            shape="rectangular"
-            useOneTap
-          />
-        </div>
+        {requirePayment ? (
+          <div style={{ textAlign: 'center', padding: '1rem', marginTop: '1rem' }}>
+            <div style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', borderRadius: '12px', padding: '1.5rem', marginBottom: '2rem' }}>
+              <p style={{ color: '#ef4444', fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '1.1rem' }}>
+                Accès Restreint
+              </p>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '0', lineHeight: 1.6 }}>
+                Vous devez vous acquitter de vos frais d'inscription pour accéder au tableau de bord principal.
+              </p>
+            </div>
+            <button 
+              type="button"
+              className="btn btn-primary" 
+              onClick={() => navigate('/payment-gateway')}
+              style={{ width: '100%', justifyContent: 'center' }}
+            >
+              Procéder au paiement
+            </button>
+          </div>
+        ) : (
+          <>
+            <div style={{ marginTop: '1.5rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'center' }}>
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => {
+                  console.log('Login Failed');
+                  showAlert("La connexion avec Google a échoué.", 'error');
+                }}
+                theme="outline"
+                size="large"
+                text="signin_with"
+                shape="rectangular"
+                useOneTap
+              />
+            </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <div style={{ flex: 1, height: '1px', backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <div style={{ flex: 1, height: '1px', backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
           <span style={{ margin: '0 10px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>ou par email</span>
           <div style={{ flex: 1, height: '1px', backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
         </div>
@@ -164,6 +192,8 @@ const Login: React.FC = () => {
             Se connecter
           </button>
         </form>
+        </>
+        )}
 
         <div style={{ textAlign: 'center', marginTop: '2rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
           Vous êtes un nouvel étudiant ? <Link to="/register" className="link">S'inscrire</Link>

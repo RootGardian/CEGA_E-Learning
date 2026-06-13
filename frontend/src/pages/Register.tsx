@@ -18,6 +18,7 @@ const Register: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [formations, setFormations] = useState<any[]>([]);
   const [isGoogleAuth, setIsGoogleAuth] = useState(false);
+  const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { showAlert } = usePopup();
@@ -61,10 +62,11 @@ const Register: React.FC = () => {
       const lowerEmail = formData.email.toLowerCase().trim();
       const submissionData = { ...formData, email: lowerEmail };
 
-      await axios.post('/api/auth/verify-email', { email: lowerEmail });
+      // Make the actual registration call which logs the user in
+      await axios.post('/api/auth/register', submissionData);
       
-      // Navigate to payment and pass registration data in state
-      navigate('/payment-gateway', { state: { registrationData: submissionData } });
+      // Show welcome dialog
+      setShowWelcomeDialog(true);
     } catch (error: unknown) {
       if (axios.isAxiosError(error) && error.response) {
         showAlert(error.response.data.message, 'error');
@@ -141,8 +143,42 @@ const Register: React.FC = () => {
           </>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-row">
+        {showWelcomeDialog ? (
+          <div style={{ textAlign: 'center', padding: '1rem' }}>
+            <h2 className="gradient-text" style={{ marginBottom: '1.5rem', fontSize: '1.8rem' }}>Bienvenue à CEGA !</h2>
+            <div style={{ backgroundColor: 'rgba(var(--accent-primary-rgb), 0.05)', border: '1px solid var(--accent-primary)', borderRadius: '12px', padding: '1.5rem', marginBottom: '2rem' }}>
+              <p style={{ color: 'var(--text-primary)', marginBottom: '1rem', lineHeight: 1.6, fontSize: '1.1rem' }}>
+                Vous avez été inscrit au sein de CEGA.
+              </p>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem', lineHeight: 1.6 }}>
+                Si vous souhaitez suivre les cours en <strong>présentiel</strong>, veuillez vous rendre au centre pour finaliser votre dossier.
+              </p>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '0', lineHeight: 1.6 }}>
+                Si vous souhaitez suivre les cours en <strong>ligne</strong>, veuillez procéder au paiement de vos frais d'inscription pour accéder à la plateforme.
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button 
+                type="button"
+                className="btn" 
+                onClick={() => navigate('/')}
+                style={{ flex: '1 1 200px', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' }}
+              >
+                Payer plus tard
+              </button>
+              <button 
+                type="button"
+                className="btn btn-primary" 
+                onClick={() => navigate('/payment-gateway')}
+                style={{ flex: '1 1 200px' }}
+              >
+                Procéder au paiement
+              </button>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit}>
+            <div className="form-row">
             <div className="form-group">
               <label className="form-label" htmlFor="firstName">Prénom</label>
               <div style={{ position: 'relative' }}>
@@ -279,9 +315,10 @@ const Register: React.FC = () => {
 
           <button type="submit" className="btn btn-primary" style={{ marginTop: '1rem' }}>
             <UserPlus size={20} style={{ marginRight: '0.5rem' }} />
-            S'inscrire et Payer
+            S'inscrire
           </button>
         </form>
+        )}
 
         <div style={{ textAlign: 'center', marginTop: '2rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
           Vous avez déjà un compte ? <Link to="/login" className="link" translate="no">Se connecter</Link>

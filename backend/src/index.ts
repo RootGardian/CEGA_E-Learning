@@ -35,6 +35,8 @@ import './models/Resource';
 import './models/Comment';
 import { initSocket } from './utils/socket';
 import { startCommentCleanupJob } from './services/commentCleanup';
+import { startStudentCleanupJob } from './services/studentCleanup';
+import { startEvaluationCleanupJob } from './services/evaluationCleanup';
 
 dotenv.config();
 dns.setDefaultResultOrder('ipv4first');
@@ -79,6 +81,8 @@ sequelize.sync({ alter: false })
   .then(() => {
     console.log('Database synced successfully.');
     startCommentCleanupJob();
+    startStudentCleanupJob();
+    startEvaluationCleanupJob();
     httpServer.listen(port, () => {
       console.log(`Server is running on port ${port}`);
     });

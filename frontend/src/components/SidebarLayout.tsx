@@ -225,6 +225,28 @@ const SidebarLayout: React.FC = () => {
     );
   }
 
+  // Blocage si l'étudiant n'a pas payé ses frais
+  if (user.role === 'etudiant' && user.subscriptionStatus === 'pending') {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-primary)' }}>
+        <div className="glass-panel" style={{ padding: '2.5rem', maxWidth: '500px', textAlign: 'center' }}>
+          <h2 style={{ color: 'var(--error)', marginBottom: '1rem' }}>Accès Restreint</h2>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', lineHeight: 1.6 }}>
+            Vous devez vous acquitter de vos frais d'inscription pour accéder à votre tableau de bord principal.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <button className="btn btn-primary" onClick={() => navigate('/payment-gateway')} style={{ width: '100%', justifyContent: 'center' }}>
+              Procéder au paiement
+            </button>
+            <button className="btn btn-secondary" onClick={handleLogout} style={{ width: '100%', justifyContent: 'center' }}>
+              <LogOut size={18} style={{ marginRight: '0.5rem' }} /> Se déconnecter
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const navLinkStyle = ({ isActive }: { isActive: boolean }) => ({
     display: 'flex',
     alignItems: 'center',

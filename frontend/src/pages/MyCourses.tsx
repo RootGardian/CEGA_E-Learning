@@ -33,9 +33,16 @@ const MyCourses: React.FC = () => {
           headers: { 'Cache-Control': 'no-cache' }
         });
         // Filtrer les cours selon la filière de l'utilisateur
-        const filtered = response.data.filter((c: Course) => 
-          c.department === user.department || c.department === 'geosciences' || c.department === 'all'
-        );
+        const isEnseignant = (user as any).role === 'enseignant';
+        const filtered = response.data.filter((c: Course) => {
+          if (isEnseignant) {
+            // Les enseignants ne voient que les cours de leur propre filière
+            return c.department === user.department;
+          } else {
+            // Les étudiants voient leur filière ET les cours communs
+            return c.department === user.department || c.department === 'all';
+          }
+        });
         setCourses(filtered);
       } catch (err) {
         console.error('Error fetching courses:', err);

@@ -45,6 +45,62 @@ export const verifyEmail = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
+export const register = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { firstName, lastName, email, phone, password, department, formationType } = req.body;
+
+    if (!firstName || !lastName || !email || !password || !department) {
+      res.status(400).json({ message: 'Veuillez remplir tous les champs obligatoires.' });
+      return;
+    }
+
+    const lowerEmail = email.toLowerCase().trim();
+    const existing = await Etudiant.findOne({ where: { email: lowerEmail } });
+    if (existing) {
+      res.status(400).json({ message: 'Cet email est déjà utilisé.' });
+      return;
+    }
+
+    const hashedPassword = await hashPassword(password);
+    const newStudent = await Etudiant.create({
+      firstName,
+      lastName,
+      email: lowerEmail,
+      phone,
+      password: hashedPassword,
+      department,
+      formationType: formationType || 'presentiel',
+      subscriptionStatus: 'pending'
+    });
+
+    const token = generateToken(newStudent.id, 'etudiant');
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
+
+    // Envoyer un email de bienvenue
+    try {
+      const loginUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/login`;
+      const emailContent = welcomeEmail(firstName, loginUrl);
+      await sendEmail(lowerEmail, emailContent.subject, emailContent.text, emailContent.html);
+    } catch (err) {
+      console.warn("L'email de bienvenue n'a pas pu être envoyé:", err);
+    }
+
+    res.status(201).json({ 
+      message: 'Inscription réussie.', 
+      user: { id: newStudent.id, email: newStudent.email, role: 'etudiant', department: newStudent.department } 
+    });
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password, token: twoFactorToken } = req.body;
@@ -55,17 +111,17 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     let role = 'etudiant';
 
     if (!user) {
-      user = await Intervenant.findOne({ where: { email: lowerEmail } });
+      user = await User.findOne({ where: { email: lowerEmail } });
       if (user) {
-        role = 'enseignant';
+        if (user.role === 'directeur_formation') {
+          role = 'admin';
+        } else {
+          role = user.role;
+        }
       } else {
-        user = await User.findOne({ where: { email: lowerEmail } });
+        user = await Intervenant.findOne({ where: { email: lowerEmail } });
         if (user) {
-          if (user.role === 'directeur_formation') {
-            role = 'admin';
-          } else {
-            role = user.role;
-          }
+          role = 'enseignant';
         } else {
           res.status(401).json({ message: 'Adresse email introuvable.' });
           return;
@@ -124,6 +180,15 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
 
+    if (role === 'etudiant' && user.subscriptionStatus === 'pending') {
+      res.status(200).json({ 
+        message: "Vous devez vous acquitter de vos frais d'inscription", 
+        action: 'require_payment',
+        user: { id: user.id, email: user.email, role } 
+      });
+      return;
+    }
+
     res.status(200).json({ message: 'Login successful', user: { id: user.id, email: user.email, role } });
   } catch (error) {
     console.error('Login error:', error);
@@ -168,17 +233,17 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
     let role = 'etudiant';
 
     if (!user) {
-      user = await Intervenant.findOne({ where: { email: lowerEmail } });
+      user = await User.findOne({ where: { email: lowerEmail } });
       if (user) {
-        role = 'enseignant';
+        if (user.role === 'directeur_formation') {
+          role = 'admin';
+        } else {
+          role = user.role;
+        }
       } else {
-        user = await User.findOne({ where: { email: lowerEmail } });
+        user = await Intervenant.findOne({ where: { email: lowerEmail } });
         if (user) {
-          if (user.role === 'directeur_formation') {
-            role = 'admin';
-          } else {
-            role = user.role;
-          }
+          role = 'enseignant';
         }
       }
     }
@@ -211,6 +276,15 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
       sameSite: 'strict',
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
+
+    if (role === 'etudiant' && user.subscriptionStatus === 'pending') {
+      res.status(200).json({ 
+        action: 'require_payment',
+        message: "Vous devez vous acquitter de vos frais d'inscription", 
+        user: { id: user.id, email: user.email, role } 
+      });
+      return;
+    }
 
     res.status(200).json({ 
       action: 'login', 

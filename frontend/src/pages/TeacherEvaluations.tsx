@@ -20,6 +20,7 @@ interface Evaluation {
   targetStudent?: { id: number; firstName: string; lastName: string };
   course?: { id: number; title: string };
   qcmQuestions?: number[];
+  status?: string;
 }
 
 interface CourseStudent {
@@ -39,6 +40,7 @@ interface GradeData {
 interface Course {
   id: number;
   title: string;
+  department?: string;
 }
 
 const TeacherEvaluations: React.FC = () => {
@@ -100,7 +102,8 @@ const TeacherEvaluations: React.FC = () => {
   const fetchCourses = async () => {
     try {
       const res = await axios.get('/api/teacher/courses', { withCredentials: true });
-      setCourses(res.data);
+      const filteredCourses = res.data.filter((c: Course) => c.department !== 'all');
+      setCourses(filteredCourses);
     } catch (err) {
       console.error('Erreur chargement cours:', err);
     }
@@ -389,20 +392,24 @@ const TeacherEvaluations: React.FC = () => {
                       >
                         <ClipboardList size={16} /> Saisir les notes
                       </button>
-                      <button 
-                        onClick={() => { setActiveMenuId(null); handleOpenModal(ev); }} 
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', background: 'none', border: 'none', borderBottom: '1px solid var(--border-color)', color: 'var(--text-primary)', cursor: 'pointer', textAlign: 'left', width: '100%' }}
-                      >
-                        <Edit size={16} /> Modifier l'évaluation
-                      </button>
-                      {ev.type === "QCM (En ligne sur l'application)" && (
+                      {ev.status !== 'validated' && (
+                        <button 
+                          onClick={() => { setActiveMenuId(null); handleOpenModal(ev); }} 
+                          style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', background: 'none', border: 'none', borderBottom: '1px solid var(--border-color)', color: 'var(--text-primary)', cursor: 'pointer', textAlign: 'left', width: '100%' }}
+                        >
+                          <Edit size={16} /> Modifier l'évaluation
+                        </button>
+                      )}
+                      {ev.type === "QCM (En ligne sur l'application)" && ev.status !== 'validated' && (
                         <>
-                          <button 
-                            onClick={() => { setActiveMenuId(null); handleOpenQcmModal(ev); }} 
-                            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', background: 'none', border: 'none', borderBottom: '1px solid var(--border-color)', color: 'var(--text-primary)', cursor: 'pointer', textAlign: 'left', width: '100%' }}
-                          >
-                            <Settings size={16} /> Importer Questions (Excel)
-                          </button>
+                          {!(new Date(ev.date).getTime() + (ev.duration ? (parseInt(ev.duration.split(':')[0] || '0') * 60 + parseInt(ev.duration.split(':')[1] || '0')) * 60000 : 0) < new Date().getTime()) && (
+                            <button 
+                              onClick={() => { setActiveMenuId(null); handleOpenQcmModal(ev); }} 
+                              style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', background: 'none', border: 'none', borderBottom: '1px solid var(--border-color)', color: 'var(--text-primary)', cursor: 'pointer', textAlign: 'left', width: '100%' }}
+                            >
+                              <Settings size={16} /> Importer Questions (Excel)
+                            </button>
+                          )}
                           <button 
                             onClick={() => { setActiveMenuId(null); handleValidateGrades(ev.id); }} 
                             style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', background: 'none', border: 'none', borderBottom: '1px solid var(--border-color)', color: 'var(--success)', cursor: 'pointer', textAlign: 'left', width: '100%' }}

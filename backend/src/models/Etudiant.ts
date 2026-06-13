@@ -97,7 +97,7 @@ Etudiant.init(
     subscriptionStatus: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: 'active',
+      defaultValue: 'pending',
     },
     accessExpirationDate: {
       type: DataTypes.DATE,

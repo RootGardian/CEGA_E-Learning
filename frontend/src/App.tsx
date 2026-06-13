@@ -27,6 +27,7 @@ import AdminStudents from './pages/AdminStudents';
 import AdminSettings from './pages/AdminSettings';
 import AdminGrades from './pages/AdminGrades';
 import AdminEnrollments from './pages/AdminEnrollments';
+import AdminEvaluations from './pages/AdminEvaluations';
 import AdminFormateurs from './pages/AdminFormateurs';
 import AdminResources from './pages/AdminResources';
 import Support from './pages/Support';
@@ -79,6 +80,7 @@ function App() {
           <Route path="/admin/grades" element={<AdminGrades />} />
           <Route path="/admin/settings" element={<AdminSettings />} />
           <Route path="/admin/enrollments" element={<AdminEnrollments />} />
+          <Route path="/admin/evaluations" element={<AdminEvaluations />} />
           <Route path="/admin/resources" element={<AdminResources />} />
           <Route path="/admin/support" element={<Support />} />
         </Route>

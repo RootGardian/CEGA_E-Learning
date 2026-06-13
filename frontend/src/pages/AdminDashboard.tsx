@@ -75,7 +75,7 @@ const AdminDashboard: React.FC = () => {
             <DollarSign size={24} />
           </div>
           <div>
-            <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Revenus (XAF)</div>
+            <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Revenus (GNF)</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{stats?.totalRevenue?.toLocaleString('fr-FR') || 0}</div>
           </div>
         </div>

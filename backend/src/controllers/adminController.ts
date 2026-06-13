@@ -78,6 +78,9 @@ export const getStudents = async (req: Request, res: Response): Promise<void> =>
   try {
     const { Op } = require('sequelize');
     const students = await Etudiant.findAll({
+      where: {
+        subscriptionStatus: { [Op.ne]: 'pending' }
+      },
       attributes: { exclude: ['password', 'twoFactorSecret'] },
       order: [['created_at', 'DESC']]
     });
@@ -219,6 +222,35 @@ export const deleteStudent = async (req: Request, res: Response): Promise<void> 
     res.status(200).json({ message: 'Étudiant supprimé avec succès' });
   } catch (error) {
     console.error('Error deleting student:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const getCourseStudents = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { Op } = require('sequelize');
+    const courseId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const Course = require('../models/Course').default;
+    const course = await Course.findByPk(courseId as string);
+    
+    if (!course) {
+      res.status(404).json({ message: 'Course not found' });
+      return;
+    }
+
+    let whereCondition: any = { subscriptionStatus: { [Op.ne]: 'pending' } };
+    if (course.department !== 'all') {
+      whereCondition.department = course.department;
+    }
+
+    const students = await Etudiant.findAll({
+      where: whereCondition,
+      attributes: ['id', 'firstName', 'lastName', 'email', 'department', 'formationType']
+    });
+
+    res.status(200).json({ students });
+  } catch (error) {
+    console.error('getCourseStudents error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };

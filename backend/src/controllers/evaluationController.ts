@@ -143,17 +143,29 @@ export const getStudentEvaluations = async (req: Request, res: Response): Promis
 
 export const getTeacherEvaluations = async (req: Request, res: Response): Promise<void> => {
   try {
+    const userRole = (req as any).user?.role;
     const intervenantId = (req as any).user?.id;
+    
+    // If admin, they can see all evaluations? 
+    // Wait, let's keep where: { intervenantId } if we want them to see what they created.
+    // Actually, maybe admin should see ALL evaluations! Let's allow admin to see all evaluations.
+    const whereClause: any = userRole === 'enseignant' ? { intervenantId } : {};
+
     const evaluations = await Evaluation.findAll({
-      where: { intervenantId },
+      where: whereClause,
       include: [
-        { model: Course, as: 'course', attributes: ['id', 'title'] },
+        { model: Course, as: 'course', attributes: ['id', 'title', 'department'] },
         { model: Etudiant, as: 'targetStudent', attributes: ['id', 'firstName', 'lastName'] }
       ],
       order: [['date', 'ASC']]
     });
 
-    res.status(200).json(evaluations);
+    let result = evaluations;
+    if (userRole === 'enseignant') {
+      result = evaluations.filter((ev: any) => ev.course && ev.course.department !== 'all');
+    }
+
+    res.status(200).json(result);
   } catch (error) {
     console.error('Error fetching teacher evaluations:', error);
     res.status(500).json({ message: 'Server error' });
@@ -163,7 +175,44 @@ export const getTeacherEvaluations = async (req: Request, res: Response): Promis
 export const createEvaluation = async (req: Request, res: Response): Promise<void> => {
   try {
     const intervenantId = (req as any).user?.id;
+    const userRole = (req as any).user?.role;
     const { title, type, description, date, duration, courseId, documentLink, isGlobal, targetStudentId } = req.body;
+
+    const course = await Course.findByPk(courseId);
+    if (!course) {
+      res.status(404).json({ message: 'Course not found' });
+      return;
+    }
+
+    if (course.department === 'all' && userRole !== 'admin' && userRole !== 'directeur_formation') {
+      res.status(403).json({ message: "Seul l'administrateur peut évaluer les cours communs." });
+      return;
+    }
+
+    let finalIntervenantId = intervenantId;
+    if (userRole === 'admin' || userRole === 'directeur_formation') {
+      const User = require('../models/User').default;
+      const Intervenant = require('../models/Intervenant').default;
+      
+      const dfUser = await User.findOne({ where: { role: 'directeur_formation' } });
+      if (!dfUser) {
+        res.status(400).json({ message: "Action impossible : aucun profil Directeur de Formation n'est configuré dans le système." });
+        return;
+      }
+
+      let adminIntervenant = await Intervenant.findOne({ where: { email: dfUser.email } });
+      if (!adminIntervenant) {
+        adminIntervenant = await Intervenant.create({
+          firstName: dfUser.prenom || 'Directeur',
+          lastName: dfUser.nom || 'Formation',
+          email: dfUser.email,
+          password: 'dummy_password_no_login',
+          department: 'all',
+          is_active: false
+        });
+      }
+      finalIntervenantId = adminIntervenant.id;
+    }
 
     const evaluation = await Evaluation.create({
       title,
@@ -172,14 +221,13 @@ export const createEvaluation = async (req: Request, res: Response): Promise<voi
       date,
       duration,
       courseId,
-      intervenantId,
+      intervenantId: finalIntervenantId,
       documentLink,
       isGlobal: isGlobal !== undefined ? isGlobal : true,
       targetStudentId: isGlobal === false ? targetStudentId : null
     });
 
     // Notify students
-    const course = await Course.findByPk(courseId);
     const courseTitle = course ? course.title : 'votre cours';
     
     if (evaluation.isGlobal) {
@@ -209,14 +257,23 @@ export const createEvaluation = async (req: Request, res: Response): Promise<voi
 export const updateEvaluation = async (req: Request, res: Response): Promise<void> => {
   try {
     const intervenantId = (req as any).user?.id;
+    const userRole = (req as any).user?.role;
     const { id } = req.params;
     const { title, type, description, date, duration, courseId, documentLink, isGlobal, targetStudentId } = req.body;
 
-    const evaluation = await Evaluation.findOne({ where: { id, intervenantId } });
+    const whereClause: any = { id };
+    if (userRole === 'enseignant') {
+      whereClause.intervenantId = intervenantId;
+    }
+
+    const evaluation = await Evaluation.findOne({ where: whereClause }) as any;
     if (!evaluation) {
       res.status(404).json({ message: 'Evaluation not found or unauthorized' });
       return;
     }
+
+    const isNewDateFuture = new Date(date) > new Date();
+    const newStatus = (evaluation.status === 'validated' && isNewDateFuture) ? 'published' : evaluation.status || 'draft';
 
     await evaluation.update({
       title,
@@ -227,7 +284,8 @@ export const updateEvaluation = async (req: Request, res: Response): Promise<voi
       courseId,
       documentLink,
       isGlobal: isGlobal !== undefined ? isGlobal : true,
-      targetStudentId: isGlobal === false ? targetStudentId : null
+      targetStudentId: isGlobal === false ? targetStudentId : null,
+      status: newStatus
     });
 
     const course = await Course.findByPk(courseId);
@@ -259,10 +317,16 @@ export const updateEvaluation = async (req: Request, res: Response): Promise<voi
 export const updateQcmConfig = async (req: Request, res: Response): Promise<void> => {
   try {
     const intervenantId = (req as any).user?.id;
+    const userRole = (req as any).user?.role;
     const { id } = req.params;
     const { qcmQuestions } = req.body;
 
-    const evaluation = await Evaluation.findOne({ where: { id, intervenantId } }) as any;
+    const whereClause: any = { id };
+    if (userRole === 'enseignant') {
+      whereClause.intervenantId = intervenantId;
+    }
+
+    const evaluation = await Evaluation.findOne({ where: whereClause }) as any;
     if (!evaluation) {
       res.status(404).json({ message: 'Evaluation not found or unauthorized' });
       return;
@@ -279,9 +343,15 @@ export const updateQcmConfig = async (req: Request, res: Response): Promise<void
 export const deleteEvaluation = async (req: Request, res: Response): Promise<void> => {
   try {
     const intervenantId = (req as any).user?.id;
+    const userRole = (req as any).user?.role;
     const { id } = req.params;
 
-    const evaluation = await Evaluation.findOne({ where: { id, intervenantId } });
+    const whereClause: any = { id };
+    if (userRole === 'enseignant') {
+      whereClause.intervenantId = intervenantId;
+    }
+
+    const evaluation = await Evaluation.findOne({ where: whereClause });
     if (!evaluation) {
       res.status(404).json({ message: 'Evaluation not found or unauthorized' });
       return;
@@ -311,26 +381,65 @@ export const getEvaluationGrades = async (req: Request, res: Response): Promise<
   try {
     const { id } = req.params;
     const intervenantId = (req as any).user?.id;
+    const userRole = (req as any).user?.role;
     
-    const evaluation = await Evaluation.findOne({ where: { id, intervenantId } });
+    const whereClauseId: any = { id };
+    if (userRole === 'enseignant') {
+      whereClauseId.intervenantId = intervenantId;
+    }
+
+    const evaluation = await Evaluation.findOne({ where: whereClauseId });
     if (!evaluation) {
       res.status(404).json({ message: 'Evaluation not found or unauthorized' });
       return;
     }
 
     const courseId = evaluation.courseId;
+    const course = await Course.findByPk(courseId);
+    if (!course) {
+      res.status(404).json({ message: 'Course not found' });
+      return;
+    }
+
+    if (course.department === 'all' && userRole !== 'admin' && userRole !== 'directeur_formation') {
+      res.status(403).json({ message: "Seul l'administrateur peut voir les notes des cours communs." });
+      return;
+    }
+
+    let teacherDept: string | null = null;
+    if (userRole === 'enseignant') {
+      const Intervenant = require('../models/Intervenant').default;
+      const teacher = await Intervenant.findByPk(intervenantId);
+      if (teacher) teacherDept = teacher.department;
+    }
+
     const accesses = await CourseAccess.findAll({ where: { courseId, isUnlocked: true } });
     const specificStudentIds = accesses.filter(a => a.etudiantId).map(a => a.etudiantId);
     const globalDepartments = accesses.filter(a => a.department && !a.etudiantId).map(a => a.department);
 
+    if (course.department && course.department !== 'all' && !globalDepartments.includes(course.department)) {
+      globalDepartments.push(course.department);
+    }
+
     const Etudiant = require('../models/Etudiant').default;
+    
+    let whereClause: any = {
+      subscriptionStatus: { [Op.ne]: 'pending' }
+    };
+
+    if (course.department !== 'all') {
+      whereClause[Op.or] = [
+        { id: specificStudentIds },
+        { department: globalDepartments }
+      ];
+    }
+
+    if (userRole === 'enseignant' && teacherDept) {
+      whereClause.department = teacherDept;
+    }
+
     const students = await Etudiant.findAll({
-      where: {
-        [Op.or]: [
-          { id: specificStudentIds },
-          { department: globalDepartments }
-        ]
-      },
+      where: whereClause,
       attributes: ['id', 'firstName', 'lastName', 'email', 'department']
     });
 
@@ -355,9 +464,14 @@ export const saveEvaluationGrades = async (req: Request, res: Response): Promise
   try {
     const { id } = req.params;
     const intervenantId = (req as any).user?.id;
+    const userRole = (req as any).user?.role;
     const { grades } = req.body; 
+    const whereClause: any = { id };
+    if (userRole === 'enseignant') {
+      whereClause.intervenantId = intervenantId;
+    }
     
-    const evaluation = await Evaluation.findOne({ where: { id, intervenantId } });
+    const evaluation = await Evaluation.findOne({ where: whereClause });
     if (!evaluation) {
       res.status(404).json({ message: 'Evaluation not found or unauthorized' });
       return;
@@ -406,8 +520,14 @@ export const deleteEvaluationGrades = async (req: Request, res: Response): Promi
   try {
     const { id } = req.params;
     const intervenantId = (req as any).user?.id;
+    const userRole = (req as any).user?.role;
     
-    const evaluation = await Evaluation.findOne({ where: { id, intervenantId } });
+    const whereClause: any = { id };
+    if (userRole === 'enseignant') {
+      whereClause.intervenantId = intervenantId;
+    }
+
+    const evaluation = await Evaluation.findOne({ where: whereClause });
     if (!evaluation) {
       res.status(404).json({ message: 'Evaluation not found or unauthorized' });
       return;
@@ -460,8 +580,14 @@ export const deleteStudentGrade = async (req: Request, res: Response): Promise<v
   try {
     const { id, etudiantId } = req.params;
     const intervenantId = (req as any).user?.id;
+    const userRole = (req as any).user?.role;
     
-    const evaluation = await Evaluation.findOne({ where: { id, intervenantId } });
+    const whereClause: any = { id };
+    if (userRole === 'enseignant') {
+      whereClause.intervenantId = intervenantId;
+    }
+
+    const evaluation = await Evaluation.findOne({ where: whereClause });
     if (!evaluation) {
       res.status(404).json({ message: 'Evaluation not found or unauthorized' });
       return;
@@ -469,6 +595,10 @@ export const deleteStudentGrade = async (req: Request, res: Response): Promise<v
 
     // Autoriser à recommencer = supprimer sa note
     await Grade.destroy({ where: { evaluationId: id, etudiantId } });
+
+    if ((evaluation as any).status === 'validated') {
+      await (evaluation as any).update({ status: 'published' });
+    }
     
     res.status(200).json({ message: 'Grade deleted successfully, student can retake exam.' });
   } catch (error) {
@@ -505,6 +635,7 @@ export const generateExcelTemplate = (req: Request, res: Response) => {
 export const uploadQuestions = async (req: Request, res: Response): Promise<void> => {
   try {
     const intervenantId = (req as any).user?.id;
+    const userRole = (req as any).user?.role;
     const { id } = req.params;
     const file = req.file;
 
@@ -513,7 +644,12 @@ export const uploadQuestions = async (req: Request, res: Response): Promise<void
       return;
     }
 
-    const evaluation = await Evaluation.findOne({ where: { id, intervenantId } }) as any;
+    const whereClause: any = { id };
+    if (userRole === 'enseignant') {
+      whereClause.intervenantId = intervenantId;
+    }
+
+    const evaluation = await Evaluation.findOne({ where: whereClause }) as any;
     if (!evaluation) {
       res.status(404).json({ message: 'Evaluation not found or unauthorized' });
       return;
@@ -555,23 +691,29 @@ export const uploadQuestions = async (req: Request, res: Response): Promise<void
   }
 };
 
+
 export const validateGrades = async (req: Request, res: Response): Promise<void> => {
   try {
     const intervenantId = (req as any).user?.id;
+    const userRole = (req as any).user?.role;
     const { id } = req.params;
 
-    const evaluation = await Evaluation.findOne({ where: { id, intervenantId } }) as any;
+    const whereClause: any = { id };
+    if (userRole === 'enseignant') {
+      whereClause.intervenantId = intervenantId;
+    }
+
+    const evaluation = await Evaluation.findOne({ where: whereClause }) as any;
     if (!evaluation) {
       res.status(404).json({ message: 'Evaluation not found or unauthorized' });
       return;
     }
 
     await evaluation.update({ 
-      status: 'validated',
-      qcmQuestions: null // Nettoyage de la base de données
+      status: 'validated'
     });
 
-    res.status(200).json({ message: 'Notes validées et questions supprimées avec succès' });
+    res.status(200).json({ message: 'Notes validées avec succès' });
   } catch (error) {
     console.error('Error validating grades:', error);
     res.status(500).json({ message: 'Server error' });

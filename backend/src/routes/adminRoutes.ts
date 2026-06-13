@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { protect, requireRole } from '../middlewares/authMiddleware';
+import { protect, restrictTo } from '../middlewares/authMiddleware';
 import {
   getSystemSettings,
   updateSystemSettings,
@@ -28,10 +28,12 @@ import {
   updateStudentFormation
 } from '../controllers/adminController';
 
+import { getCourseStudents, toggleGlobalAccess, toggleStudentAccess } from '../controllers/teacherController';
+
 const router = Router();
 
-// Toutes les routes admin nécessitent l'authentification et le rôle admin
-router.use(protect, requireRole('admin'));
+// Toutes les routes admin nécessitent l'authentification et les rôles admin/directeur
+router.use(protect, restrictTo('admin', 'directeur_formation'));
 
 router.get('/settings', getSystemSettings);
 router.put('/settings', updateSystemSettings);
@@ -64,9 +66,14 @@ router.post('/formateurs/unassign-course', unassignCourseFromFormateur);
 router.get('/grades', getAllGrades);
 
 // Resources
-router.get('/resources', getResources);
-router.post('/resources', addResource);
-router.delete('/resources/:id', deleteResource);
+router.get('/resources', protect, restrictTo('admin', 'directeur_formation'), getResources);
+router.post('/resources', protect, restrictTo('admin', 'directeur_formation'), addResource);
+router.delete('/resources/:id', protect, restrictTo('admin', 'directeur_formation'), deleteResource);
+
+// Course Management for Admins (common courses)
 router.get('/courses/:id/structure', getCourseStructure);
+router.get('/courses/:id/students', protect, restrictTo('admin', 'directeur_formation'), getCourseStudents);
+router.post('/courses/:id/unlock-global', protect, restrictTo('admin', 'directeur_formation'), toggleGlobalAccess);
+router.post('/courses/:id/unlock-student', protect, restrictTo('admin', 'directeur_formation'), toggleStudentAccess);
 
 export default router;

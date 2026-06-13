@@ -22,7 +22,8 @@ const TeacherCourseAccess: React.FC = () => {
     const fetchCourses = async () => {
       try {
         const res = await axios.get('/api/teacher/courses', { withCredentials: true });
-        setCourses(res.data);
+        const filteredCourses = res.data.filter((c: any) => c.department !== 'all');
+        setCourses(filteredCourses);
       } catch (err) {
         console.error('Erreur chargement cours:', err);
       } finally {

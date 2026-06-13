@@ -16,7 +16,8 @@ import {
   FileText,
   Video,
   ArrowLeft,
-  HelpCircle
+  HelpCircle,
+  BookOpen
 } from 'lucide-react';
 
 export interface AdminProfile {
@@ -239,6 +240,11 @@ const AdminSidebarLayout: React.FC = () => {
             <li>
               <NavLink to="/admin/formateurs" style={navLinkStyle} onClick={() => setIsSidebarOpen(false)}>
                 <GraduationCap size={20} style={{ marginRight: '0.75rem' }} /> Gestion des Formateurs
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/admin/evaluations" style={navLinkStyle} onClick={() => setIsSidebarOpen(false)}>
+                <BookOpen size={20} style={{ marginRight: '0.75rem' }} /> Cours Communs
               </NavLink>
             </li>
             <li>

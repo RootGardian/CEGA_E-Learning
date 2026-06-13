@@ -59,22 +59,7 @@ const Support: React.FC = () => {
 
       </div>
 
-      {settings.supportFormEnabled === 'true' && (
-        <div className="glass-panel" style={{ padding: '2.5rem', marginTop: '2rem' }}>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <Mail size={24} color="var(--accent-primary)" /> Formulaire de contact
-          </h2>
-          <form style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }} onSubmit={(e) => e.preventDefault()}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.25rem' }}>
-              <input type="text" placeholder="Votre nom" className="input-field" style={{ padding: '0.85rem', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }} />
-              <input type="email" placeholder="Votre email" className="input-field" style={{ padding: '0.85rem', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }} />
-            </div>
-            <input type="text" placeholder="Sujet" className="input-field" style={{ padding: '0.85rem', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }} />
-            <textarea placeholder="Votre message..." rows={5} className="input-field" style={{ padding: '0.85rem', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)', resize: 'vertical' }}></textarea>
-            <button type="submit" className="btn btn-primary" style={{ padding: '0.85rem', marginTop: '0.5rem', fontSize: '1rem' }}>Envoyer le message</button>
-          </form>
-        </div>
-      )}
+
     </div>
   );
 };

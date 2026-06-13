@@ -1,10 +1,11 @@
 import { Router } from 'express';
-import { verifyEmail, login, logout, googleAuth, enable2FA, verify2FA, forgotPassword, resetPassword, getMe, updateProfile, updatePassword, getPublicSettings, getPublicFormations, trackTime } from '../controllers/authController';
+import { verifyEmail, register, login, logout, googleAuth, enable2FA, verify2FA, forgotPassword, resetPassword, getMe, updateProfile, updatePassword, getPublicSettings, getPublicFormations, trackTime } from '../controllers/authController';
 import { protect } from '../middlewares/authMiddleware';
 
 const router = Router();
 
 router.post('/verify-email', verifyEmail);
+router.post('/register', register);
 router.post('/login', login);
 router.post('/logout', logout);
 router.post('/google', googleAuth);

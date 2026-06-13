@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { CheckCircle, XCircle, ArrowRight } from 'lucide-react';
 
+import axios from 'axios';
+
 const PaymentCallback: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -9,16 +11,27 @@ const PaymentCallback: React.FC = () => {
   const tx = searchParams.get('tx');
 
   const [loading, setLoading] = useState(true);
+  const [verifiedStatus, setVerifiedStatus] = useState<string | null>(status);
 
   useEffect(() => {
-    // In a real scenario, you might want to call your backend here to double-check the transaction status.
-    // However, the webhook in the backend should have already updated the database.
-    const timer = setTimeout(() => {
+    const verifyTransaction = async () => {
+      if (tx) {
+        try {
+          const res = await axios.get(`/api/payments/cinetpay/status/${tx}`);
+          if (res.data.status === 'succeeded') {
+            setVerifiedStatus('success');
+          } else if (res.data.status === 'failed') {
+            setVerifiedStatus('failed');
+          }
+        } catch (error) {
+          console.error("Erreur lors de la vérification:", error);
+        }
+      }
       setLoading(false);
-    }, 1000);
+    };
 
-    return () => clearTimeout(timer);
-  }, []);
+    verifyTransaction();
+  }, [tx]);
 
   if (loading) {
     return (
@@ -28,7 +41,7 @@ const PaymentCallback: React.FC = () => {
     );
   }
 
-  const isSuccess = status === 'success';
+  const isSuccess = verifiedStatus === 'success';
 
   return (
     <div className="auth-layout">

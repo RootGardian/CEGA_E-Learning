@@ -31,13 +31,17 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
           model: Evaluation,
           as: 'evaluation',
           where: { intervenantId: teacher.id },
-          required: true
+          required: true,
+          include: [{ model: Course, as: 'course', where: { department: { [Op.ne]: 'all' } }, required: true }]
         }
       ]
     });
 
     const recentEvals = await Evaluation.findAll({
       where: { intervenantId: teacher.id },
+      include: [
+        { model: Course, as: 'course', where: { department: { [Op.ne]: 'all' } }, required: true }
+      ],
       order: [['createdAt', 'DESC']],
       limit: 3
     });
@@ -51,7 +55,8 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
           model: Evaluation,
           as: 'evaluation',
           where: { intervenantId: teacher.id },
-          required: true
+          required: true,
+          include: [{ model: Course, as: 'course', where: { department: { [Op.ne]: 'all' } }, required: true }]
         },
         {
           model: Etudiant,
@@ -114,14 +119,8 @@ export const getTeacherCourses = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    const { Op } = require('sequelize');
     const courses = await Course.findAll({
-      where: { 
-        [Op.or]: [
-          { department: teacher.department },
-          { department: 'all' }
-        ]
-      },
+      where: { department: teacher.department },
       order: [['id', 'ASC']]
     });
 
@@ -143,6 +142,12 @@ export const getCourseStudents = async (req: Request, res: Response): Promise<vo
       return;
     }
 
+    const userRole = (req as any).user?.role;
+    if (course.department === 'all' && userRole !== 'admin' && userRole !== 'directeur_formation') {
+      res.status(403).json({ message: "Seul l'administrateur peut gérer l'accès aux cours communs." });
+      return;
+    }
+
     // Tous les étudiants du même département que le cours, ou tous si le cours est 'all'
     let whereCondition: any = { department: course.department };
     if (course.department === 'all') {
@@ -158,15 +163,15 @@ export const getCourseStudents = async (req: Request, res: Response): Promise<vo
       where: { courseId }
     });
 
-    const globalAccessStatus = accesses.find(a => a.department === course.department && a.etudiantId === null);
+    const targetDept = course.department === 'all' ? null : course.department;
+    const globalAccessStatus = accesses.find(a => a.department === targetDept && a.etudiantId === null);
     const globalUnlocked = globalAccessStatus ? globalAccessStatus.isUnlocked : false;
 
     // Construire la réponse combinée
     const result = students.map(student => {
-      // Un étudiant a accès si :
-      // - Il y a un accès global pour le département
+      // - Il y a un accès global pour le département (ou global pour tous = null)
       // - OU il y a un accès spécifique pour lui
-      const globalAccess = accesses.find(a => a.department === student.department && a.etudiantId === null);
+      const globalAccess = accesses.find(a => (a.department === student.department || a.department === null) && a.etudiantId === null);
       const specificAccess = accesses.find(a => a.etudiantId === student.id);
       
       const isUnlocked = specificAccess
@@ -202,13 +207,44 @@ export const toggleGlobalAccess = async (req: Request, res: Response): Promise<v
       return;
     }
 
+    const userRole = (req as any).user?.role;
+    if (course.department === 'all' && userRole !== 'admin' && userRole !== 'directeur_formation') {
+      res.status(403).json({ message: "Seul l'administrateur peut modifier l'accès aux cours communs." });
+      return;
+    }
+
+    let finalTeacherId = teacherId;
+    if (userRole === 'admin' || userRole === 'directeur_formation') {
+      const User = require('../models/User').default;
+      const Intervenant = require('../models/Intervenant').default;
+      
+      const dfUser = await User.findOne({ where: { role: 'directeur_formation' } });
+      if (!dfUser) {
+        res.status(400).json({ message: "Action impossible : aucun profil Directeur de Formation n'est configuré dans le système." });
+        return;
+      }
+
+      let adminIntervenant = await Intervenant.findOne({ where: { email: dfUser.email } });
+      if (!adminIntervenant) {
+        adminIntervenant = await Intervenant.create({
+          firstName: dfUser.prenom || 'Directeur',
+          lastName: dfUser.nom || 'Formation',
+          email: dfUser.email,
+          password: 'dummy_password_no_login',
+          department: 'all',
+          is_active: false
+        });
+      }
+      finalTeacherId = adminIntervenant.id;
+    }
+
     let access = await CourseAccess.findOne({
       where: { courseId, department: course.department === 'all' ? null : course.department, etudiantId: null }
     });
 
     if (access) {
       access.isUnlocked = isUnlocked;
-      access.unlockedBy = teacherId;
+      access.unlockedBy = finalTeacherId;
       await access.save();
     } else {
       await CourseAccess.create({
@@ -216,14 +252,14 @@ export const toggleGlobalAccess = async (req: Request, res: Response): Promise<v
         department: course.department === 'all' ? null : course.department,
         etudiantId: null,
         isUnlocked,
-        unlockedBy: teacherId
+        unlockedBy: finalTeacherId
       });
     }
 
     // Forcer toutes les règles individuelles existantes à s'aligner sur le nouveau choix global
     const { Op } = require('sequelize');
     await CourseAccess.update(
-      { isUnlocked, unlockedBy: teacherId },
+      { isUnlocked, unlockedBy: finalTeacherId },
       {
         where: {
           courseId,
@@ -273,24 +309,61 @@ export const toggleStudentAccess = async (req: Request, res: Response): Promise<
     const { etudiantId, isUnlocked } = req.body;
     const teacherId = (req as any).user.id;
 
+    const course = await Course.findByPk(courseId as string);
+    if (!course) {
+      res.status(404).json({ message: 'Course not found' });
+      return;
+    }
+
+    const userRole = (req as any).user?.role;
+    if (course.department === 'all' && userRole !== 'admin' && userRole !== 'directeur_formation') {
+      res.status(403).json({ message: "Seul l'administrateur peut modifier l'accès aux cours communs." });
+      return;
+    }
+
+    let finalTeacherId = teacherId;
+    if (userRole === 'admin' || userRole === 'directeur_formation') {
+      const User = require('../models/User').default;
+      const Intervenant = require('../models/Intervenant').default;
+      
+      const dfUser = await User.findOne({ where: { role: 'directeur_formation' } });
+      if (!dfUser) {
+        res.status(400).json({ message: "Action impossible : aucun profil Directeur de Formation n'est configuré dans le système." });
+        return;
+      }
+
+      let adminIntervenant = await Intervenant.findOne({ where: { email: dfUser.email } });
+      if (!adminIntervenant) {
+        adminIntervenant = await Intervenant.create({
+          firstName: dfUser.prenom || 'Directeur',
+          lastName: dfUser.nom || 'Formation',
+          email: dfUser.email,
+          password: 'dummy_password_no_login',
+          department: 'all',
+          is_active: false
+        });
+      }
+      finalTeacherId = adminIntervenant.id;
+    }
+
     let access = await CourseAccess.findOne({
       where: { courseId, etudiantId }
     });
 
     if (access) {
       access.isUnlocked = isUnlocked;
-      access.unlockedBy = teacherId;
+      access.unlockedBy = finalTeacherId;
       await access.save();
     } else {
+      const student = await Etudiant.findByPk(etudiantId);
       await CourseAccess.create({
         courseId,
         etudiantId,
+        department: student?.department || null,
         isUnlocked,
-        unlockedBy: teacherId
+        unlockedBy: finalTeacherId
       });
     }
-
-    const course = await Course.findByPk(courseId as string);
 
     if (isUnlocked && course) {
       await Notification.create({
@@ -320,6 +393,12 @@ export const emergencyLock = async (req: Request, res: Response): Promise<void> 
     const course = await Course.findByPk(courseId as string);
     if (!course) {
       res.status(404).json({ message: 'Course not found' });
+      return;
+    }
+
+    const userRole = (req as any).user?.role;
+    if (course.department === 'all' && userRole !== 'admin' && userRole !== 'directeur_formation') {
+      res.status(403).json({ message: "Seul l'administrateur peut bloquer les cours communs." });
       return;
     }
 

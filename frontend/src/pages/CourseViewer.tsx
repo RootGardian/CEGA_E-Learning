@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ChevronRight, PlayCircle, BookOpen, CheckCircle, X, ArrowLeft, List, Terminal, Cpu, Layers, Milestone, Code, Video } from 'lucide-react';
+import { ChevronRight, PlayCircle, BookOpen, CheckCircle, X, ArrowLeft, List, Terminal, Cpu, Layers, Milestone, Code, Video, Lock } from 'lucide-react';
 import socket from '../utils/socket';
 import { usePopup } from '../contexts/PopupContext';
 import LessonIA_Geo_S1 from '../components/LessonIA_Geo_S1';
@@ -76,6 +76,11 @@ const CourseViewer: React.FC = () => {
         const authRes = await axios.get('/api/auth/me', { withCredentials: true });
         setCurrentUser(authRes.data);
         setUserRole(authRes.data.role);
+
+        if (authRes.data.role === 'etudiant' && authRes.data.subscriptionStatus === 'pending') {
+          navigate('/dashboard');
+          return;
+        }
 
         const response = await axios.get(`/api/courses/${courseId}?t=${Date.now()}`, {
           withCredentials: true,
@@ -359,7 +364,7 @@ const CourseViewer: React.FC = () => {
                   {unlocked ? (
                     <ChevronRight size={18} style={{ marginRight: '0.5rem', color: activeModuleId === mod.id && !activeLessonId ? 'var(--accent-primary)' : 'var(--text-secondary)' }} />
                   ) : (
-                    <span style={{ marginRight: '0.5rem', fontSize: '14px' }}>🔒</span>
+                    <span style={{ marginRight: '0.5rem', display: 'flex', alignItems: 'center' }}><Lock size={14} /></span>
                   )}
                   <span style={{ flex: 1, lineHeight: 1.3 }}>{mod.title}</span>
                 </button>
@@ -493,7 +498,7 @@ const CourseViewer: React.FC = () => {
                                 fontWeight: 'bold',
                                 flexShrink: 0
                               }}>
-                                {unlocked ? (index + 1) : '🔒'}
+                                {unlocked ? (index + 1) : <Lock size={14} />}
                               </div>
                               <div>
                                 <h3 style={{ margin: '0 0 0.25rem 0', color: unlocked ? 'var(--text-primary)' : 'var(--text-secondary)', fontSize: '1.1rem', fontWeight: 600 }}>{lesson.title}</h3>
@@ -718,7 +723,7 @@ const CourseViewer: React.FC = () => {
                       </div>
                       <h2 style={{ fontSize: '1.15rem', color: 'var(--text-primary)', marginBottom: '0.5rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         {mod.title}
-                        {!unlocked && <span style={{ fontSize: '14px' }}>🔒</span>}
+                        {!unlocked && <span style={{ display: 'flex', alignItems: 'center' }}><Lock size={14} /></span>}
                       </h2>
                       <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.5rem', flex: 1 }}>
                         Découvrez les notions essentielles de ce module et maîtrisez les concepts clés pas à pas.
